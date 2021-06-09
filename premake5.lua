@@ -21,7 +21,7 @@ project "Shadertool"
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	pchheader "pch.h"
-	pchsource "src/pch.cpp"
+	pchsource "%{prj.name}/src/pch.cpp"
 
 	files
 	{
