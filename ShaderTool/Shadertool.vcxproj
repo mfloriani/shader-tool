@@ -99,6 +99,10 @@
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\Constants.h" />
+    <ClInclude Include="src\Rendering\D3DApp.h" />
+    <ClInclude Include="src\Rendering\D3DUtil.h" />
+    <ClInclude Include="src\Rendering\d3dx12.h" />
+    <ClInclude Include="src\Rendering\Renderer.h" />
     <ClInclude Include="src\Rendering\Window.h" />
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +111,9 @@
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\Rendering\D3DApp.cpp" />
+    <ClCompile Include="src\Rendering\D3DUtil.cpp" />
+    <ClCompile Include="src\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Rendering\Window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

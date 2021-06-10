@@ -1,5 +1,8 @@
 #pragma once
 
-constexpr int ScreenWidth = 800;
-constexpr int ScreenHeight = 600;
+#include <stdint.h>
 
+constexpr uint32_t InitialClientWidth = 1280;
+constexpr uint32_t InitialClientHeight = 720;
+
+constexpr int NumBuffers = 2;
