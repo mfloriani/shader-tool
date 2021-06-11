@@ -54,6 +54,12 @@ LRESULT D3DApp::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
+	case WM_PAINT:
+	{
+		OnUpdate();
+		OnRender();
+		break;
+	}
 	case WM_CLOSE:
 		break;
 
@@ -100,6 +106,19 @@ LRESULT D3DApp::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void D3DApp::OnUpdate()
+{
+}
+
+void D3DApp::OnRender()
+{
+	_Renderer->Clear();
+
+
+
+	_Renderer->Present();
 }
 
 void D3DApp::OnKeyDown(WPARAM key)

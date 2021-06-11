@@ -121,20 +121,7 @@ ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter)
     return d3d12Device2;
 }
 
-ComPtr<ID3D12CommandQueue> CreateCommandQueue(ComPtr<ID3D12Device> device, D3D12_COMMAND_LIST_TYPE type)
-{
-    ComPtr<ID3D12CommandQueue> d3d12CommandQueue;
 
-    D3D12_COMMAND_QUEUE_DESC desc = {};
-    desc.Type = type;
-    desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    desc.NodeMask = 0;
-
-    ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
-
-    return d3d12CommandQueue;
-}
 
 ComPtr<IDXGISwapChain4> CreateSwapChain(
     HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue,
@@ -222,6 +209,21 @@ void CreateRenderTargetViews(
     }
 }
 
+ComPtr<ID3D12CommandQueue> CreateCommandQueue(ComPtr<ID3D12Device> device, D3D12_COMMAND_LIST_TYPE type)
+{
+    ComPtr<ID3D12CommandQueue> d3d12CommandQueue;
+
+    D3D12_COMMAND_QUEUE_DESC desc = {};
+    desc.Type = type;
+    desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    desc.NodeMask = 0;
+
+    ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
+
+    return d3d12CommandQueue;
+}
+
 ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
     ComPtr<ID3D12Device> device,
     D3D12_COMMAND_LIST_TYPE type
@@ -242,23 +244,6 @@ ComPtr<ID3D12GraphicsCommandList> CreateCommandList(
     ThrowIfFailed(device->CreateCommandList(0, type, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
     ThrowIfFailed(commandList->Close());
     return commandList;
-}
-
-ComPtr<ID3D12Fence> CreateFence(ComPtr<ID3D12Device> device)
-{
-    ComPtr<ID3D12Fence> fence;
-    ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
-    return fence;
-}
-
-HANDLE CreateEventHandle()
-{
-    HANDLE fenceEvent;
-
-    fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-    assert(fenceEvent && "Failed to create fence event.");
-
-    return fenceEvent;
 }
 
 uint64_t Signal(
@@ -345,6 +330,9 @@ bool Renderer::Init()
 
     _RTVDescriptorHeap = ::CreateDescriptorHeap(_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NumBuffers);
     _RTVDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    
+    _DSVDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    _CbvSrvUavDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     ::CreateRenderTargetViews(_Device, _SwapChain, _RTVDescriptorHeap, _BackBuffers);
 
@@ -353,8 +341,11 @@ bool Renderer::Init()
 
     _CommandList = ::CreateCommandList(_Device, _CommandAllocators[_CurrentBackBufferIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-    _Fence = ::CreateFence(_Device);
-    _FenceEvent = ::CreateEventHandle();
+    ThrowIfFailed(_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&_Fence)));
+    
+    _FenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+
+
 
     ::ShowWindow(_Window->GetHandler(), SW_SHOW);
 
@@ -368,6 +359,8 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
         // Don't allow 0 size swap chain back buffers.
         _ClientWidth = std::max(1u, width);
         _ClientHeight = std::max(1u, height);
+
+        LOG_TRACE("Window Resize x: {0}, y: {1}", _ClientWidth, _ClientHeight);
 
         // Flush the GPU queue to make sure the swap chain's back buffers
         // are not being referenced by an in-flight command list.
@@ -396,6 +389,60 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
         _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
 
         CreateRenderTargetViews(_Device, _SwapChain, _RTVDescriptorHeap, _BackBuffers);
+    }
+}
+
+void Renderer::Clear()
+{
+    auto commandAllocator = _CommandAllocators[_CurrentBackBufferIndex];
+    auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
+
+    commandAllocator->Reset();
+    _CommandList->Reset(commandAllocator.Get(), nullptr);
+
+    // Clear the render target.
+    {
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+            backBuffer.Get(),
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        _CommandList->ResourceBarrier(1, &barrier);
+
+        FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+            _CurrentBackBufferIndex, _RTVDescriptorSize);
+
+        _CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+    }
+}
+
+void Renderer::Present()
+{
+    auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
+
+    // Present
+    {
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+            backBuffer.Get(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        _CommandList->ResourceBarrier(1, &barrier);
+
+        ThrowIfFailed(_CommandList->Close());
+
+        ID3D12CommandList* const commandLists[] = {
+            _CommandList.Get()
+        };
+        _CommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+        _FrameFenceValues[_CurrentBackBufferIndex] = Signal(_CommandQueue, _Fence, _FenceValue);
+
+        UINT syncInterval = _VSync ? 1 : 0;
+        UINT presentFlags = _TearingSupport && !_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+        ThrowIfFailed(_SwapChain->Present(syncInterval, presentFlags));
+
+        _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
+
+        WaitForFenceValue(_Fence, _FrameFenceValues[_CurrentBackBufferIndex], _FenceEvent);
     }
 }
 

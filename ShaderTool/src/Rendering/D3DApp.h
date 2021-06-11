@@ -24,6 +24,9 @@ public:
 	void Run();
 	LRESULT WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+	void OnUpdate();
+	void OnRender();
+
 	void OnKeyDown(WPARAM key);
 	void OnKeyUp(WPARAM key);
 

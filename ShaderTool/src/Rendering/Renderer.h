@@ -17,6 +17,9 @@ public:
 	bool Init();
 	void OnResize(uint32_t width, uint32_t height);
 	
+	void Clear();
+	void Present();
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12Device>              _Device;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>        _CommandQueue;
@@ -29,8 +32,11 @@ private:
 
 	
 	bool _TearingSupport{ false };
-	unsigned int _CurrentBackBufferIndex{ 0 };
-	unsigned int _RTVDescriptorSize{ 0 };
+	bool _VSync{ true };
+	uint16_t _CurrentBackBufferIndex{ 0 };
+	uint32_t _RTVDescriptorSize{ 0 };
+	uint32_t _DSVDescriptorSize{ 0 };
+	uint32_t _CbvSrvUavDescriptorSize{ 0 };
 	uint64_t _FenceValue{ 0 };
 	HANDLE _FenceEvent;
 	uint64_t _FrameFenceValues[NumBuffers]{0};
