@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Window.h"
-#include "Constants.h"
+#include "Defines.h"
 
 bool Window::Init(HINSTANCE hInstance, WNDPROC wndProc)
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "D3DUtil.h"
-#include "Constants.h"
+#include "Defines.h"
 
 
 #include <stdint.h>

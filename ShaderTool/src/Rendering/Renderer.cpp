@@ -1,15 +1,9 @@
 #include "pch.h"
 #include "Renderer.h"
 #include "Window.h"
-#include "Constants.h"
+#include "Defines.h"
 
-#if defined(min)
-#undef min
-#endif
 
-#if defined(max)
-#undef max
-#endif
 
 using Microsoft::WRL::ComPtr;
 
