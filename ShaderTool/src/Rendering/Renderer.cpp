@@ -3,9 +3,25 @@
 #include "Window.h"
 #include "Defines.h"
 
-
-
 using Microsoft::WRL::ComPtr;
+
+Renderer::Renderer(Window* window) :
+    _Window(window)
+{
+    auto [w, h] = window->GetSize();
+    _CurrentBufferWidth = w;
+    _CurrentBufferHeight = h;
+}
+
+Renderer::~Renderer()
+{
+    Flush();
+    ::CloseHandle(_FenceEvent);
+
+    ImGui_ImplDX12_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+}
 
 bool CheckTearingSupport()
 {
@@ -23,6 +39,8 @@ bool CheckTearingSupport()
             }
         }
     }
+
+    LOG_TRACE("Tearing suport? {0}", (allowTearing == TRUE));
 
     return allowTearing == TRUE;
 }
@@ -67,62 +85,18 @@ ComPtr<IDXGIAdapter4> GetAdapter(bool useWarp)
         }
     }
 
+    // Log the chosen adapter 
+    DXGI_ADAPTER_DESC adapterDesc{};
+    dxgiAdapter4->GetDesc(&adapterDesc);
+    LOG_TRACE(L"Adapter {0}", adapterDesc.Description);
+
     return dxgiAdapter4;
 }
 
-ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter)
+void Renderer::CreateSwapChain( HWND hWnd, uint32_t width, uint32_t height )
 {
-    ComPtr<ID3D12Device2> d3d12Device2;
-    ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2)));
+    LOG_TRACE("SwapChain size x: {0}, y: {1}", width, height);
 
-    // Enable debug messages in debug mode.
-#if defined(_DEBUG)
-    ComPtr<ID3D12InfoQueue> pInfoQueue;
-    if (SUCCEEDED(d3d12Device2.As(&pInfoQueue)))
-    {
-        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-
-        // Suppress whole categories of messages
-        //D3D12_MESSAGE_CATEGORY Categories[] = {};
-
-        // Suppress messages based on their severity level
-        D3D12_MESSAGE_SEVERITY Severities[] =
-        {
-            D3D12_MESSAGE_SEVERITY_INFO
-        };
-
-        // Suppress individual messages by their ID
-        D3D12_MESSAGE_ID DenyIds[] = {
-            D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,   // I'm really not sure how to avoid this message.
-            D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,                         // This warning occurs when using capture frame while graphics debugging.
-            D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,                       // This warning occurs when using capture frame while graphics debugging.
-        };
-
-        D3D12_INFO_QUEUE_FILTER NewFilter = {};
-        //NewFilter.DenyList.NumCategories = _countof(Categories);
-        //NewFilter.DenyList.pCategoryList = Categories;
-        NewFilter.DenyList.NumSeverities = _countof(Severities);
-        NewFilter.DenyList.pSeverityList = Severities;
-        NewFilter.DenyList.NumIDs = _countof(DenyIds);
-        NewFilter.DenyList.pIDList = DenyIds;
-
-        ThrowIfFailed(pInfoQueue->PushStorageFilter(&NewFilter));
-    }
-#endif
-
-    return d3d12Device2;
-}
-
-
-
-ComPtr<IDXGISwapChain4> CreateSwapChain(
-    HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue,
-    uint32_t width, uint32_t height, uint32_t bufferCount
-)
-{
-    ComPtr<IDXGISwapChain4> dxgiSwapChain4;
     ComPtr<IDXGIFactory4> dxgiFactory4;
     UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
@@ -134,19 +108,21 @@ ComPtr<IDXGISwapChain4> CreateSwapChain(
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = width;
     swapChainDesc.Height = height;
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.Format = _BackBufferFormat;
     swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc = { 1, 0 };
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount = bufferCount;
+    swapChainDesc.BufferCount = NUM_FRAMES;
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-    swapChainDesc.Flags = ::CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+    if (::CheckTearingSupport())
+        swapChainDesc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
     ComPtr<IDXGISwapChain1> swapChain1;
     ThrowIfFailed(dxgiFactory4->CreateSwapChainForHwnd(
-        commandQueue.Get(),
+        _CommandQueue.Get(),
         hWnd,
         &swapChainDesc,
         nullptr,
@@ -156,143 +132,147 @@ ComPtr<IDXGISwapChain4> CreateSwapChain(
 
     // Disable the Alt+Enter fullscreen toggle feature. 
     ThrowIfFailed(dxgiFactory4->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER));
-
-    ThrowIfFailed(swapChain1.As(&dxgiSwapChain4));
-
-    return dxgiSwapChain4;
+    ThrowIfFailed(swapChain1.As(&_SwapChain));
 }
 
-ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(
-    ComPtr<ID3D12Device> device,
-    D3D12_DESCRIPTOR_HEAP_TYPE type, 
-    uint32_t numDescriptors
-)
+void Renderer::CreateRTVAndDSVDescriptorHeaps()
 {
-    ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
+    rtvHeapDesc.NumDescriptors = NUM_FRAMES;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    rtvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(_Device->CreateDescriptorHeap( &rtvHeapDesc, IID_PPV_ARGS(_RTVDescriptorHeap.GetAddressOf())));
 
-    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.NumDescriptors = numDescriptors;
-    desc.Type = type;
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    dsvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(_Device->CreateDescriptorHeap( &dsvHeapDesc, IID_PPV_ARGS(_DSVDescriptorHeap.GetAddressOf())));
 
-    ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
-
-    return descriptorHeap;
+    D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+    srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    srvHeapDesc.NumDescriptors = 1;
+    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_SRVDescriptorHeap)));
 }
 
-void CreateRenderTargetViews(
-    ComPtr<ID3D12Device> device,
-    ComPtr<IDXGISwapChain4> swapChain, 
-    ComPtr<ID3D12DescriptorHeap> descriptorHeap,
-    ComPtr<ID3D12Resource> backBuffers[]
-)
+void Renderer::CreateRenderTargetViews()
 {
-    auto rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-    for (int i = 0; i < NumBuffers; ++i)
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    for (int i = 0; i < NUM_FRAMES; ++i)
     {
-        ComPtr<ID3D12Resource> backBuffer;
-        ThrowIfFailed(swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
-
-        device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtvHandle);
-
-        backBuffers[i] = backBuffer;
-
-        rtvHandle.Offset(rtvDescriptorSize);
+        ThrowIfFailed(_SwapChain->GetBuffer(i, IID_PPV_ARGS(&_BackBuffers[i])));
+        _Device->CreateRenderTargetView(_BackBuffers[i].Get(), nullptr, rtvHandle);
+        rtvHandle.Offset(1, _RTVDescriptorSize);
     }
 }
 
-ComPtr<ID3D12CommandQueue> CreateCommandQueue(ComPtr<ID3D12Device> device, D3D12_COMMAND_LIST_TYPE type)
+void Renderer::CreateCommandObjects()
 {
-    ComPtr<ID3D12CommandQueue> d3d12CommandQueue;
-
     D3D12_COMMAND_QUEUE_DESC desc = {};
-    desc.Type = type;
+    desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     desc.NodeMask = 0;
+    ThrowIfFailed(_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&_CommandQueue)));
 
-    ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
+    for (int i = 0; i < NUM_FRAMES; ++i)
+        ThrowIfFailed(_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&_CommandAllocators[i])));
 
-    return d3d12CommandQueue;
+    ThrowIfFailed(_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, _CommandAllocators[_CurrentBackBufferIndex].Get(), nullptr, IID_PPV_ARGS(&_CommandList)));
+    ThrowIfFailed(_CommandList->Close());
 }
 
-ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
-    ComPtr<ID3D12Device> device,
-    D3D12_COMMAND_LIST_TYPE type
-)
+void Renderer::Flush()
 {
-    ComPtr<ID3D12CommandAllocator> commandAllocator;
-    ThrowIfFailed(device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
-    return commandAllocator;
-}
+    ++_FenceValue;
+    ThrowIfFailed(_CommandQueue->Signal(_Fence.Get(), _FenceValue));
 
-ComPtr<ID3D12GraphicsCommandList> CreateCommandList(
-    ComPtr<ID3D12Device> device,
-    ComPtr<ID3D12CommandAllocator> commandAllocator, 
-    D3D12_COMMAND_LIST_TYPE type
-)
-{
-    ComPtr<ID3D12GraphicsCommandList> commandList;
-    ThrowIfFailed(device->CreateCommandList(0, type, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
-    ThrowIfFailed(commandList->Close());
-    return commandList;
-}
-
-uint64_t Signal(
-    ComPtr<ID3D12CommandQueue> commandQueue, 
-    ComPtr<ID3D12Fence> fence,
-    uint64_t& fenceValue
-)
-{
-    uint64_t fenceValueForSignal = ++fenceValue;
-    ThrowIfFailed(commandQueue->Signal(fence.Get(), fenceValueForSignal));
-    return fenceValueForSignal;
-}
-
-void WaitForFenceValue(
-    ComPtr<ID3D12Fence> fence, 
-    uint64_t fenceValue, 
-    HANDLE fenceEvent,
-    std::chrono::milliseconds duration = std::chrono::milliseconds::max()
-)
-{
-    if (fence->GetCompletedValue() < fenceValue)
+    if (_Fence->GetCompletedValue() < _FenceValue)
     {
-        ThrowIfFailed(fence->SetEventOnCompletion(fenceValue, fenceEvent));
-        ::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
+        ThrowIfFailed(_Fence->SetEventOnCompletion(_FenceValue, _FenceEvent));
+        ::WaitForSingleObject(_FenceEvent, INFINITE);
     }
+
 }
 
-void Flush(
-    ComPtr<ID3D12CommandQueue> commandQueue, 
-    ComPtr<ID3D12Fence> fence,
-    uint64_t& fenceValue, 
-    HANDLE fenceEvent
-)
+void Renderer::NewUIFrame()
 {
-    uint64_t fenceValueForSignal = Signal(commandQueue, fence, fenceValue);
-    WaitForFenceValue(fence, fenceValueForSignal, fenceEvent);
+    ImGui_ImplDX12_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
 }
 
-Renderer::Renderer(Window* window) : 
-    _Window(window)    
+void Renderer::CreateDSVBuffer()
 {
-    auto [w, h] = window->GetSize();
-    _ClientWidth = w;
-    _ClientHeight = h;
+    // Create the depth/stencil buffer and view.
+    D3D12_RESOURCE_DESC depthStencilDesc;
+    depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    depthStencilDesc.Alignment = 0;
+    depthStencilDesc.Width = _CurrentBufferWidth;
+    depthStencilDesc.Height = _CurrentBufferHeight;
+    depthStencilDesc.DepthOrArraySize = 1;
+    depthStencilDesc.MipLevels = 1;
+    depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+    depthStencilDesc.SampleDesc.Count = _4xMsaaState ? 4 : 1;
+    depthStencilDesc.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
+    depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+    D3D12_CLEAR_VALUE optClear;
+    optClear.Format = _DepthStencilFormat;
+    optClear.DepthStencil.Depth = 1.0f;
+    optClear.DepthStencil.Stencil = 0;
+    ThrowIfFailed(_Device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        D3D12_HEAP_FLAG_NONE,
+        &depthStencilDesc,
+        D3D12_RESOURCE_STATE_COMMON,
+        &optClear,
+        IID_PPV_ARGS(_DepthStencilBuffer.GetAddressOf())));
+
+    // Create descriptor to mip level 0 of entire resource using the format of the resource.
+    D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+    dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+    dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    dsvDesc.Format = _DepthStencilFormat;
+    dsvDesc.Texture2D.MipSlice = 0;
+    _Device->CreateDepthStencilView(_DepthStencilBuffer.Get(), &dsvDesc, _DSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+    // Transition the resource from its initial state to be used as a depth buffer.
+    _CommandList->ResourceBarrier(
+        1,
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            _DepthStencilBuffer.Get(),
+            D3D12_RESOURCE_STATE_COMMON,
+            D3D12_RESOURCE_STATE_DEPTH_WRITE
+        )
+    );
+
+    // Execute the resize commands.
+    ThrowIfFailed(_CommandList->Close());
+    ID3D12CommandList* cmdsLists[] = { _CommandList.Get() };
+    _CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 }
 
-Renderer::~Renderer()
+void Renderer::SetViewportAndScissor()
 {
-    Flush(_CommandQueue, _Fence, _FenceValue, _FenceEvent);
+    // Update the viewport transform to cover the client area.
+    _ScreenViewport.TopLeftX = 0;
+    _ScreenViewport.TopLeftY = 0;
+    _ScreenViewport.Width = static_cast<float>(_CurrentBufferWidth);
+    _ScreenViewport.Height = static_cast<float>(_CurrentBufferHeight);
+    _ScreenViewport.MinDepth = 0.0f;
+    _ScreenViewport.MaxDepth = 1.0f;
 
-    ::CloseHandle(_FenceEvent);
+    _ScissorRect = { 0, 0, static_cast<LONG>(_CurrentBufferWidth), static_cast<LONG>(_CurrentBufferHeight) };
 }
 
 bool Renderer::Init()
 {
+    LOG_WARN("Renderer::Init()");
 #if defined(_DEBUG)
 	{
 		ComPtr<ID3D12Debug> debugController;
@@ -302,88 +282,146 @@ bool Renderer::Init()
 #endif
 
     _TearingSupport = ::CheckTearingSupport();
-    LOG_TRACE("Tearing suport? {0}", _TearingSupport);
-
-    ComPtr<IDXGIAdapter4> dxgiAdapter4 = ::GetAdapter(false);
-    DXGI_ADAPTER_DESC adapterDesc{};
-    dxgiAdapter4->GetDesc(&adapterDesc);
-    LOG_TRACE(L"Adapter {0}", adapterDesc.Description);
-
-    _Device = ::CreateDevice(dxgiAdapter4);
-
-    _CommandQueue = ::CreateCommandQueue(_Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-    LOG_TRACE("Window size x: {0}, y: {1}", _ClientWidth, _ClientHeight);
-
-    _SwapChain = ::CreateSwapChain(
-        _Window->GetHandler(), _CommandQueue,
-        _ClientWidth, _ClientHeight, NumBuffers
-    );
-
-    _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
-
-    _RTVDescriptorHeap = ::CreateDescriptorHeap(_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NumBuffers);
-    _RTVDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     
+    ComPtr<IDXGIAdapter4> adapter = ::GetAdapter(false);
+    ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&_Device)));
+
+    _RTVDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     _DSVDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     _CbvSrvUavDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    ::CreateRenderTargetViews(_Device, _SwapChain, _RTVDescriptorHeap, _BackBuffers);
+    // Check 4X MSAA quality support for our back buffer format.
+    // All Direct3D 11 capable devices support 4X MSAA for all render
+    // target formats, so we only need to check quality support.
+    D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
+    msQualityLevels.Format = _BackBufferFormat;
+    msQualityLevels.SampleCount = 4;
+    msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+    msQualityLevels.NumQualityLevels = 0;
+    ThrowIfFailed(_Device->CheckFeatureSupport(
+        D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+        &msQualityLevels,
+        sizeof(msQualityLevels)));
+    _4xMsaaQuality = msQualityLevels.NumQualityLevels;
+    assert(_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 
-    for (int i = 0; i < NumBuffers; ++i)
-        _CommandAllocators[i] = ::CreateCommandAllocator(_Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    CreateCommandObjects();
 
-    _CommandList = ::CreateCommandList(_Device, _CommandAllocators[_CurrentBackBufferIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
+    CreateSwapChain( _Window->GetHandler(), _CurrentBufferWidth, _CurrentBufferHeight);
+    _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
+
+    CreateRTVAndDSVDescriptorHeaps();
+    CreateRenderTargetViews();
 
     ThrowIfFailed(_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&_Fence)));
-    
     _FenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 
+    ThrowIfFailed(_CommandList->Reset(_CommandAllocators[_CurrentBackBufferIndex].Get(), nullptr));
 
+    CreateDSVBuffer();
+    SetViewportAndScissor();
+    Flush();
+
+    if (!InitImGui())
+        return false;    
 
     ::ShowWindow(_Window->GetHandler(), SW_SHOW);
+    ::UpdateWindow(_Window->GetHandler());
 
 	return true;
 }
 
+bool Renderer::InitImGui()
+{
+    LOG_WARN("Renderer::InitImGui()");
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    //io.ConfigViewportsNoAutoMerge = true;
+    //io.ConfigViewportsNoTaskBarIcon = true;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+    // Setup Platform/Renderer backends
+    if (!ImGui_ImplWin32_Init(_Window->GetHandler()))
+    {
+        LOG_CRITICAL("Error ImGui_ImplWin32_Init");
+        return false;
+    }
+    if (!ImGui_ImplDX12_Init(
+        _Device.Get(),
+        NUM_FRAMES,
+        _BackBufferFormat,
+        _SRVDescriptorHeap.Get(),
+        _SRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+        _SRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart()
+    ))
+    {
+        LOG_CRITICAL("Error ImGui_ImplDX12_Init");
+        return false;
+    }
+
+    return true;
+}
+
 void Renderer::OnResize(uint32_t width, uint32_t height)
 {
-    if (_ClientWidth != width || _ClientHeight != height)
-    {
-        // Don't allow 0 size swap chain back buffers.
-        _ClientWidth = std::max(1u, width);
-        _ClientHeight = std::max(1u, height);
+    // Don't allow 0 size swap chain back buffers.
+    _CurrentBufferWidth = std::max(1u, width);
+    _CurrentBufferHeight = std::max(1u, height);
 
-        LOG_TRACE("Window Resize x: {0}, y: {1}", _ClientWidth, _ClientHeight);
+    LOG_TRACE("OnResize x: {0}, y: {1}", _CurrentBufferWidth, _CurrentBufferHeight);
 
-        // Flush the GPU queue to make sure the swap chain's back buffers
-        // are not being referenced by an in-flight command list.
-        Flush(_CommandQueue, _Fence, _FenceValue, _FenceEvent);
+    // Flush the GPU queue to make sure the swap chain's back buffers
+    // are not being referenced by an in-flight command list.
+    Flush();
 
-        for (int i = 0; i < NumBuffers; ++i)
-        {
-            // Any references to the back buffers must be released
-            // before the swap chain can be resized.
-            _BackBuffers[i].Reset();
-            _FrameFenceValues[i] = _FrameFenceValues[_CurrentBackBufferIndex];
-        }
+    ThrowIfFailed(
+        _CommandList->Reset(
+            _CommandAllocators[_CurrentBackBufferIndex].Get(), 
+            nullptr
+        )
+    );
 
-        DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-        ThrowIfFailed(_SwapChain->GetDesc(&swapChainDesc));
-        ThrowIfFailed(
-            _SwapChain->ResizeBuffers(
-                NumBuffers, 
-                _ClientWidth, 
-                _ClientHeight,
-                swapChainDesc.BufferDesc.Format, 
-                swapChainDesc.Flags
-            )
-        );
+    for (int i = 0; i < NUM_FRAMES; ++i)
+        _BackBuffers[i].Reset();
 
-        _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
+    _DepthStencilBuffer.Reset();
 
-        CreateRenderTargetViews(_Device, _SwapChain, _RTVDescriptorHeap, _BackBuffers);
-    }
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+    ThrowIfFailed(_SwapChain->GetDesc(&swapChainDesc));
+    ThrowIfFailed(
+        _SwapChain->ResizeBuffers(
+            NUM_FRAMES, 
+            _CurrentBufferWidth,
+            _CurrentBufferHeight,
+            swapChainDesc.BufferDesc.Format, 
+            swapChainDesc.Flags
+        )
+    );
+
+    //_CurrentBackBufferIndex = 0;
+    _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
+
+    CreateRenderTargetViews();
+    CreateDSVBuffer();
+    SetViewportAndScissor();
+    Flush();
 }
 
 void Renderer::Clear()
@@ -394,49 +432,78 @@ void Renderer::Clear()
     commandAllocator->Reset();
     _CommandList->Reset(commandAllocator.Get(), nullptr);
 
-    // Clear the render target.
-    {
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-            backBuffer.Get(),
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        backBuffer.Get(),
+        D3D12_RESOURCE_STATE_PRESENT, 
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    );
+    _CommandList->ResourceBarrier(1, &barrier);
 
-        _CommandList->ResourceBarrier(1, &barrier);
+    // Set the viewport and scissor rect.  This needs to be reset whenever the command list is reset.
+    _CommandList->RSSetViewports(1, &_ScreenViewport);
+    _CommandList->RSSetScissorRects(1, &_ScissorRect);
 
-        FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-            _CurrentBackBufferIndex, _RTVDescriptorSize);
+    FLOAT clearColor[] = { 0.9f, 0.0f, 0.9f, 1.0f };
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(
+        _RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+        _CurrentBackBufferIndex, 
+        _RTVDescriptorSize
+    );
 
-        _CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-    }
+    auto& dsv = _DSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+    _CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+    _CommandList->ClearDepthStencilView(
+        dsv, 
+        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 
+        1.0f, 
+        0, 0, 
+        nullptr
+    );
+
+    // Specify the buffers we are going to render to.
+    _CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
+
 }
 
 void Renderer::Present()
 {
     auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
+    
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        backBuffer.Get(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET, 
+        D3D12_RESOURCE_STATE_PRESENT
+    );
+    _CommandList->ResourceBarrier(1, &barrier);
 
-    // Present
-    {
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-            backBuffer.Get(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-        _CommandList->ResourceBarrier(1, &barrier);
+    ThrowIfFailed(_CommandList->Close());
 
-        ThrowIfFailed(_CommandList->Close());
+    ID3D12CommandList* const commandLists[] = { _CommandList.Get() };
+    _CommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
-        ID3D12CommandList* const commandLists[] = {
-            _CommandList.Get()
-        };
-        _CommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+    UINT syncInterval = _VSync ? 1 : 0;
+    UINT presentFlags = _TearingSupport && !_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+    ThrowIfFailed(_SwapChain->Present(syncInterval, presentFlags));
 
-        _FrameFenceValues[_CurrentBackBufferIndex] = Signal(_CommandQueue, _Fence, _FenceValue);
+    _CurrentBackBufferIndex = (_CurrentBackBufferIndex + 1) % NUM_FRAMES;
 
-        UINT syncInterval = _VSync ? 1 : 0;
-        UINT presentFlags = _TearingSupport && !_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
-        ThrowIfFailed(_SwapChain->Present(syncInterval, presentFlags));
-
-        _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
-
-        WaitForFenceValue(_Fence, _FrameFenceValues[_CurrentBackBufferIndex], _FenceEvent);
-    }
+    Flush();   
 }
 
+void Renderer::RenderUI()
+{
+    ImGui::Render();
+
+    ID3D12DescriptorHeap* const descHeapList[] = { _SRVDescriptorHeap.Get() };
+    _CommandList->SetDescriptorHeaps(1, descHeapList);
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), _CommandList.Get());
+
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    // Update and Render additional Platform Windows
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault(NULL, (void*)_CommandList.Get());
+    }
+}

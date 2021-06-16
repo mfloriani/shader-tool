@@ -17,7 +17,7 @@ bool Window::Init(HINSTANCE hInstance, WNDPROC wndProc)
 
 	RegisterClassEx(&wc);
 
-	RECT wr = { 0, 0, static_cast<LONG>(InitialClientWidth), static_cast<LONG>(InitialClientHeight) };
+	RECT wr = { 0, 0, static_cast<LONG>(INIT_CLIENT_WIDTH), static_cast<LONG>(INIT_CLIENT_HEIGHT) };
 	::AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
 
 	int windowWidth = wr.right - wr.left;
@@ -49,7 +49,7 @@ bool Window::Init(HINSTANCE hInstance, WNDPROC wndProc)
 		return false;
 	}
 	
-	::GetWindowRect(_Handler, &_WindowRect);
+	::GetWindowRect(_Handler, &_WindowedRect);
 
     return true;
 }
@@ -75,7 +75,7 @@ void Window::SetFullscreen(bool fullscreen)
 		{
 			// Store the current window dimensions so they can be restored 
 			// when switching out of fullscreen state.
-			::GetWindowRect(_Handler, &_WindowRect);
+			::GetWindowRect(_Handler, &_WindowedRect);
 
 			// Set the window style to a borderless window so the client area fills
 			// the entire screen.
@@ -105,10 +105,10 @@ void Window::SetFullscreen(bool fullscreen)
 			::SetWindowLong(_Handler, GWL_STYLE, WS_OVERLAPPEDWINDOW);
 
 			::SetWindowPos(_Handler, HWND_NOTOPMOST,
-				_WindowRect.left,
-				_WindowRect.top,
-				_WindowRect.right - _WindowRect.left,
-				_WindowRect.bottom - _WindowRect.top,
+				_WindowedRect.left,
+				_WindowedRect.top,
+				_WindowedRect.right - _WindowedRect.left,
+				_WindowedRect.bottom - _WindowedRect.top,
 				SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 			::ShowWindow(_Handler, SW_NORMAL);

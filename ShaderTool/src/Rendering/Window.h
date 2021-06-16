@@ -14,10 +14,9 @@ public:
 	
 	std::pair<uint32_t, uint32_t> GetSize() const;
 	void SetFullscreen(bool fullscreen);
-	
 
 private:
 	HWND _Handler{ nullptr };
-	RECT _WindowRect{};
+	RECT _WindowedRect{};
 	bool _Fullscreen{ false };
 };

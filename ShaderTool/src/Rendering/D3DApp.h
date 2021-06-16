@@ -5,8 +5,6 @@
 #include "Window.h"
 #include "Renderer.h"
 
-
-
 class D3DApp
 {
 public:
@@ -29,6 +27,8 @@ public:
 
 	void OnKeyDown(WPARAM key);
 	void OnKeyUp(WPARAM key);
+
+	void OnResize(int width, int height);
 
 private:
 	D3DApp() = default;

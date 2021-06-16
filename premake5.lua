@@ -70,3 +70,7 @@ project "Shadertool"
 		}
 		optimize "on"
 		buildoptions "/MD"
+
+	
+	filter 'files:**/ImGui/**.cpp'
+		flags  { 'NoPCH' }
