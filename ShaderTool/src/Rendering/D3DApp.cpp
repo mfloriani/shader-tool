@@ -43,13 +43,19 @@ void D3DApp::Run()
 	try
 	{
 		MSG msg = { 0 };
-		while (msg.message != WM_QUIT)
+		while (_IsRunning)
 		{
 			while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
+				if (msg.message == WM_QUIT)
+					_IsRunning = false;
 			}
+
+			if (!_IsRunning)
+				break;
+
 			OnUpdate();
 			OnRender();
 		}
@@ -65,10 +71,12 @@ LRESULT D3DApp::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_CLOSE:
+		LOG_TRACE("WM_CLOSE");
+		PostQuitMessage(0);
 		break;
 
 	case WM_DESTROY:
-		PostQuitMessage(0);
+		LOG_TRACE("WM_DESTROY");
 		break;
 
 	case WM_KEYDOWN:

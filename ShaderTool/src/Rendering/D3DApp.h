@@ -39,4 +39,5 @@ private:
 	std::unique_ptr<Window>   _Window;
 	std::unique_ptr<Renderer> _Renderer;
 	GameTimer _Timer;
+	bool _IsRunning{ true };
 };
