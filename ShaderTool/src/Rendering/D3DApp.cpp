@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "D3DApp.h"
+#include "Editor\NodeGraphEditor.h"
+
 
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -30,11 +32,14 @@ bool D3DApp::Init(HINSTANCE hInstance)
 	if (!_Renderer->Init())
 		return false;
 
+	color_editor.Init();
+
 	return true;
 }
 
 void D3DApp::Run()
 {
+	_Timer.Reset();
 	try
 	{
 		MSG msg = { 0 };
@@ -108,6 +113,7 @@ LRESULT D3DApp::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void D3DApp::OnUpdate()
 {
+	_Timer.Tick();
 }
 
 void D3DApp::OnRender()
@@ -173,11 +179,13 @@ void D3DApp::OnRender()
 	//	ImGui::EndMenuBar();
 	//}
 
+
 	ImGui::End();
 
-	static bool show_demo_window = true;
-	ImGui::ShowDemoWindow(&show_demo_window);
-		
+	//static bool show_demo_window = true;
+	//ImGui::ShowDemoWindow(&show_demo_window);
+	
+	color_editor.show();
 
 	_Renderer->RenderUI();
 	_Renderer->Present();

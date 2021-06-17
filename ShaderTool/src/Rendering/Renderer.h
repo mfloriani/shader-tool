@@ -3,6 +3,7 @@
 #include "Editor\ImGui\imgui.h"
 #include "Editor\ImGui\imgui_impl_win32.h"
 #include "Editor\ImGui\imgui_impl_dx12.h"
+#include "Editor\ImGui\imnodes.h"
 
 #include "D3DUtil.h"
 #include "Defines.h"

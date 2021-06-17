@@ -18,6 +18,8 @@ Renderer::~Renderer()
     Flush();
     ::CloseHandle(_FenceEvent);
 
+    ImNodes::DestroyContext();
+
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
@@ -334,9 +336,12 @@ bool Renderer::Init()
 bool Renderer::InitImGui()
 {
     LOG_WARN("Renderer::InitImGui()");
+    
     // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
+    IMGUI_CHECKVERSION();    
     ImGui::CreateContext();
+    ImNodes::CreateContext();
+    
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -345,9 +350,8 @@ bool Renderer::InitImGui()
     //io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
 
-    // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
+    ImNodes::StyleColorsDark();
 
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
     ImGuiStyle& style = ImGui::GetStyle();

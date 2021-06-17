@@ -4,6 +4,7 @@
 
 #include "Window.h"
 #include "Renderer.h"
+#include "GameTimer.h"
 
 class D3DApp
 {
@@ -20,15 +21,16 @@ public:
 
 	bool Init(HINSTANCE hInstance);
 	void Run();
+	
 	LRESULT WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void OnUpdate();
 	void OnRender();
-
 	void OnKeyDown(WPARAM key);
 	void OnKeyUp(WPARAM key);
-
 	void OnResize(int width, int height);
+
+	const GameTimer& GetTimer() const { return _Timer; }
 
 private:
 	D3DApp() = default;
@@ -36,4 +38,5 @@ private:
 private:
 	std::unique_ptr<Window>   _Window;
 	std::unique_ptr<Renderer> _Renderer;
+	GameTimer _Timer;
 };

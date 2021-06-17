@@ -97,6 +97,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Defines.h" />
+    <ClInclude Include="src\Editor\Graph.h" />
     <ClInclude Include="src\Editor\ImGui\imconfig.h" />
     <ClInclude Include="src\Editor\ImGui\imgui.h" />
     <ClInclude Include="src\Editor\ImGui\imgui_impl_dx12.h" />
@@ -105,6 +106,10 @@
     <ClInclude Include="src\Editor\ImGui\imstb_rectpack.h" />
     <ClInclude Include="src\Editor\ImGui\imstb_textedit.h" />
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h" />
+    <ClInclude Include="src\Editor\ImGui\imnodes.h" />
+    <ClInclude Include="src\Editor\ImGui\imnodes_internal.h" />
+    <ClInclude Include="src\Editor\NodeGraphEditor.h" />
+    <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Rendering\D3DApp.h" />
     <ClInclude Include="src\Rendering\D3DUtil.h" />
@@ -118,8 +123,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imgui_demo.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imgui_draw.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -136,6 +140,10 @@
     <ClCompile Include="src\Editor\ImGui\imgui_widgets.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Rendering\D3DApp.cpp" />

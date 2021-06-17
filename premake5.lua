@@ -74,3 +74,4 @@ project "Shadertool"
 	
 	filter 'files:**/ImGui/**.cpp'
 		flags  { 'NoPCH' }
+	
