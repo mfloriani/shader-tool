@@ -146,16 +146,16 @@ public:
 
         // The node editor window
         ImGui::Begin("color node editor");
-        ImGui::TextUnformatted("Edit the color of the output color window using nodes.");
-        ImGui::Columns(2);
-        ImGui::TextUnformatted("A -- add node");
-        ImGui::TextUnformatted("X -- delete selected node or link");
-        ImGui::NextColumn();
-        if (ImGui::Checkbox("emulate_three_button_mouse", &emulate_three_button_mouse))
-        {
-            ImNodes::GetIO().EmulateThreeButtonMouse.Modifier =
-                emulate_three_button_mouse ? &ImGui::GetIO().KeyAlt : NULL;
-        }
+        //ImGui::TextUnformatted("Edit the color of the output color window using nodes.");
+        //ImGui::Columns(2);
+        //ImGui::TextUnformatted("A -- add node");
+        //ImGui::TextUnformatted("X -- delete selected node or link");
+        //ImGui::NextColumn();
+        //if (ImGui::Checkbox("emulate_three_button_mouse", &emulate_three_button_mouse))
+        //{
+        //    ImNodes::GetIO().EmulateThreeButtonMouse.Modifier =
+        //        emulate_three_button_mouse ? &ImGui::GetIO().KeyAlt : NULL;
+        //}
         ImGui::Columns(1);
 
         ImNodes::BeginNodeEditor();
@@ -165,7 +165,7 @@ public:
         {
             const bool open_popup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
                 ImNodes::IsEditorHovered() &&
-                ImGui::IsKeyReleased(VK_INSERT);
+                ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right);
 
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
             if (!ImGui::IsAnyItemHovered() && open_popup)
@@ -505,12 +505,11 @@ public:
 
 
 
-        ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight, mini_map_node_hovering_callback, nullptr);
+        ImNodes::MiniMap(0.1f, ImNodesMiniMapLocation_BottomRight, mini_map_node_hovering_callback, nullptr);
         ImNodes::EndNodeEditor();
 
         // Handle new links
         // These are driven by Imnodes, so we place the code after EndNodeEditor().
-
         {
             int start_attr, end_attr;
             if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
@@ -533,7 +532,6 @@ public:
         }
 
         // Handle deleted links
-
         {
             int link_id;
             if (ImNodes::IsLinkDestroyed(&link_id))
@@ -601,8 +599,7 @@ public:
         ImGui::End();
 
         // The color output window
-        const ImU32 color =
-            root_node_id_ != -1 ? evaluate(graph_, root_node_id_) : IM_COL32(255, 20, 147, 255);
+        const ImU32 color = root_node_id_ != -1 ? evaluate(graph_, root_node_id_) : IM_COL32(255, 20, 147, 255);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, color);
         ImGui::Begin("output color");
         ImGui::End();

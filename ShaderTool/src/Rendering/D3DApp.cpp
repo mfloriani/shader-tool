@@ -32,6 +32,8 @@ bool D3DApp::Init(HINSTANCE hInstance)
 	if (!_Renderer->Init())
 		return false;
 
+	_Window->SetFullscreen(true);
+
 	color_editor.Init();
 
 	return true;
