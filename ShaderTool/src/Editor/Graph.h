@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <utility>
 #include <vector>
-
+#include <iostream>
 
 template<typename ElementType>
 struct Span
@@ -42,6 +42,7 @@ public:
     // Element access
 
     Span<const ElementType> elements() const { return elements_; }
+    std::vector<int>& ids() { return sorted_ids_; }
 
     // Capacity
 
@@ -75,12 +76,10 @@ std::pair<typename IdMap<ElementType>::iterator, bool> IdMap<ElementType>::inser
 
     if (lower_bound != sorted_ids_.end() && id == *lower_bound)
     {
-        return std::make_pair(
-            std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound)), false);
+        return std::make_pair(std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound)), false);
     }
 
-    auto insert_element_at =
-        std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound));
+    auto insert_element_at = std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound));
 
     sorted_ids_.insert(lower_bound, id);
     return std::make_pair(elements_.insert(insert_element_at, element), true);
@@ -95,12 +94,10 @@ std::pair<typename IdMap<ElementType>::iterator, bool> IdMap<ElementType>::inser
 
     if (lower_bound != sorted_ids_.end() && id == *lower_bound)
     {
-        return std::make_pair(
-            std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound)), false);
+        return std::make_pair(std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound)), false);
     }
 
-    auto insert_element_at =
-        std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound));
+    auto insert_element_at = std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound));
 
     sorted_ids_.insert(lower_bound, id);
     return std::make_pair(elements_.insert(insert_element_at, std::move(element)), true);
@@ -188,6 +185,7 @@ public:
     const NodeType& node(int node_id) const;
     Span<const int>  neighbors(int node_id) const;
     Span<const Edge> edges() const;
+    std::vector<int>& nodes() { return nodes_.ids(); }
 
     // Capacity
 
@@ -201,6 +199,24 @@ public:
     int  insert_edge(int from, int to);
     void erase_edge(int edge_id);
 
+    int GetCurrentId() const { return current_id_; }
+    void SetCurrentId(int currentId) { current_id_ = currentId; }
+
+    size_t GetNodesCount() const { return nodes_.size(); }
+    
+    friend std::ostream& operator<<(std::ostream& out, const Graph<NodeType>& g)
+    {
+        out << "#graph\n";
+        out << g.current_id_ << "\n";
+        out << g.nodes_.size() << "\n";
+        for (auto it = g.nodes_.begin(); it != g.nodes_.end(); ++it)
+            out << *it;
+
+
+
+        return out;
+    }
+    
 private:
     int current_id_;
     // These contains map to the node id

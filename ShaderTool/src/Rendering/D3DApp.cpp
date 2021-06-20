@@ -16,7 +16,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 D3DApp::~D3DApp()
 {
-
+	color_editor.Quit();
 }
 	
 
@@ -32,7 +32,7 @@ bool D3DApp::Init(HINSTANCE hInstance)
 	if (!_Renderer->Init())
 		return false;
 
-	_Window->SetFullscreen(true);
+	//_Window->SetFullscreen(true);
 
 	color_editor.Init();
 
@@ -133,13 +133,57 @@ void D3DApp::OnRender()
 	_Renderer->Clear();
 	_Renderer->NewUIFrame();
 
+	RenderUIDockSpace();
+
+	//static bool show_demo_window = true;
+	//ImGui::ShowDemoWindow(&show_demo_window);
+	
+	color_editor.show();
+
+	_Renderer->RenderUI();
+	_Renderer->Present();
+}
+
+void D3DApp::OnKeyDown(WPARAM key)
+{
+	switch (key)
+	{
+	case VK_ESCAPE:
+	{
+		LOG_TRACE("ESC pressed");
+		PostQuitMessage(0);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void D3DApp::OnKeyUp(WPARAM key)
+{
+
+}
+
+void D3DApp::OnResize(int width, int height)
+{
+	if (_Renderer->HasToResizeBuffer(width, height))
+	{
+		_Renderer->Flush();
+		ImGui_ImplDX12_InvalidateDeviceObjects();
+		_Renderer->OnResize(width, height);
+		ImGui_ImplDX12_CreateDeviceObjects();
+	}
+}
+
+void D3DApp::RenderUIDockSpace()
+{
 	static bool docking_open = true;
 	static bool docking_opt_fullscreen = true;
 	static bool docking_opt_padding = false;
 	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-	
+
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->WorkPos);
 	ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -191,43 +235,4 @@ void D3DApp::OnRender()
 
 
 	ImGui::End();
-
-	//static bool show_demo_window = true;
-	//ImGui::ShowDemoWindow(&show_demo_window);
-	
-	color_editor.show();
-
-	_Renderer->RenderUI();
-	_Renderer->Present();
-}
-
-void D3DApp::OnKeyDown(WPARAM key)
-{
-	switch (key)
-	{
-	case VK_ESCAPE:
-	{
-		LOG_TRACE("ESC pressed");
-		PostQuitMessage(0);
-		break;
-	}
-	default:
-		break;
-	}
-}
-
-void D3DApp::OnKeyUp(WPARAM key)
-{
-
-}
-
-void D3DApp::OnResize(int width, int height)
-{
-	if (_Renderer->HasToResizeBuffer(width, height))
-	{
-		_Renderer->Flush();
-		ImGui_ImplDX12_InvalidateDeviceObjects();
-		_Renderer->OnResize(width, height);
-		ImGui_ImplDX12_CreateDeviceObjects();
-	}
 }

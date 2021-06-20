@@ -21,7 +21,8 @@ public:
 
 	bool Init(HINSTANCE hInstance);
 	void Run();
-	
+	void RenderUIDockSpace();
+
 	LRESULT WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void OnUpdate();

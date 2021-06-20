@@ -11,6 +11,8 @@
 #include <chrono>
 #include <cmath>
 #include <vector>
+#include <fstream>
+#include <iomanip>
 
 static GameTimer _Timer;
 
@@ -30,8 +32,17 @@ struct Node
     float    value;
 
     explicit Node(const NodeType t) : type(t), value(0.f) {}
-
     Node(const NodeType t, const float v) : type(t), value(v) {}
+
+    friend std::ostream& operator<<(std::ostream& out, const Node& n)
+    {
+        out << "n "
+            << static_cast<int>(n.type) 
+            << " " 
+            << n.value 
+            << "\n";
+        return out;
+    }
 };
 
 template<class T>
@@ -39,7 +50,6 @@ T clamp(T x, T a, T b)
 {
     return std::min(b, std::max(x, a));
 }
-
 
 void mini_map_node_hovering_callback(int node_id, void* user_data)
 {
@@ -52,8 +62,7 @@ static bool  emulate_three_button_mouse = false;
 ImU32 evaluate(const Graph<Node>& graph, const int root_node)
 {
     std::stack<int> postorder;
-    dfs_traverse(
-        graph, root_node, [&postorder](const int node_id) -> void { postorder.push(node_id); });
+    dfs_traverse(graph, root_node, [&postorder](const int node_id) -> void { postorder.push(node_id); });
 
     std::stack<float> value_stack;
     while (!postorder.empty())
@@ -127,7 +136,7 @@ ImU32 evaluate(const Graph<Node>& graph, const int root_node)
 class ColorNodeEditor
 {
 public:
-    ColorNodeEditor() : graph_(), nodes_(), root_node_id_(-1) {}
+    ColorNodeEditor() : graph_(), uiNodes_(), root_node_id_(-1) {}
 
     void Init()
     {
@@ -135,6 +144,13 @@ public:
 
         ImNodesIO& io = ImNodes::GetIO();
         io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+
+        Load();
+    }
+
+    void Quit()
+    {
+        Save();
     }
 
     void show()
@@ -191,7 +207,7 @@ public:
                     graph_.insert_edge(ui_node.id, ui_node.add.lhs);
                     graph_.insert_edge(ui_node.id, ui_node.add.rhs);
 
-                    nodes_.push_back(ui_node);
+                    uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
                 }
 
@@ -209,7 +225,7 @@ public:
                     graph_.insert_edge(ui_node.id, ui_node.multiply.lhs);
                     graph_.insert_edge(ui_node.id, ui_node.multiply.rhs);
 
-                    nodes_.push_back(ui_node);
+                    uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
                 }
 
@@ -229,7 +245,7 @@ public:
                     graph_.insert_edge(ui_node.id, ui_node.output.g);
                     graph_.insert_edge(ui_node.id, ui_node.output.b);
 
-                    nodes_.push_back(ui_node);
+                    uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
                     root_node_id_ = ui_node.id;
                 }
@@ -246,7 +262,7 @@ public:
 
                     graph_.insert_edge(ui_node.id, ui_node.sine.input);
 
-                    nodes_.push_back(ui_node);
+                    uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
                 }
 
@@ -256,7 +272,7 @@ public:
                     ui_node.type = UiNodeType::time;
                     ui_node.id = graph_.insert_node(Node(NodeType::time));
 
-                    nodes_.push_back(ui_node);
+                    uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
                 }
 
@@ -265,7 +281,7 @@ public:
             ImGui::PopStyleVar();
         }
 
-        for (const UiNode& node : nodes_)
+        for (const UiNode& node : uiNodes_)
         {
             switch (node.type)
             {
@@ -565,7 +581,7 @@ public:
                 {
                     graph_.erase_node(node_id);
                     auto iter = std::find_if(
-                        nodes_.begin(), nodes_.end(), [node_id](const UiNode& node) -> bool {
+                        uiNodes_.begin(), uiNodes_.end(), [node_id](const UiNode& node) -> bool {
                         return node.id == node_id;
                     });
                     // Erase any additional internal nodes
@@ -591,10 +607,27 @@ public:
                     default:
                         break;
                     }
-                    nodes_.erase(iter);
+                    uiNodes_.erase(iter);
                 }
             }
         }
+
+
+        if (ImGui::IsKeyReleased(VK_RETURN))
+        {
+            LOG_TRACE("#########");
+            auto& ids = graph_.nodes();
+            LOG_TRACE("Node ids:");
+            for(auto id : ids)
+                LOG_TRACE("  {0}", id);
+
+            auto edges = graph_.edges();
+            LOG_TRACE("Edge ids:");
+            for (auto it = edges.begin(); it != edges.end(); ++it)
+                LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
+
+        }
+
 
         ImGui::End();
 
@@ -604,6 +637,88 @@ public:
         ImGui::Begin("output color");
         ImGui::End();
         ImGui::PopStyleColor();
+    }
+
+    void Save()
+    {
+        // Save the internal imnodes state
+        ImNodes::SaveCurrentEditorStateToIniFile("node_graph.ini");
+
+        // Dump our editor state as bytes into a file
+        std::ofstream fout("node_graph.txt", std::ios_base::out | std::ios_base::trunc);
+
+        fout << graph_;
+
+
+        fout.close();
+
+        // copy the node vector to file
+        //const size_t num_nodes = nodes_.size();
+        //fout.write(
+        //    reinterpret_cast<const char*>(&num_nodes),
+        //    static_cast<std::streamsize>(sizeof(size_t)));
+        //
+        //for (auto& n : nodes_)
+        //{
+
+        //    fout.write(
+        //        reinterpret_cast<const char*>(nodes_.data()),
+        //        static_cast<std::streamsize>(sizeof(Node) * num_nodes));
+        //}
+
+        // copy the link vector to file
+        //const size_t num_links = links_.size();
+        //fout.write(
+        //    reinterpret_cast<const char*>(&num_links),
+        //    static_cast<std::streamsize>(sizeof(size_t)));
+        //fout.write(
+        //    reinterpret_cast<const char*>(links_.data()),
+        //    static_cast<std::streamsize>(sizeof(Link) * num_links));
+
+        // copy the current_id to file
+        //int currentId = graph_.GetCurrentId();
+        //fout.write(
+        //    reinterpret_cast<const char*>(&currentId), 
+        //    static_cast<std::streamsize>(sizeof(int))
+        //);
+    }
+
+    void Load()
+    {
+        // Load the internal imnodes state
+        ImNodes::LoadCurrentEditorStateFromIniFile("node_graph.ini");
+
+        // Load our editor state into memory
+
+        std::fstream fin("node_graph.bytes", std::ios_base::in | std::ios_base::binary);
+
+        if (!fin.is_open())
+        {
+            LOG_WARN("Failed to load the file node_graph.bytes");
+            return;
+        }
+
+        // copy nodes into memory
+        size_t num_nodes;
+        fin.read(reinterpret_cast<char*>(&num_nodes), static_cast<std::streamsize>(sizeof(size_t)));
+        LOG_TRACE("NUM_NODES {0}", num_nodes);
+        //nodes_.resize(num_nodes);
+        //fin.read(
+        //    reinterpret_cast<char*>(nodes_.data()),
+        //    static_cast<std::streamsize>(sizeof(Node) * num_nodes));
+
+        // copy links into memory
+        //size_t num_links;
+        //fin.read(reinterpret_cast<char*>(&num_links), static_cast<std::streamsize>(sizeof(size_t)));
+        //links_.resize(num_links);
+        //fin.read(
+        //    reinterpret_cast<char*>(links_.data()),
+        //    static_cast<std::streamsize>(sizeof(Link) * num_links));
+
+        // copy current_id into memory
+        //int currentId;
+        //fin.read(reinterpret_cast<char*>(&currentId), static_cast<std::streamsize>(sizeof(int)));
+        //graph_.SetCurrentId(currentId);
     }
 
 private:
@@ -649,7 +764,7 @@ private:
     };
 
     Graph<Node>         graph_;
-    std::vector<UiNode> nodes_;
+    std::vector<UiNode> uiNodes_;
     int                 root_node_id_;
 };
 

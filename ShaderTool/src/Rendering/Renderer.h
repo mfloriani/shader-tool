@@ -64,7 +64,6 @@ private:
 	uint32_t _CbvSrvUavDescriptorSize{ 0 };
 	uint64_t _FenceValue{ 0 };
 	HANDLE _FenceEvent{ nullptr };
-	//uint64_t _FrameFenceValues[NUM_FRAMES]{ 0 };
 	uint32_t _CurrentBufferWidth{ 0 };
 	uint32_t _CurrentBufferHeight{ 0 };
 	Window* _Window;
