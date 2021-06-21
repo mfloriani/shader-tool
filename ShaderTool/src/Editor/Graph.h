@@ -15,16 +15,19 @@ struct Span
     using iterator = ElementType*;
 
     template<typename Container>
-    Span(Container& c) : begin_(c.data()), end_(begin_ + c.size())
+    Span(Container& c) : begin_(c.data()), end_(begin_ + c.size()), size_(c.size())
     {
     }
 
     iterator begin() const { return begin_; }
     iterator end() const { return end_; }
 
+    size_t size() const { return size_; }
+
 private:
     iterator begin_;
     iterator end_;
+    size_t size_;
 };
 
 template<typename ElementType>
@@ -42,7 +45,7 @@ public:
     // Element access
 
     Span<const ElementType> elements() const { return elements_; }
-    std::vector<int>& ids() { return sorted_ids_; }
+    const std::vector<int>& ids() const { return sorted_ids_; }
 
     // Capacity
 
@@ -177,6 +180,16 @@ public:
 
         inline int  opposite(const int n) const { return n == from ? to : from; }
         inline bool contains(const int n) const { return n == from || n == to; }
+
+        friend std::ostream& operator<<(std::ostream& out, const Edge& e)
+        {
+            out << e.id
+                << " "
+                << e.from
+                << " "
+                << e.to;
+            return out;
+        }
     };
 
     // Element access
@@ -185,7 +198,13 @@ public:
     const NodeType& node(int node_id) const;
     Span<const int>  neighbors(int node_id) const;
     Span<const Edge> edges() const;
-    std::vector<int>& nodes() { return nodes_.ids(); }
+    const std::vector<int>& nodes() const { return nodes_.ids(); }
+    
+    const std::vector<int>& edgesFromNodeIds() const { return edges_from_node_.ids(); }
+    Span<const int> edgesFromNode() const { return edges_from_node_.elements(); }
+    
+    const std::vector<int>& allNeighborIds() const { return node_neighbors_.ids(); }
+    Span<const std::vector<int>> allNeighbors() const { return node_neighbors_.elements(); }
 
     // Capacity
 
@@ -209,10 +228,40 @@ public:
         out << "#graph\n";
         out << g.current_id_ << "\n";
         out << g.nodes_.size() << "\n";
-        for (auto it = g.nodes_.begin(); it != g.nodes_.end(); ++it)
-            out << *it;
+        
+        auto& ids = g.nodes_.ids();
+        int i = 0;
+        for (auto it = g.nodes_.begin(); it != g.nodes_.end(); ++it, ++i)
+            out << "n " << ids[i] << " " << *it << "\n";
 
+        out << g.edges_.size() << "\n";
+        auto edges = g.edges_.elements();
+        for (auto it = edges.begin(); it != edges.end(); ++it)
+            out << "e " << *it << "\n";
 
+        {
+            out << g.edges_from_node_.size() << "\n";
+            auto edgesFromNodeIds = g.edges_from_node_.ids();
+            auto edgesFromNode = g.edges_from_node_.elements();
+            int i = 0;
+            for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
+                out << "en " << edgesFromNodeIds[i] << " " << *it << "\n";
+        }
+
+        {
+            int counter = 0;
+            auto neighbors = g.node_neighbors_.elements();
+            for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+                for (auto neighborId : *it)
+                    ++counter;
+            out << counter << "\n";
+
+            auto neighborIds = g.node_neighbors_.ids();
+            int i = 0;
+            for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+                for (auto neighborId : *it)
+                    out << "nb " << neighborIds[i] << " " << neighborId << "\n";
+        }
 
         return out;
     }

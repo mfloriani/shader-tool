@@ -14,6 +14,11 @@
 #include <fstream>
 #include <iomanip>
 
+
+#define VK_S 0x53
+#define VK_L 0x4C
+
+
 static GameTimer _Timer;
 
 enum class NodeType
@@ -36,11 +41,9 @@ struct Node
 
     friend std::ostream& operator<<(std::ostream& out, const Node& n)
     {
-        out << "n "
-            << static_cast<int>(n.type) 
+        out << static_cast<int>(n.type) 
             << " " 
-            << n.value 
-            << "\n";
+            << n.value;
         return out;
     }
 };
@@ -615,7 +618,7 @@ public:
 
         if (ImGui::IsKeyReleased(VK_RETURN))
         {
-            LOG_TRACE("#########");
+            LOG_TRACE("###########################");
             auto& ids = graph_.nodes();
             LOG_TRACE("Node ids:");
             for(auto id : ids)
@@ -626,8 +629,37 @@ public:
             for (auto it = edges.begin(); it != edges.end(); ++it)
                 LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
 
+            {
+                auto edgesFromNodeIds = graph_.edgesFromNodeIds();
+                auto edgesFromNode = graph_.edgesFromNode();
+                LOG_TRACE("EdgesFromNode:");
+                int i = 0;
+                for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
+                    LOG_TRACE("  {0} {1}", edgesFromNodeIds[i], *it);
+            }
+
+            {
+                auto neighborIds = graph_.allNeighborIds();
+                auto neighbors = graph_.allNeighbors();
+                LOG_TRACE("Neighbors:");
+                int i = 0;
+                for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+                    for(auto neighborId : *it)
+                        LOG_TRACE("  {0} {1}", neighborIds[i], neighborId);
+            }
+
         }
 
+
+        if (ImGui::IsKeyReleased(VK_S))
+        {
+            Save();
+        }
+
+        if (ImGui::IsKeyReleased(VK_L))
+        {
+            Load();
+        }
 
         ImGui::End();
 
