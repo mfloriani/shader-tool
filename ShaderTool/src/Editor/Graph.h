@@ -164,7 +164,7 @@ bool IdMap<ElementType>::contains(const int id) const
 }
 
 // a very simple directional graph
-template<typename NodeType>
+template<typename NodeT>
 class Graph
 {
 public:
@@ -194,8 +194,8 @@ public:
 
     // Element access
 
-    NodeType& node(int node_id);
-    const NodeType& node(int node_id) const;
+    NodeT& node(int node_id);
+    const NodeT& node(int node_id) const;
     Span<const int>  neighbors(int node_id) const;
     Span<const Edge> edges() const;
     const std::vector<int>& nodes() const { return nodes_.ids(); }
@@ -206,24 +206,34 @@ public:
     const std::vector<int>& allNeighborIds() const { return node_neighbors_.ids(); }
     Span<const std::vector<int>> allNeighbors() const { return node_neighbors_.elements(); }
 
+    int GetCurrentId() const { return current_id_; }
+    
+
+    size_t GetNodesCount() const { return nodes_.size(); }
+
     // Capacity
 
     size_t num_edges_from_node(int node_id) const;
 
     // Modifiers
-
-    int  insert_node(const NodeType& node);
+    int create_node(const NodeT& node);        
     void erase_node(int node_id);
 
-    int  insert_edge(int from, int to);
+    int  create_edge(int from, int to);    
     void erase_edge(int edge_id);
 
-    int GetCurrentId() const { return current_id_; }
     void SetCurrentId(int currentId) { current_id_ = currentId; }
 
-    size_t GetNodesCount() const { return nodes_.size(); }
+    void reset()
+    {
+        int current_id_ = 0;
+        nodes_.clear();
+        edges_from_node_.clear();
+        node_neighbors_.clear();
+        edges_.clear();
+    }
     
-    friend std::ostream& operator<<(std::ostream& out, const Graph<NodeType>& g)
+    friend std::ostream& operator<<(std::ostream& out, const Graph<NodeT>& g)
     {
         out << g.current_id_ << "\n";
         out << g.nodes_.size() << "\n";
@@ -237,43 +247,101 @@ public:
         auto edges = g.edges_.elements();
         for (auto it = edges.begin(); it != edges.end(); ++it)
             out << "e " << *it << "\n";
+        
+        //{
+        //    out << g.edges_from_node_.size() << "\n";
+        //    auto edgesFromNodeIds = g.edges_from_node_.ids();
+        //    auto edgesFromNode = g.edges_from_node_.elements();
+        //    int i = 0;
+        //    for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
+        //        out << "en " << edgesFromNodeIds[i] << " " << *it << "\n";
+        //}
 
-        {
-            out << g.edges_from_node_.size() << "\n";
-            auto edgesFromNodeIds = g.edges_from_node_.ids();
-            auto edgesFromNode = g.edges_from_node_.elements();
-            int i = 0;
-            for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
-                out << "en " << edgesFromNodeIds[i] << " " << *it << "\n";
-        }
+        //{
+        //    int counter = 0;
+        //    auto neighbors = g.node_neighbors_.elements();
+        //    for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+        //        for (auto neighborId : *it)
+        //            ++counter;
+        //    out << counter << "\n";
 
-        {
-            int counter = 0;
-            auto neighbors = g.node_neighbors_.elements();
-            for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
-                for (auto neighborId : *it)
-                    ++counter;
-            out << counter << "\n";
-
-            auto neighborIds = g.node_neighbors_.ids();
-            int i = 0;
-            for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
-                for (auto neighborId : *it)
-                    out << "nb " << neighborIds[i] << " " << neighborId << "\n";
-        }
+        //    auto neighborIds = g.node_neighbors_.ids();
+        //    int i = 0;
+        //    for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+        //        for (auto neighborId : *it)
+        //            out << "nb " << neighborIds[i] << " " << neighborId << "\n";
+        //}
 
         return out;
     }
 
-    friend std::istream& operator>>(std::istream& in, const Graph<NodeType>& g)
+    friend std::istream& operator>>(std::istream& in, Graph<NodeT>& g)
     {
+        std::string comment;
+        int numNodes;
+        in >> comment >> g.current_id_ >> numNodes;
 
+        std::string nLabel;
+        int nId, nType;
+        float nValue;
+
+        for (int i = 0; i < numNodes; ++i)
+        {
+            in >> nLabel >> nId >> nType >> nValue;
+            LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
+            NodeT node(static_cast<NodeType>(nType));
+            node.value = nValue;
+            g.insert_node(nId, node);
+        }
+
+        int numEdges;
+        in >> numEdges;
+
+        std::string eLabel;
+        int eId, eFrom, eTo;
+
+        for (int i = 0; i < numEdges; ++i)
+        {
+            in >> eLabel >> eId >> eFrom >> eTo;
+            LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
+            g.insert_edge(eId, eFrom, eTo);
+        }
+
+        //int numEdgesFromNode;
+        //in >> numEdgesFromNode;
+
+        //std::string enLabel;
+        //int enId, enCount;
+
+        //for (int i = 0; i < numEdgesFromNode; ++i)
+        //{
+        //    in >> enLabel >> enId >> enCount;
+        //    LOG_TRACE("{0} {1} {2}", enLabel, enId, enCount);
+        //}
+
+        //int numNeighbors;
+        //in >> numNeighbors;
+
+        //std::string nbLabel;
+        //int nbId, nbTo;
+
+        //for (int i = 0; i < numNeighbors; ++i)
+        //{
+        //    in >> nbLabel >> nbId >> nbTo;
+        //    LOG_TRACE("{0} {1} {2}", nbLabel, nbId, nbTo);
+        //}
+
+        return in;
     }
     
 private:
+    int  insert_node(const int id, const NodeT& node);
+    int  insert_edge(const int id, int from, int to);
+
+private:
     int current_id_;
     // These contains map to the node id
-    IdMap<NodeType>         nodes_;
+    IdMap<NodeT>         nodes_;
     IdMap<int>              edges_from_node_;
     IdMap<std::vector<int>> node_neighbors_;
 
@@ -281,46 +349,52 @@ private:
     IdMap<Edge> edges_;
 };
 
-template<typename NodeType>
-NodeType& Graph<NodeType>::node(const int id)
+template<typename NodeT>
+NodeT& Graph<NodeT>::node(const int id)
 {
-    return const_cast<NodeType&>(static_cast<const Graph*>(this)->node(id));
+    return const_cast<NodeT&>(static_cast<const Graph*>(this)->node(id));
 }
 
-template<typename NodeType>
-const NodeType& Graph<NodeType>::node(const int id) const
+template<typename NodeT>
+const NodeT& Graph<NodeT>::node(const int id) const
 {
     const auto iter = nodes_.find(id);
     assert(iter != nodes_.end());
     return *iter;
 }
 
-template<typename NodeType>
-Span<const int> Graph<NodeType>::neighbors(int node_id) const
+template<typename NodeT>
+Span<const int> Graph<NodeT>::neighbors(int node_id) const
 {
     const auto iter = node_neighbors_.find(node_id);
     assert(iter != node_neighbors_.end());
     return *iter;
 }
 
-template<typename NodeType>
-Span<const typename Graph<NodeType>::Edge> Graph<NodeType>::edges() const
+template<typename NodeT>
+Span<const typename Graph<NodeT>::Edge> Graph<NodeT>::edges() const
 {
     return edges_.elements();
 }
 
-template<typename NodeType>
-size_t Graph<NodeType>::num_edges_from_node(const int id) const
+template<typename NodeT>
+size_t Graph<NodeT>::num_edges_from_node(const int id) const
 {
     auto iter = edges_from_node_.find(id);
     assert(iter != edges_from_node_.end());
     return *iter;
 }
 
-template<typename NodeType>
-int Graph<NodeType>::insert_node(const NodeType& node)
+template<typename NodeT>
+int Graph<NodeT>::create_node(const NodeT& node)
 {
-    const int id = current_id_++;
+    const int id = current_id_++;    
+    return insert_node(id, node);
+}
+
+template<typename NodeT>
+int Graph<NodeT>::insert_node(const int id, const NodeT& node)
+{
     assert(!nodes_.contains(id));
     nodes_.insert(id, node);
     edges_from_node_.insert(id, 0);
@@ -328,8 +402,8 @@ int Graph<NodeType>::insert_node(const NodeType& node)
     return id;
 }
 
-template<typename NodeType>
-void Graph<NodeType>::erase_node(const int id)
+template<typename NodeT>
+void Graph<NodeT>::erase_node(const int id)
 {
 
     // first, remove any potential dangling edges
@@ -357,10 +431,16 @@ void Graph<NodeType>::erase_node(const int id)
     node_neighbors_.erase(id);
 }
 
-template<typename NodeType>
-int Graph<NodeType>::insert_edge(const int from, const int to)
+template<typename NodeT>
+int Graph<NodeT>::create_edge(const int from, const int to)
 {
     const int id = current_id_++;
+    return insert_edge(id, from, to);
+}
+
+template<typename NodeT>
+int Graph<NodeT>::insert_edge(const int id, const int from, const int to)
+{
     assert(!edges_.contains(id));
     assert(nodes_.contains(from));
     assert(nodes_.contains(to));
@@ -376,8 +456,8 @@ int Graph<NodeType>::insert_edge(const int from, const int to)
     return id;
 }
 
-template<typename NodeType>
-void Graph<NodeType>::erase_edge(const int edge_id)
+template<typename NodeT>
+void Graph<NodeT>::erase_edge(const int edge_id)
 {
     // This is a bit lazy, we find the pointer here, but we refind it when we erase the edge based
     // on id key.
@@ -402,8 +482,8 @@ void Graph<NodeType>::erase_edge(const int edge_id)
     edges_.erase(edge_id);
 }
 
-template<typename NodeType, typename Visitor>
-void dfs_traverse(const Graph<NodeType>& graph, const int start_node, Visitor visitor)
+template<typename NodeT, typename Visitor>
+void dfs_traverse(const Graph<NodeT>& graph, const int start_node, Visitor visitor)
 {
     std::stack<int> stack;
 

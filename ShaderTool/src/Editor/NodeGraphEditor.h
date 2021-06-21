@@ -46,6 +46,14 @@ struct Node
             << n.value;
         return out;
     }
+
+    friend std::istream& operator>>(std::istream& in, Node& n)
+    {
+        int type;
+        in >> type >> n.value;
+        n.type = static_cast<NodeType>(type);
+        return in;
+    }
 };
 
 template<class T>
@@ -203,12 +211,12 @@ public:
 
                     UiNode ui_node;
                     ui_node.type = UiNodeType::add;
-                    ui_node.add.lhs = graph_.insert_node(value);
-                    ui_node.add.rhs = graph_.insert_node(value);
-                    ui_node.id = graph_.insert_node(op);
+                    ui_node.add.lhs = graph_.create_node(value);
+                    ui_node.add.rhs = graph_.create_node(value);
+                    ui_node.id = graph_.create_node(op);
 
-                    graph_.insert_edge(ui_node.id, ui_node.add.lhs);
-                    graph_.insert_edge(ui_node.id, ui_node.add.rhs);
+                    graph_.create_edge(ui_node.id, ui_node.add.lhs);
+                    graph_.create_edge(ui_node.id, ui_node.add.rhs);
 
                     uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
@@ -221,12 +229,12 @@ public:
 
                     UiNode ui_node;
                     ui_node.type = UiNodeType::multiply;
-                    ui_node.multiply.lhs = graph_.insert_node(value);
-                    ui_node.multiply.rhs = graph_.insert_node(value);
-                    ui_node.id = graph_.insert_node(op);
+                    ui_node.multiply.lhs = graph_.create_node(value);
+                    ui_node.multiply.rhs = graph_.create_node(value);
+                    ui_node.id = graph_.create_node(op);
 
-                    graph_.insert_edge(ui_node.id, ui_node.multiply.lhs);
-                    graph_.insert_edge(ui_node.id, ui_node.multiply.rhs);
+                    graph_.create_edge(ui_node.id, ui_node.multiply.lhs);
+                    graph_.create_edge(ui_node.id, ui_node.multiply.rhs);
 
                     uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
@@ -239,14 +247,14 @@ public:
 
                     UiNode ui_node;
                     ui_node.type = UiNodeType::output;
-                    ui_node.output.r = graph_.insert_node(value);
-                    ui_node.output.g = graph_.insert_node(value);
-                    ui_node.output.b = graph_.insert_node(value);
-                    ui_node.id = graph_.insert_node(out);
+                    ui_node.output.r = graph_.create_node(value);
+                    ui_node.output.g = graph_.create_node(value);
+                    ui_node.output.b = graph_.create_node(value);
+                    ui_node.id = graph_.create_node(out);
 
-                    graph_.insert_edge(ui_node.id, ui_node.output.r);
-                    graph_.insert_edge(ui_node.id, ui_node.output.g);
-                    graph_.insert_edge(ui_node.id, ui_node.output.b);
+                    graph_.create_edge(ui_node.id, ui_node.output.r);
+                    graph_.create_edge(ui_node.id, ui_node.output.g);
+                    graph_.create_edge(ui_node.id, ui_node.output.b);
 
                     uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
@@ -260,10 +268,10 @@ public:
 
                     UiNode ui_node;
                     ui_node.type = UiNodeType::sine;
-                    ui_node.sine.input = graph_.insert_node(value);
-                    ui_node.id = graph_.insert_node(op);
+                    ui_node.sine.input = graph_.create_node(value);
+                    ui_node.id = graph_.create_node(op);
 
-                    graph_.insert_edge(ui_node.id, ui_node.sine.input);
+                    graph_.create_edge(ui_node.id, ui_node.sine.input);
 
                     uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
@@ -273,7 +281,7 @@ public:
                 {
                     UiNode ui_node;
                     ui_node.type = UiNodeType::time;
-                    ui_node.id = graph_.insert_node(Node(NodeType::time));
+                    ui_node.id = graph_.create_node(Node(NodeType::time));
 
                     uiNodes_.push_back(ui_node);
                     ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
@@ -545,7 +553,7 @@ public:
                     {
                         std::swap(start_attr, end_attr);
                     }
-                    graph_.insert_edge(start_attr, end_attr);
+                    graph_.create_edge(start_attr, end_attr);
                 }
             }
         }
@@ -692,6 +700,9 @@ public:
 
     void Load()
     {
+        LOG_TRACE("###################");
+        LOG_TRACE("Loading node graph");
+
         // Load the internal imnodes state
         ImNodes::LoadCurrentEditorStateFromIniFile("node_graph.ini");
 
@@ -703,104 +714,27 @@ public:
             return;
         }
 
-        LOG_TRACE("###################");
+        Reset();
 
-        std::string comment; // #graph
-        int currentId, numNodes;
-        fin >> comment >> currentId >> numNodes;
-
-        std::string nLabel;
-        int nId, nType;
-        float nValue;
-
-        for (int i = 0; i < numNodes; ++i)
-        {
-            fin >> nLabel >> nId >> nType >> nValue;
-            LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
-        }
-
-        int numEdges;
-        fin >> numEdges;
-
-        std::string eLabel;
-        int eId, eFrom, eTo;
-
-        for (int i = 0; i < numEdges; ++i)
-        {
-            fin >> eLabel >> eId >> eFrom >> eTo;
-            LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
-        }
-
-        int numEdgesFromNode;
-        fin >> numEdgesFromNode;
-
-        std::string enLabel;
-        int enId, enCount;
-
-        for (int i = 0; i < numEdgesFromNode; ++i)
-        {
-            fin >> enLabel >> enId >> enCount;
-            LOG_TRACE("{0} {1} {2}", enLabel, enId, enCount);
-        }
-
-        int numNeighbors;
-        fin >> numNeighbors;
-
-        std::string nbLabel;
-        int nbId, nbTo;
-
-        for (int i = 0; i < numNeighbors; ++i)
-        {
-            fin >> nbLabel >> nbId >> nbTo;
-            LOG_TRACE("{0} {1} {2}", nbLabel, nbId, nbTo);
-        }
-
+        fin >> graph_;
+        
+        std::string comment;
         int rootId, numUiNodes;
         fin >> comment >> rootId >> numUiNodes;
 
         std::string uinLabel;
-        
+
         for (int i = 0; i < numUiNodes; ++i)
         {
+            fin >> uinLabel;
+
             UiNode uiNode;
-            int uinType;
-            fin >> uinLabel >> uinType >> uiNode.id;
+            fin >> uiNode;
+            uiNodes_.push_back(uiNode);
 
-            uiNode.type = static_cast<UiNodeType>(uinType);
 
-            switch (uiNode.type)
-            {
-            case UiNodeType::add:
-            {
-                fin >> uiNode.add.lhs >> uiNode.add.rhs;
-                LOG_TRACE("{0} {1} {2} {3} {4}", uinLabel, uiNode.type, uiNode.id, uiNode.add.lhs, uiNode.add.rhs);
-                break;
-            }
-            case UiNodeType::multiply:
-            {
-                fin >> uiNode.multiply.lhs >> uiNode.multiply.rhs;
-                LOG_TRACE("{0} {1} {2} {3} {4}", uinLabel, uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
-                break;
-            }
-            case UiNodeType::output:
-            {
-                fin >> uiNode.output.r >> uiNode.output.g >> uiNode.output.b;
-                LOG_TRACE("{0} {1} {2} {3} {4} {5}", uinLabel, uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
-                break;
-            }
-            case UiNodeType::sine:
-            {
-                fin >> uiNode.sine.input;
-                LOG_TRACE("{0} {1} {2} {3}", uinLabel, uiNode.type, uiNode.id, uiNode.sine.input);
-                break;
-            }
-            case UiNodeType::time:
-                LOG_TRACE("{0} {1} {2}", uinLabel, uiNode.type, uiNode.id);
-                break;
-            default:
-                LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(uiNode.type));
-                break;
-            }
+            //const ImVec2 click_pos = ImGui::GetMousePos();
+            //ImNodes::SetNodeScreenSpacePos(uiNode.id, click_pos);
         }
 
         fin.close();
@@ -815,6 +749,14 @@ public:
         sine,
         time,
     };
+
+private:
+    void Reset()
+    {
+        graph_.reset();
+        uiNodes_.clear();
+        root_node_id_ = -1;
+    }
 
 private:
     
@@ -898,6 +840,49 @@ private:
             }
             
             return out;
+        }
+
+        friend std::istream& operator>>(std::istream& in, UiNode& uiNode)
+        {
+            int uinType;
+            in >> uinType >> uiNode.id;
+
+            uiNode.type = static_cast<UiNodeType>(uinType);
+
+            switch (uiNode.type)
+            {
+            case UiNodeType::add:
+            {
+                in >> uiNode.add.lhs >> uiNode.add.rhs;
+                LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.add.lhs, uiNode.add.rhs);
+                break;
+            }
+            case UiNodeType::multiply:
+            {
+                in >> uiNode.multiply.lhs >> uiNode.multiply.rhs;
+                LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
+                break;
+            }
+            case UiNodeType::output:
+            {
+                in >> uiNode.output.r >> uiNode.output.g >> uiNode.output.b;
+                LOG_TRACE("{0} {1} {2} {3} {4}", uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
+                break;
+            }
+            case UiNodeType::sine:
+            {
+                in >> uiNode.sine.input;
+                LOG_TRACE("{0} {1} {2}", uiNode.type, uiNode.id, uiNode.sine.input);
+                break;
+            }
+            case UiNodeType::time:
+                LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
+                break;
+            default:
+                LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(uiNode.type));
+                break;
+            }
+            return in;
         }
     };
 
