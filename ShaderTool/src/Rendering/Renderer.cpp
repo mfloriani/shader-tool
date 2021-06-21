@@ -274,7 +274,7 @@ void Renderer::SetViewportAndScissor()
 
 bool Renderer::Init()
 {
-    LOG_WARN("Renderer::Init()");
+    LOG_TRACE("Renderer::Init()");
 #if defined(_DEBUG)
 	{
 		ComPtr<ID3D12Debug> debugController;
@@ -335,7 +335,7 @@ bool Renderer::Init()
 
 bool Renderer::InitImGui()
 {
-    LOG_WARN("Renderer::InitImGui()");
+    LOG_TRACE("Renderer::InitImGui()");
     
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();    

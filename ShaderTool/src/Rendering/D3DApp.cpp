@@ -128,8 +128,6 @@ void D3DApp::OnUpdate()
 
 void D3DApp::OnRender()
 {
-	//LOG_WARN("OnRender()");
-	
 	_Renderer->Clear();
 	_Renderer->NewUIFrame();
 

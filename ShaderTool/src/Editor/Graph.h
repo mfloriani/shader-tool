@@ -225,7 +225,6 @@ public:
     
     friend std::ostream& operator<<(std::ostream& out, const Graph<NodeType>& g)
     {
-        out << "#graph\n";
         out << g.current_id_ << "\n";
         out << g.nodes_.size() << "\n";
         
@@ -264,6 +263,11 @@ public:
         }
 
         return out;
+    }
+
+    friend std::istream& operator>>(std::istream& in, const Graph<NodeType>& g)
+    {
+
     }
     
 private:

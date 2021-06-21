@@ -148,12 +148,12 @@ public:
         ImNodesIO& io = ImNodes::GetIO();
         io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
-        Load();
+        //Load();
     }
 
     void Quit()
     {
-        Save();
+        //Save();
     }
 
     void show()
@@ -675,44 +675,19 @@ public:
     {
         // Save the internal imnodes state
         ImNodes::SaveCurrentEditorStateToIniFile("node_graph.ini");
-
-        // Dump our editor state as bytes into a file
+        
         std::ofstream fout("node_graph.txt", std::ios_base::out | std::ios_base::trunc);
 
+        fout << "#graph\n";
         fout << graph_;
+        fout << "#ui_nodes\n";
+        fout << root_node_id_ << "\n";
+        fout << uiNodes_.size() << "\n";
 
+        for(auto& uin : uiNodes_)
+            fout << "uin " << uin << "\n";
 
         fout.close();
-
-        // copy the node vector to file
-        //const size_t num_nodes = nodes_.size();
-        //fout.write(
-        //    reinterpret_cast<const char*>(&num_nodes),
-        //    static_cast<std::streamsize>(sizeof(size_t)));
-        //
-        //for (auto& n : nodes_)
-        //{
-
-        //    fout.write(
-        //        reinterpret_cast<const char*>(nodes_.data()),
-        //        static_cast<std::streamsize>(sizeof(Node) * num_nodes));
-        //}
-
-        // copy the link vector to file
-        //const size_t num_links = links_.size();
-        //fout.write(
-        //    reinterpret_cast<const char*>(&num_links),
-        //    static_cast<std::streamsize>(sizeof(size_t)));
-        //fout.write(
-        //    reinterpret_cast<const char*>(links_.data()),
-        //    static_cast<std::streamsize>(sizeof(Link) * num_links));
-
-        // copy the current_id to file
-        //int currentId = graph_.GetCurrentId();
-        //fout.write(
-        //    reinterpret_cast<const char*>(&currentId), 
-        //    static_cast<std::streamsize>(sizeof(int))
-        //);
     }
 
     void Load()
@@ -720,40 +695,118 @@ public:
         // Load the internal imnodes state
         ImNodes::LoadCurrentEditorStateFromIniFile("node_graph.ini");
 
-        // Load our editor state into memory
-
-        std::fstream fin("node_graph.bytes", std::ios_base::in | std::ios_base::binary);
+        std::ifstream fin("node_graph.txt", std::ios_base::in);
 
         if (!fin.is_open())
         {
-            LOG_WARN("Failed to load the file node_graph.bytes");
+            LOG_WARN("Failed to load file node_graph.txt");
             return;
         }
 
-        // copy nodes into memory
-        size_t num_nodes;
-        fin.read(reinterpret_cast<char*>(&num_nodes), static_cast<std::streamsize>(sizeof(size_t)));
-        LOG_TRACE("NUM_NODES {0}", num_nodes);
-        //nodes_.resize(num_nodes);
-        //fin.read(
-        //    reinterpret_cast<char*>(nodes_.data()),
-        //    static_cast<std::streamsize>(sizeof(Node) * num_nodes));
+        LOG_TRACE("###################");
 
-        // copy links into memory
-        //size_t num_links;
-        //fin.read(reinterpret_cast<char*>(&num_links), static_cast<std::streamsize>(sizeof(size_t)));
-        //links_.resize(num_links);
-        //fin.read(
-        //    reinterpret_cast<char*>(links_.data()),
-        //    static_cast<std::streamsize>(sizeof(Link) * num_links));
+        std::string comment; // #graph
+        int currentId, numNodes;
+        fin >> comment >> currentId >> numNodes;
 
-        // copy current_id into memory
-        //int currentId;
-        //fin.read(reinterpret_cast<char*>(&currentId), static_cast<std::streamsize>(sizeof(int)));
-        //graph_.SetCurrentId(currentId);
+        std::string nLabel;
+        int nId, nType;
+        float nValue;
+
+        for (int i = 0; i < numNodes; ++i)
+        {
+            fin >> nLabel >> nId >> nType >> nValue;
+            LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
+        }
+
+        int numEdges;
+        fin >> numEdges;
+
+        std::string eLabel;
+        int eId, eFrom, eTo;
+
+        for (int i = 0; i < numEdges; ++i)
+        {
+            fin >> eLabel >> eId >> eFrom >> eTo;
+            LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
+        }
+
+        int numEdgesFromNode;
+        fin >> numEdgesFromNode;
+
+        std::string enLabel;
+        int enId, enCount;
+
+        for (int i = 0; i < numEdgesFromNode; ++i)
+        {
+            fin >> enLabel >> enId >> enCount;
+            LOG_TRACE("{0} {1} {2}", enLabel, enId, enCount);
+        }
+
+        int numNeighbors;
+        fin >> numNeighbors;
+
+        std::string nbLabel;
+        int nbId, nbTo;
+
+        for (int i = 0; i < numNeighbors; ++i)
+        {
+            fin >> nbLabel >> nbId >> nbTo;
+            LOG_TRACE("{0} {1} {2}", nbLabel, nbId, nbTo);
+        }
+
+        int rootId, numUiNodes;
+        fin >> comment >> rootId >> numUiNodes;
+
+        std::string uinLabel;
+        
+        for (int i = 0; i < numUiNodes; ++i)
+        {
+            UiNode uiNode;
+            int uinType;
+            fin >> uinLabel >> uinType >> uiNode.id;
+
+            uiNode.type = static_cast<UiNodeType>(uinType);
+
+            switch (uiNode.type)
+            {
+            case UiNodeType::add:
+            {
+                fin >> uiNode.add.lhs >> uiNode.add.rhs;
+                LOG_TRACE("{0} {1} {2} {3} {4}", uinLabel, uiNode.type, uiNode.id, uiNode.add.lhs, uiNode.add.rhs);
+                break;
+            }
+            case UiNodeType::multiply:
+            {
+                fin >> uiNode.multiply.lhs >> uiNode.multiply.rhs;
+                LOG_TRACE("{0} {1} {2} {3} {4}", uinLabel, uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
+                break;
+            }
+            case UiNodeType::output:
+            {
+                fin >> uiNode.output.r >> uiNode.output.g >> uiNode.output.b;
+                LOG_TRACE("{0} {1} {2} {3} {4} {5}", uinLabel, uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
+                break;
+            }
+            case UiNodeType::sine:
+            {
+                fin >> uiNode.sine.input;
+                LOG_TRACE("{0} {1} {2} {3}", uinLabel, uiNode.type, uiNode.id, uiNode.sine.input);
+                break;
+            }
+            case UiNodeType::time:
+                LOG_TRACE("{0} {1} {2}", uinLabel, uiNode.type, uiNode.id);
+                break;
+            default:
+                LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(uiNode.type));
+                break;
+            }
+        }
+
+        fin.close();
     }
 
-private:
+
     enum class UiNodeType
     {
         add,
@@ -762,6 +815,9 @@ private:
         sine,
         time,
     };
+
+private:
+    
 
     struct UiNode
     {
@@ -793,6 +849,56 @@ private:
                 int input;
             } sine;
         };
+
+        friend std::ostream& operator<<(std::ostream& out, const UiNode& n)
+        {
+            out << static_cast<int>(n.type)
+                << " "
+                << n.id;
+
+            switch (n.type)
+            {
+            case UiNodeType::add:
+            {
+                out << " "
+                    << n.add.lhs
+                    << " "
+                    << n.add.rhs;
+                break;
+            }
+            case UiNodeType::multiply:
+            {
+                out << " "
+                    << n.multiply.lhs
+                    << " "
+                    << n.multiply.rhs;
+                break;
+            }
+            case UiNodeType::output:
+            {
+                out << " "
+                    << n.output.r
+                    << " "
+                    << n.output.g
+                    << " "
+                    << n.output.b;
+                break;
+            }
+            case UiNodeType::sine:
+            {
+                out << " "
+                    << n.sine.input;
+                break;
+            }
+            case UiNodeType::time:
+                break;
+            default:
+                LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(n.type));
+                break;
+            }
+            
+            return out;
+        }
     };
 
     Graph<Node>         graph_;
