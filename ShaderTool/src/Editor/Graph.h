@@ -248,30 +248,6 @@ public:
         for (auto it = edges.begin(); it != edges.end(); ++it)
             out << "e " << *it << "\n";
         
-        //{
-        //    out << g.edges_from_node_.size() << "\n";
-        //    auto edgesFromNodeIds = g.edges_from_node_.ids();
-        //    auto edgesFromNode = g.edges_from_node_.elements();
-        //    int i = 0;
-        //    for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
-        //        out << "en " << edgesFromNodeIds[i] << " " << *it << "\n";
-        //}
-
-        //{
-        //    int counter = 0;
-        //    auto neighbors = g.node_neighbors_.elements();
-        //    for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
-        //        for (auto neighborId : *it)
-        //            ++counter;
-        //    out << counter << "\n";
-
-        //    auto neighborIds = g.node_neighbors_.ids();
-        //    int i = 0;
-        //    for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
-        //        for (auto neighborId : *it)
-        //            out << "nb " << neighborIds[i] << " " << neighborId << "\n";
-        //}
-
         return out;
     }
 
@@ -288,7 +264,7 @@ public:
         for (int i = 0; i < numNodes; ++i)
         {
             in >> nLabel >> nId >> nType >> nValue;
-            LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
+            //LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
             NodeT node(static_cast<NodeType>(nType));
             node.value = nValue;
             g.insert_node(nId, node);
@@ -303,33 +279,9 @@ public:
         for (int i = 0; i < numEdges; ++i)
         {
             in >> eLabel >> eId >> eFrom >> eTo;
-            LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
+            //LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
             g.insert_edge(eId, eFrom, eTo);
         }
-
-        //int numEdgesFromNode;
-        //in >> numEdgesFromNode;
-
-        //std::string enLabel;
-        //int enId, enCount;
-
-        //for (int i = 0; i < numEdgesFromNode; ++i)
-        //{
-        //    in >> enLabel >> enId >> enCount;
-        //    LOG_TRACE("{0} {1} {2}", enLabel, enId, enCount);
-        //}
-
-        //int numNeighbors;
-        //in >> numNeighbors;
-
-        //std::string nbLabel;
-        //int nbId, nbTo;
-
-        //for (int i = 0; i < numNeighbors; ++i)
-        //{
-        //    in >> nbLabel >> nbId >> nbTo;
-        //    LOG_TRACE("{0} {1} {2}", nbLabel, nbId, nbTo);
-        //}
 
         return in;
     }
@@ -341,7 +293,7 @@ private:
 private:
     int current_id_;
     // These contains map to the node id
-    IdMap<NodeT>         nodes_;
+    IdMap<NodeT>            nodes_;
     IdMap<int>              edges_from_node_;
     IdMap<std::vector<int>> node_neighbors_;
 

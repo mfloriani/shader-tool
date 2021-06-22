@@ -155,13 +155,11 @@ public:
 
         ImNodesIO& io = ImNodes::GetIO();
         io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
-
-        //Load();
     }
 
     void Quit()
     {
-        //Save();
+        
     }
 
     void show()
@@ -173,18 +171,7 @@ public:
 
         // The node editor window
         ImGui::Begin("color node editor");
-        //ImGui::TextUnformatted("Edit the color of the output color window using nodes.");
-        //ImGui::Columns(2);
-        //ImGui::TextUnformatted("A -- add node");
-        //ImGui::TextUnformatted("X -- delete selected node or link");
-        //ImGui::NextColumn();
-        //if (ImGui::Checkbox("emulate_three_button_mouse", &emulate_three_button_mouse))
-        //{
-        //    ImNodes::GetIO().EmulateThreeButtonMouse.Modifier =
-        //        emulate_three_button_mouse ? &ImGui::GetIO().KeyAlt : NULL;
-        //}
         ImGui::Columns(1);
-
         ImNodes::BeginNodeEditor();
 
         // Handle new nodes
@@ -658,7 +645,6 @@ public:
 
         }
 
-
         if (ImGui::IsKeyReleased(VK_S))
         {
             Save();
@@ -700,8 +686,8 @@ public:
 
     void Load()
     {
-        LOG_TRACE("###################");
-        LOG_TRACE("Loading node graph");
+        //LOG_TRACE("###################");
+        //LOG_TRACE("Loading node graph");
 
         // Load the internal imnodes state
         ImNodes::LoadCurrentEditorStateFromIniFile("node_graph.ini");
@@ -719,8 +705,8 @@ public:
         fin >> graph_;
         
         std::string comment;
-        int rootId, numUiNodes;
-        fin >> comment >> rootId >> numUiNodes;
+        int numUiNodes;
+        fin >> comment >> root_node_id_ >> numUiNodes;
 
         std::string uinLabel;
 
@@ -731,10 +717,6 @@ public:
             UiNode uiNode;
             fin >> uiNode;
             uiNodes_.push_back(uiNode);
-
-
-            //const ImVec2 click_pos = ImGui::GetMousePos();
-            //ImNodes::SetNodeScreenSpacePos(uiNode.id, click_pos);
         }
 
         fin.close();
@@ -854,29 +836,29 @@ private:
             case UiNodeType::add:
             {
                 in >> uiNode.add.lhs >> uiNode.add.rhs;
-                LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.add.lhs, uiNode.add.rhs);
+                //LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.add.lhs, uiNode.add.rhs);
                 break;
             }
             case UiNodeType::multiply:
             {
                 in >> uiNode.multiply.lhs >> uiNode.multiply.rhs;
-                LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
+                //LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
                 break;
             }
             case UiNodeType::output:
             {
                 in >> uiNode.output.r >> uiNode.output.g >> uiNode.output.b;
-                LOG_TRACE("{0} {1} {2} {3} {4}", uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
+                //LOG_TRACE("{0} {1} {2} {3} {4}", uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
                 break;
             }
             case UiNodeType::sine:
             {
                 in >> uiNode.sine.input;
-                LOG_TRACE("{0} {1} {2}", uiNode.type, uiNode.id, uiNode.sine.input);
+                //LOG_TRACE("{0} {1} {2}", uiNode.type, uiNode.id, uiNode.sine.input);
                 break;
             }
             case UiNodeType::time:
-                LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
+                //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
                 break;
             default:
                 LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(uiNode.type));
