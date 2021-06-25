@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <string>
 
+UINT CalcConstantBufferByteSize(UINT byteSize);
 
 class DxException
 {

@@ -15,9 +15,8 @@ Renderer::Renderer(Window* window) :
 
 Renderer::~Renderer()
 {
-    Flush();
-    ::CloseHandle(_FenceEvent);
-
+    FlushCommandQueue();
+    
     ImNodes::DestroyContext();
 
     ImGui_ImplDX12_Shutdown();
@@ -114,7 +113,7 @@ void Renderer::CreateSwapChain( HWND hWnd, uint32_t width, uint32_t height )
     swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc = { 1, 0 };
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount = NUM_FRAMES;
+    swapChainDesc.BufferCount = NUM_BACK_BUFFERS;
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -140,7 +139,7 @@ void Renderer::CreateSwapChain( HWND hWnd, uint32_t width, uint32_t height )
 void Renderer::CreateRTVAndDSVDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-    rtvHeapDesc.NumDescriptors = NUM_FRAMES;
+    rtvHeapDesc.NumDescriptors = NUM_BACK_BUFFERS;
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     rtvHeapDesc.NodeMask = 0;
@@ -163,7 +162,7 @@ void Renderer::CreateRTVAndDSVDescriptorHeaps()
 void Renderer::CreateRenderTargetViews()
 {
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-    for (int i = 0; i < NUM_FRAMES; ++i)
+    for (int i = 0; i < NUM_BACK_BUFFERS; ++i)
     {
         ThrowIfFailed(_SwapChain->GetBuffer(i, IID_PPV_ARGS(&_BackBuffers[i])));
         _Device->CreateRenderTargetView(_BackBuffers[i].Get(), nullptr, rtvHandle);
@@ -181,21 +180,40 @@ void Renderer::CreateCommandObjects()
     ThrowIfFailed(_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&_CommandQueue)));
 
     for (int i = 0; i < NUM_FRAMES; ++i)
-        ThrowIfFailed(_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&_CommandAllocators[i])));
+        ThrowIfFailed(
+            _Device->CreateCommandAllocator(
+                D3D12_COMMAND_LIST_TYPE_DIRECT, 
+                IID_PPV_ARGS(&_FrameResources[i]->CmdListAlloc)
+            )
+        );
 
-    ThrowIfFailed(_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, _CommandAllocators[_CurrentBackBufferIndex].Get(), nullptr, IID_PPV_ARGS(&_CommandList)));
+    _CurrFrameResourceIndex = 0;
+    _CurrFrameResource = _FrameResources[_CurrFrameResourceIndex].get();
+
+    ThrowIfFailed(
+        _Device->CreateCommandList(
+            0, 
+            D3D12_COMMAND_LIST_TYPE_DIRECT, 
+            _CurrFrameResource->CmdListAlloc.Get(),
+            nullptr, 
+            IID_PPV_ARGS(&_CommandList)
+        )
+    );
     ThrowIfFailed(_CommandList->Close());
+    ThrowIfFailed(_CommandList->Reset(_CurrFrameResource->CmdListAlloc.Get(), nullptr));
 }
 
-void Renderer::Flush()
+void Renderer::FlushCommandQueue()
 {
-    ++_FenceValue;
-    ThrowIfFailed(_CommandQueue->Signal(_Fence.Get(), _FenceValue));
+    ++_CurrentFenceValue;
+    ThrowIfFailed(_CommandQueue->Signal(_Fence.Get(), _CurrentFenceValue));
 
-    if (_Fence->GetCompletedValue() < _FenceValue)
+    if (_Fence->GetCompletedValue() < _CurrentFenceValue)
     {
-        ThrowIfFailed(_Fence->SetEventOnCompletion(_FenceValue, _FenceEvent));
-        ::WaitForSingleObject(_FenceEvent, INFINITE);
+        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+        ThrowIfFailed(_Fence->SetEventOnCompletion(_CurrentFenceValue, eventHandle));
+        WaitForSingleObject(eventHandle, INFINITE);
+        CloseHandle(eventHandle);
     }
 
 }
@@ -307,6 +325,10 @@ bool Renderer::Init()
     _4xMsaaQuality = msQualityLevels.NumQualityLevels;
     assert(_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 
+
+    for (int i = 0; i < NUM_FRAMES; ++i)
+        _FrameResources[i] = std::make_unique<FrameResource>(_Device.Get(), 1, 0);
+
     CreateCommandObjects();
 
     CreateSwapChain( _Window->GetHandler(), _CurrentBufferWidth, _CurrentBufferHeight);
@@ -316,15 +338,13 @@ bool Renderer::Init()
     CreateRenderTargetViews();
 
     ThrowIfFailed(_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&_Fence)));
-    _FenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-
-    ThrowIfFailed(_CommandList->Reset(_CommandAllocators[_CurrentBackBufferIndex].Get(), nullptr));
 
     CreateDSVBuffer();
     SetViewportAndScissor();
-    Flush();
+    
+    FlushCommandQueue();
 
-    if (!InitImGui())
+    if (!InitGUI())
         return false;    
 
     ::ShowWindow(_Window->GetHandler(), SW_SHOW);
@@ -333,7 +353,7 @@ bool Renderer::Init()
 	return true;
 }
 
-bool Renderer::InitImGui()
+bool Renderer::InitGUI()
 {
     LOG_TRACE("Renderer::InitImGui()");
     
@@ -369,7 +389,7 @@ bool Renderer::InitImGui()
     }
     if (!ImGui_ImplDX12_Init(
         _Device.Get(),
-        NUM_FRAMES,
+        NUM_BACK_BUFFERS,
         _BackBufferFormat,
         _SRVDescriptorHeap.Get(),
         _SRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -393,16 +413,12 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
     // Flush the GPU queue to make sure the swap chain's back buffers
     // are not being referenced by an in-flight command list.
-    Flush();
+    FlushCommandQueue();
 
-    ThrowIfFailed(
-        _CommandList->Reset(
-            _CommandAllocators[_CurrentBackBufferIndex].Get(), 
-            nullptr
-        )
-    );
+    auto commandAllocator = _CurrFrameResource->CmdListAlloc;
+    _CommandList->Reset(commandAllocator.Get(), nullptr);
 
-    for (int i = 0; i < NUM_FRAMES; ++i)
+    for (int i = 0; i < NUM_BACK_BUFFERS; ++i)
         _BackBuffers[i].Reset();
 
     _DepthStencilBuffer.Reset();
@@ -411,7 +427,7 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
     ThrowIfFailed(_SwapChain->GetDesc(&swapChainDesc));
     ThrowIfFailed(
         _SwapChain->ResizeBuffers(
-            NUM_FRAMES, 
+            NUM_BACK_BUFFERS, 
             _CurrentBufferWidth,
             _CurrentBufferHeight,
             swapChainDesc.BufferDesc.Format, 
@@ -419,23 +435,26 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
         )
     );
 
-    //_CurrentBackBufferIndex = 0;
     _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
 
     CreateRenderTargetViews();
     CreateDSVBuffer();
     SetViewportAndScissor();
-    Flush();
+    FlushCommandQueue();
 }
 
 void Renderer::Clear()
 {
-    auto commandAllocator = _CommandAllocators[_CurrentBackBufferIndex];
+    auto commandAllocator = _CurrFrameResource->CmdListAlloc;
     auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
 
     commandAllocator->Reset();
     _CommandList->Reset(commandAllocator.Get(), nullptr);
 
+    // Set the viewport and scissor rect.  This needs to be reset whenever the command list is reset.
+    _CommandList->RSSetViewports(1, &_ScreenViewport);
+    _CommandList->RSSetScissorRects(1, &_ScissorRect);
+    
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
         backBuffer.Get(),
         D3D12_RESOURCE_STATE_PRESENT, 
@@ -443,11 +462,7 @@ void Renderer::Clear()
     );
     _CommandList->ResourceBarrier(1, &barrier);
 
-    // Set the viewport and scissor rect.  This needs to be reset whenever the command list is reset.
-    _CommandList->RSSetViewports(1, &_ScreenViewport);
-    _CommandList->RSSetScissorRects(1, &_ScissorRect);
-
-    FLOAT clearColor[] = { 0.9f, 0.0f, 0.9f, 1.0f };
+    FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(
         _RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
         _CurrentBackBufferIndex, 
@@ -490,9 +505,18 @@ void Renderer::Present()
     UINT presentFlags = _TearingSupport && !_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
     ThrowIfFailed(_SwapChain->Present(syncInterval, presentFlags));
 
-    _CurrentBackBufferIndex = (_CurrentBackBufferIndex + 1) % NUM_FRAMES;
+    _CurrentBackBufferIndex = (_CurrentBackBufferIndex + 1) % NUM_BACK_BUFFERS;
 
-    Flush();   
+    //Flush();   
+
+    // Advance the fence value to mark commands up to this fence point.
+    _CurrFrameResource->FenceValue = ++_CurrentFenceValue;
+
+    // Add an instruction to the command queue to set a new fence point.
+    // Because we are on the GPU timeline, the new fence point won't be
+    // set until the GPU finishes processing all the commands prior to this Signal().
+    _CommandQueue->Signal(_Fence.Get(), _CurrentFenceValue);
+
 }
 
 void Renderer::RenderUI()
@@ -509,5 +533,22 @@ void Renderer::RenderUI()
     {
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault(NULL, (void*)_CommandList.Get());
+    }
+}
+
+void Renderer::SwapFrameResource()
+{
+    // cycle through the frames to continue writing commands to avoid having the GPU idle
+    _CurrFrameResourceIndex = (_CurrFrameResourceIndex + 1) % NUM_FRAMES;
+    _CurrFrameResource = _FrameResources[_CurrFrameResourceIndex].get();
+
+    // Has the GPU finished processing the commands of the current frame resource?
+    // If not, wait until the GPU has completed commands up to this fence point.
+    if (_CurrFrameResource->FenceValue != 0 && _Fence->GetCompletedValue() < _CurrFrameResource->FenceValue)
+    {
+        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+        ThrowIfFailed(_Fence->SetEventOnCompletion(_CurrFrameResource->FenceValue, eventHandle));
+        WaitForSingleObject(eventHandle, INFINITE);
+        CloseHandle(eventHandle);
     }
 }

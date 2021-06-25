@@ -113,7 +113,9 @@
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Rendering\D3DApp.h" />
     <ClInclude Include="src\Rendering\D3DUtil.h" />
+    <ClInclude Include="src\Rendering\FrameResource.h" />
     <ClInclude Include="src\Rendering\Renderer.h" />
+    <ClInclude Include="src\Rendering\UploadBuffer.h" />
     <ClInclude Include="src\Rendering\Window.h" />
     <ClInclude Include="src\Rendering\d3dx12.h" />
     <ClInclude Include="src\pch.h" />
@@ -148,6 +150,7 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Rendering\D3DApp.cpp" />
     <ClCompile Include="src\Rendering\D3DUtil.cpp" />
+    <ClCompile Include="src\Rendering\FrameResource.cpp" />
     <ClCompile Include="src\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Rendering\Window.cpp" />
     <ClCompile Include="src\pch.cpp">

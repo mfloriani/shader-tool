@@ -124,6 +124,8 @@ LRESULT D3DApp::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 void D3DApp::OnUpdate()
 {
 	_Timer.Tick();
+	_Renderer->SwapFrameResource(); // cycle through the circular frame resource array
+
 }
 
 void D3DApp::OnRender()
@@ -166,7 +168,7 @@ void D3DApp::OnResize(int width, int height)
 {
 	if (_Renderer->HasToResizeBuffer(width, height))
 	{
-		_Renderer->Flush();
+		_Renderer->FlushCommandQueue();
 		ImGui_ImplDX12_InvalidateDeviceObjects();
 		_Renderer->OnResize(width, height);
 		ImGui_ImplDX12_CreateDeviceObjects();

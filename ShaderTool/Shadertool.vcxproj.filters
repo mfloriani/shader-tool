@@ -66,6 +66,8 @@
     <ClInclude Include="src\Editor\NodeGraphEditor.h" />
     <ClInclude Include="src\Editor\Graph.h" />
     <ClInclude Include="src\GameTimer.h" />
+    <ClInclude Include="src\Rendering\FrameResource.h" />
+    <ClInclude Include="src\Rendering\UploadBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
@@ -108,5 +110,6 @@
     </ClCompile>
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
+    <ClCompile Include="src\Rendering\FrameResource.cpp" />
   </ItemGroup>
 </Project>

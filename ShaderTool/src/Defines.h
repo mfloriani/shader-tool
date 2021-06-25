@@ -14,6 +14,7 @@
 constexpr uint32_t INIT_CLIENT_WIDTH = 1366;
 constexpr uint32_t INIT_CLIENT_HEIGHT = 768;
 
+constexpr int NUM_BACK_BUFFERS = 2;
 constexpr int NUM_FRAMES = 3;
 
 #if defined(min)

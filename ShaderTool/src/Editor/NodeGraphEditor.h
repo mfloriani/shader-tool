@@ -17,6 +17,7 @@
 
 #define VK_S 0x53
 #define VK_L 0x4C
+#define VK_N 0x4E
 
 
 static GameTimer _Timer;
@@ -518,6 +519,12 @@ public:
         }
 
 
+        
+
+
+
+
+
 
         ImNodes::MiniMap(0.1f, ImNodesMiniMapLocation_BottomRight, mini_map_node_hovering_callback, nullptr);
         ImNodes::EndNodeEditor();
@@ -654,6 +661,13 @@ public:
         {
             Load();
         }
+
+        if (ImGui::IsKeyReleased(VK_N))
+        {
+            Reset();
+        }
+
+        
 
         ImGui::End();
 
