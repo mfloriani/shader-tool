@@ -19,6 +19,7 @@ project "Shadertool"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+	debugdir ("bin/" .. outputdir .. "/%{prj.name}")
 
 	pchheader "pch.h"
 	pchsource "%{prj.name}/src/pch.cpp"
@@ -43,7 +44,9 @@ project "Shadertool"
 	links
 	{
 		"d3d12.lib",
-		"dxgi.lib"
+		"dxgi.lib",
+		"dxguid.lib",
+		"D3DCompiler.lib"
 	}
 
 	filter "system:windows"

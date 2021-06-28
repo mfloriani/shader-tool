@@ -7,15 +7,15 @@
     <Filter Include="Editor\ImGui">
       <UniqueIdentifier>{B6482D3E-A2AB-BCE2-4B31-F59837738865}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Editor\ImNodes">
-      <UniqueIdentifier>{AAA71D7F-9675-1185-7F09-82AB6B76EDE9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Rendering">
       <UniqueIdentifier>{E3AE1F7C-4F19-D4F2-9857-85980401B247}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Defines.h" />
+    <ClInclude Include="src\Editor\Graph.h">
+      <Filter>Editor</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\ImGui\imconfig.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
@@ -31,6 +31,12 @@
     <ClInclude Include="src\Editor\ImGui\imgui_internal.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\imnodes.h">
+      <Filter>Editor\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\imnodes_internal.h">
+      <Filter>Editor\ImGui</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\ImGui\imstb_rectpack.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
@@ -40,20 +46,22 @@
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\ImGui\imnodes.h">
-      <Filter>Editor\ImNodes</Filter>
+    <ClInclude Include="src\Editor\NodeGraphEditor.h">
+      <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\ImGui\imnodes_internal.h">
-      <Filter>Editor\ImNodes</Filter>
-    </ClInclude>
+    <ClInclude Include="src\EditorApp.h" />
+    <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
-    <ClInclude Include="src\Rendering\D3DApp.h">
-      <Filter>Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Rendering\D3DUtil.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\Rendering\Renderer.h">
+    <ClInclude Include="src\Rendering\FrameResource.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rendering\D3DApp.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rendering\UploadBuffer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\Window.h">
@@ -63,11 +71,6 @@
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Editor\NodeGraphEditor.h" />
-    <ClInclude Include="src\Editor\Graph.h" />
-    <ClInclude Include="src\GameTimer.h" />
-    <ClInclude Include="src\Rendering\FrameResource.h" />
-    <ClInclude Include="src\Rendering\UploadBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
@@ -92,24 +95,28 @@
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
-      <Filter>Editor\ImNodes</Filter>
+      <Filter>Editor\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="src\EditorApp.cpp" />
+    <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\Rendering\D3DApp.cpp">
-      <Filter>Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="src\Rendering\D3DUtil.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\Renderer.cpp">
+    <ClCompile Include="src\Rendering\FrameResource.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\D3DApp.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\Window.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\GameTimer.cpp" />
-    <ClCompile Include="src\Rendering\FrameResource.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="src\Shaders\DefaultPS.hlsl" />
+    <FxCompile Include="src\Shaders\DefaultVS.hlsl" />
   </ItemGroup>
 </Project>

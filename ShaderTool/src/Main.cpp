@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Rendering\D3DApp.h"
+#include "EditorApp.h"
 
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -17,11 +17,8 @@ int WINAPI WinMain(
 	int nCmdShow
 )
 {
-	if (D3DApp::Get().Init(hInstance))
-	{
-		D3DApp::Get().Run();
-	}
-
+	EditorApp app(hInstance);
+	app.Run();
 	return 0;
 }
 

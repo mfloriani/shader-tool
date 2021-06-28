@@ -5,6 +5,7 @@
 //***************************************************************************************
 
 #include <d3d12.h>
+#include <DirectXMath.h>
 #include <memory>
 #include <wrl.h>
 
@@ -12,11 +13,14 @@
 
 struct ObjectConstants
 {
-    //DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
+    DirectX::XMFLOAT4X4 World{ D3DUtil::Identity4x4() };
 };
 
 struct FrameConstants
 {
+    DirectX::XMFLOAT4X4 View{ D3DUtil::Identity4x4() };
+    DirectX::XMFLOAT4X4 Proj{ D3DUtil::Identity4x4() };
+
     //DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
     //DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();
     //DirectX::XMFLOAT4X4 Proj = MathHelper::Identity4x4();
@@ -35,8 +39,7 @@ struct FrameConstants
 
 struct Vertex
 {
-    //DirectX::XMFLOAT3 Pos;
-    //DirectX::XMFLOAT4 Color;
+    DirectX::XMFLOAT3 Pos;
 };
 
 // Stores the resources needed for the CPU to build the command lists for a frame.  
