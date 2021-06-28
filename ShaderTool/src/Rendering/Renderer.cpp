@@ -215,7 +215,6 @@ void Renderer::FlushCommandQueue()
         WaitForSingleObject(eventHandle, INFINITE);
         CloseHandle(eventHandle);
     }
-
 }
 
 void Renderer::NewUIFrame()
