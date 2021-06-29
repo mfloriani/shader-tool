@@ -32,6 +32,7 @@ D3DApp::D3DApp(HINSTANCE hInstance) : _Hinstance(hInstance)
 
 D3DApp::~D3DApp()
 {
+    LOG_TRACE("D3DApp::~D3DApp()");
     FlushCommandQueue();
     
     ImNodes::DestroyContext();
@@ -287,11 +288,6 @@ void D3DApp::CreateDSVBuffer()
             D3D12_RESOURCE_STATE_DEPTH_WRITE
         )
     );
-
-    // Execute the resize commands.
-    ThrowIfFailed(_CommandList->Close());
-    ID3D12CommandList* cmdsLists[] = { _CommandList.Get() };
-    _CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 }
 
 void D3DApp::SetViewportAndScissor()
@@ -370,6 +366,10 @@ bool D3DApp::InitDirect3D()
 
     CreateDSVBuffer();
     SetViewportAndScissor();
+
+    ThrowIfFailed(_CommandList->Close());
+    ID3D12CommandList* cmdsLists[] = { _CommandList.Get() };
+    _CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
     FlushCommandQueue();
 
@@ -482,12 +482,16 @@ void D3DApp::OnResize(uint32_t width, uint32_t height)
                 swapChainDesc.Flags
             )
         );
-
         _CurrentBackBufferIndex = _SwapChain->GetCurrentBackBufferIndex();
 
         CreateRenderTargetViews();
         CreateDSVBuffer();
         SetViewportAndScissor();
+
+        ThrowIfFailed(_CommandList->Close());
+        ID3D12CommandList* cmdsLists[] = { _CommandList.Get() };
+        _CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
         FlushCommandQueue();
 
         ImGui_ImplDX12_CreateDeviceObjects();

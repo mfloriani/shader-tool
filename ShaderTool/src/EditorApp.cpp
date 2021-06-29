@@ -14,18 +14,29 @@ EditorApp::EditorApp(HINSTANCE hInstance) : D3DApp(hInstance)
 
 EditorApp::~EditorApp()
 {
+	LOG_TRACE("EditorApp::~EditorApp()");
+	FlushCommandQueue();
 	color_editor.Quit();
 }
-	
 
 bool EditorApp::Init()
-{	
+{
 	if (!D3DApp::Init())
 		return false;
 
+	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
+	_CommandList->Reset(commandAllocator.Get(), nullptr);
+
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
+	BuildPSO();
 	LoadDefaultMeshes();
+
+	ThrowIfFailed(_CommandList->Close());
+	ID3D12CommandList* cmdsLists[] = { _CommandList.Get() };
+	_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	FlushCommandQueue();
 
 	color_editor.Init();
 
@@ -66,23 +77,88 @@ void EditorApp::Run()
 	}
 }
 
+void EditorApp::OnResize(uint32_t width, uint32_t height)
+{
+	D3DApp::OnResize(width, height);
 
+	// The window resized, so update the aspect ratio and recompute the projection matrix.
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
+	XMStoreFloat4x4(&_Proj, P);
+}
+
+void EditorApp::UpdateCamera()
+{
+	// Convert Spherical to Cartesian coordinates.
+	_EyePos.x = _Radius * sinf(_Phi) * cosf(_Theta);
+	_EyePos.z = _Radius * sinf(_Phi) * sinf(_Theta);
+	_EyePos.y = _Radius * cosf(_Phi);
+
+	// Build the view matrix.
+	XMVECTOR pos = XMVectorSet(_EyePos.x, _EyePos.y, _EyePos.z, 1.0f);
+	XMVECTOR target = XMVectorZero();
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+	XMStoreFloat4x4(&_View, view);
+}
+
+void EditorApp::UpdatePerFrameCB()
+{
+	XMMATRIX view = XMLoadFloat4x4(&_View);
+	XMMATRIX proj = XMLoadFloat4x4(&_Proj);
+
+	//XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+	//XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
+	//XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
+	//XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+
+	XMStoreFloat4x4(&_FrameCB.View, XMMatrixTranspose(view));
+	//XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
+	XMStoreFloat4x4(&_FrameCB.Proj, XMMatrixTranspose(proj));
+	//XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
+	//XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+	//XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+	//mMainPassCB.EyePosW = mEyePos;
+	//mMainPassCB.RenderTargetSize = XMFLOAT2((float)mClientWidth, (float)mClientHeight);
+	//mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
+	//mMainPassCB.NearZ = 1.0f;
+	//mMainPassCB.FarZ = 1000.0f;
+	//mMainPassCB.TotalTime = gt.TotalTime();
+	//mMainPassCB.DeltaTime = gt.DeltaTime();
+
+	auto currPassCB = _CurrFrameResource->FrameCB.get();
+	currPassCB->CopyData(0, _FrameCB);
+}
+
+void EditorApp::UpdatePerObjectCB()
+{
+	auto currObjectCB = _CurrFrameResource->ObjectCB.get();
+	XMMATRIX world = XMMatrixIdentity();
+
+	ObjectConstants objConstants;
+	XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+
+	int objCBIndex = 0; // only one object at the moment
+	currObjectCB->CopyData(objCBIndex, objConstants);
+}
 
 void EditorApp::OnUpdate()
 {
 	_Timer.Tick();
-	SwapFrameResource(); // cycle through the circular frame resource array
-
+	UpdateCamera();
+	SwapFrameResource();
+	UpdatePerObjectCB();
+	UpdatePerFrameCB();
 }
 
 void EditorApp::OnRender()
 {
 	// CLEAR
-	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
-
+	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	commandAllocator->Reset();
-	_CommandList->Reset(commandAllocator.Get(), nullptr);
+	_CommandList->Reset(commandAllocator.Get(), _PSOs["default"].Get());
+	//_CommandList->SetPipelineState(_PSOs["default"].Get());
 
 	// Set the viewport and scissor rect.  This needs to be reset whenever the command list is reset.
 	_CommandList->RSSetViewports(1, &_ScreenViewport);
@@ -97,7 +173,7 @@ void EditorApp::OnRender()
 		_CommandList->ResourceBarrier(1, &barrier);
 	}
 
-	FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	FLOAT clearColor[] = { 0.7f, 0.7f, 1.0f, 1.0f };
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(
 		_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		_CurrentBackBufferIndex,
@@ -118,12 +194,44 @@ void EditorApp::OnRender()
 	// Specify the buffers we are going to render to.
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
 	
-	NewUIFrame();
+	//drawing testing cube 
+	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
 
+	auto frameCB = _CurrFrameResource->FrameCB->Resource();
+	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+
+
+	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+	auto objectCB = _CurrFrameResource->ObjectCB->Resource();
+
+	// For each render item...
+	
+	auto& shapes = _Meshes["shapes"];
+
+	_CommandList->IASetVertexBuffers(0, 1, &shapes->VertexBufferView());
+	_CommandList->IASetIndexBuffer(&shapes->IndexBufferView());
+	_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	UINT objCBIndex = 0; // TODO: check this
+	D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+	objCBAddress += objCBIndex * objCBByteSize;
+
+	_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+	_CommandList->DrawIndexedInstanced(
+		shapes->DrawArgs["box"].IndexCount,
+		1, 
+		shapes->DrawArgs["box"].StartIndexLocation,
+		shapes->DrawArgs["box"].BaseVertexLocation,
+		0);
+	
+
+
+#if 0
+	NewUIFrame();
 	RenderUIDockSpace();
 	color_editor.show();
-
 	RenderUI();
+#endif
 
 	// PRESENT
 	{
@@ -136,7 +244,6 @@ void EditorApp::OnRender()
 	}
 
 	ThrowIfFailed(_CommandList->Close());
-
 	ID3D12CommandList* const commandLists[] = { _CommandList.Get() };
 	_CommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
@@ -156,9 +263,9 @@ void EditorApp::OnRender()
 
 }
 
+// cycle through frames to continue writing commands avoiding the GPU getting idle
 void EditorApp::SwapFrameResource()
 {
-	// cycle through the frames to continue writing commands to avoid having the GPU idle
 	_CurrFrameResourceIndex = (_CurrFrameResourceIndex + 1) % NUM_FRAMES;
 	_CurrFrameResource = _FrameResources[_CurrFrameResourceIndex].get();
 
@@ -361,7 +468,7 @@ void EditorApp::LoadDefaultMeshes()
 
 	mBoxGeo->DrawArgs["box"] = submesh;
 
-	_Meshes.insert(std::make_pair("primitives", std::move(mBoxGeo)));
+	_Meshes.insert(std::make_pair("shapes", std::move(mBoxGeo)));
 }
 
 void EditorApp::RenderUIDockSpace()

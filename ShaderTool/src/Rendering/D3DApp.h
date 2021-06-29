@@ -39,6 +39,7 @@ public:
 	DXGI_FORMAT GetDepthStencilFormat() const { return _DepthStencilFormat; }
 	UINT Get4xMsaaQuality() const { return _4xMsaaQuality; }
 	bool Get4xMsaaState() const { return _4xMsaaState; }
+	float GetAspectRatio() const { return static_cast<float>(_CurrentBufferWidth) / _CurrentBufferHeight; }
 
 	LRESULT WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -60,6 +61,8 @@ private:
 	void CreateRTVAndDSVDescriptorHeaps();
 	void CreateDSVBuffer();
 	void SetViewportAndScissor();
+
+	
 
 protected:
 	static D3DApp* _App;

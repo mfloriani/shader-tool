@@ -18,10 +18,13 @@ public:
 	bool Init();
 	void Run();
 	void RenderUIDockSpace();
+	void UpdateCamera();
+	void UpdatePerFrameCB();
+	void UpdatePerObjectCB();
 
 	virtual void OnUpdate() override;
 	virtual void OnRender() override;
-
+	virtual void OnResize(uint32_t width, uint32_t height) override;
 	virtual void OnKeyDown(WPARAM key) override;
 	virtual void OnKeyUp(WPARAM key) override;
 	
@@ -34,6 +37,16 @@ public:
 	const GameTimer& GetTimer() const { return _Timer; }
 
 private:
+	// TODO: Camera stuff
+	DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4X4 _View = D3DUtil::Identity4x4();
+	DirectX::XMFLOAT4X4 _Proj = D3DUtil::Identity4x4();
+	float _Theta = 1.5f * DirectX::XM_PI;
+	float _Phi = DirectX::XM_PIDIV2 - 0.1f;
+	float _Radius = 50.0f;
+	//
+
+	FrameConstants _FrameCB;
 	GameTimer _Timer;
 	bool _IsRunning{ true };
 
