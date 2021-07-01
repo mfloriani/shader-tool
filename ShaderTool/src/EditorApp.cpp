@@ -38,6 +38,33 @@ bool EditorApp::Init()
 
 	FlushCommandQueue();
 
+	//
+	// Render-to-texture
+
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
+	rtvHeapDesc.NumDescriptors = 1;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	rtvHeapDesc.NodeMask = 0;
+	ThrowIfFailed(_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(_RTrtvDescriptorHeap.GetAddressOf())));
+
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RTsrvDescriptorHeap)));
+
+	_RenderTexture = std::make_unique<RenderTexture>(_BackBufferFormat);
+	if (!_RenderTexture->Init(
+			_Device.Get(), 
+			_RTsrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 
+			_RTrtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()))
+		return false;
+
+	_RenderTexture->SetSize(_CurrentBufferWidth, _CurrentBufferHeight);
+
+	//
+
 	color_editor.Init();
 
 	return true;
@@ -135,6 +162,8 @@ void EditorApp::UpdatePerObjectCB()
 	auto currObjectCB = _CurrFrameResource->ObjectCB.get();
 	XMMATRIX world = XMMatrixIdentity();
 
+	world = XMMatrixRotationY(_Timer.TotalTime());
+
 	ObjectConstants objConstants;
 	XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 
@@ -160,10 +189,56 @@ void EditorApp::OnRender()
 	_CommandList->Reset(commandAllocator.Get(), _PSOs["default"].Get());
 	//_CommandList->SetPipelineState(_PSOs["default"].Get());
 
-	// Set the viewport and scissor rect.  This needs to be reset whenever the command list is reset.
+	auto dsv = _DSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
+
+	auto frameCB = _CurrFrameResource->FrameCB->Resource();
+	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+
+	//////////////////////////// 
+	// 
+	// RENDER TO TEXTURE
+		
+	_RenderTexture->Clear(_CommandList.Get());
+	
+	_CommandList->ClearDepthStencilView(
+		dsv,
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+		1.0f,
+		0, 0,
+		nullptr
+	);
+
+	_CommandList->OMSetRenderTargets(1, &_RTrtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), true, &dsv);
 	_CommandList->RSSetViewports(1, &_ScreenViewport);
 	_CommandList->RSSetScissorRects(1, &_ScissorRect);
+	
+	auto& shapes = _Meshes["shapes"];
 
+	_CommandList->IASetVertexBuffers(0, 1, &shapes->VertexBufferView());
+	_CommandList->IASetIndexBuffer(&shapes->IndexBufferView());
+	_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+	auto objectCB = _CurrFrameResource->ObjectCB->Resource();
+
+	UINT objCBIndex = 0; // TODO: check this
+	D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+	objCBAddress += objCBIndex * objCBByteSize;
+
+	_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+	_CommandList->DrawIndexedInstanced(
+		shapes->DrawArgs["box"].IndexCount,
+		1,
+		shapes->DrawArgs["box"].StartIndexLocation,
+		shapes->DrawArgs["box"].BaseVertexLocation,
+		0);
+
+	//////////////////////////
+
+	
+	// Render to back buffer
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			backBuffer.Get(),
@@ -180,7 +255,7 @@ void EditorApp::OnRender()
 		_RTVDescriptorSize
 	);
 
-	auto& dsv = _DSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	
 
 	_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	_CommandList->ClearDepthStencilView(
@@ -191,41 +266,16 @@ void EditorApp::OnRender()
 		nullptr
 	);
 
-	// Specify the buffers we are going to render to.
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
+	_CommandList->RSSetViewports(1, &_ScreenViewport);
+	_CommandList->RSSetScissorRects(1, &_ScissorRect);
+
+	// TODO: Render texture to Quad and render the Quad
+
+
+
+
 	
-	//drawing testing cube 
-	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
-
-	auto frameCB = _CurrFrameResource->FrameCB->Resource();
-	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
-
-
-	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-	auto objectCB = _CurrFrameResource->ObjectCB->Resource();
-
-	// For each render item...
-	
-	auto& shapes = _Meshes["shapes"];
-
-	_CommandList->IASetVertexBuffers(0, 1, &shapes->VertexBufferView());
-	_CommandList->IASetIndexBuffer(&shapes->IndexBufferView());
-	_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	UINT objCBIndex = 0; // TODO: check this
-	D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-	objCBAddress += objCBIndex * objCBByteSize;
-
-	_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-	_CommandList->DrawIndexedInstanced(
-		shapes->DrawArgs["box"].IndexCount,
-		1, 
-		shapes->DrawArgs["box"].StartIndexLocation,
-		shapes->DrawArgs["box"].BaseVertexLocation,
-		0);
-	
-
-
 #if 0
 	NewUIFrame();
 	RenderUIDockSpace();
@@ -354,7 +404,9 @@ void EditorApp::BuildShadersAndInputLayout()
 	_Shaders.insert(std::pair("default_ps", psBlob));
 
 	_InputLayout = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, 
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 }
 

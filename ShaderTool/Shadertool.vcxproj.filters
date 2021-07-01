@@ -52,13 +52,16 @@
     <ClInclude Include="src\EditorApp.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\Rendering\D3DApp.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rendering\D3DUtil.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\FrameResource.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\Rendering\D3DApp.h">
+    <ClInclude Include="src\Rendering\RenderTexture.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\UploadBuffer.h">
@@ -101,13 +104,16 @@
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Rendering\D3DApp.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Rendering\D3DUtil.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\FrameResource.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\Rendering\D3DApp.cpp">
+    <ClCompile Include="src\Rendering\RenderTexture.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\Window.cpp">

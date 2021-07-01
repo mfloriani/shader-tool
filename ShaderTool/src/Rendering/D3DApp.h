@@ -76,7 +76,7 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>        _CommandQueue;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _CommandList;
 	Microsoft::WRL::ComPtr<ID3D12Fence>				  _Fence;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	  _SRVDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	  _SRVDescriptorHeap; // ImGui usage
 
 	
 	D3D12_VIEWPORT _ScreenViewport{};

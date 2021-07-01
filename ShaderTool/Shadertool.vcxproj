@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{DAAD4362-C665-85AF-2F6D-5E0B1B4420A0}</ProjectGuid>
+    <ProjectGuid>{BA213262-A6D9-73AF-0FE1-4C0BFBB70EA0}</ProjectGuid>
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Shadertool</RootNamespace>
+    <RootNamespace>ShaderTool</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -42,16 +42,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\bin\Debug-x86_64\Shadertool\</OutDir>
-    <IntDir>..\bin-int\Debug-x86_64\Shadertool\</IntDir>
-    <TargetName>Shadertool</TargetName>
+    <OutDir>..\bin\Debug-x86_64\ShaderTool\</OutDir>
+    <IntDir>..\bin-int\Debug-x86_64\ShaderTool\</IntDir>
+    <TargetName>ShaderTool</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\Release-x86_64\Shadertool\</OutDir>
-    <IntDir>..\bin-int\Release-x86_64\Shadertool\</IntDir>
-    <TargetName>Shadertool</TargetName>
+    <OutDir>..\bin\Release-x86_64\ShaderTool\</OutDir>
+    <IntDir>..\bin-int\Release-x86_64\ShaderTool\</IntDir>
+    <TargetName>ShaderTool</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -112,9 +112,10 @@
     <ClInclude Include="src\EditorApp.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\Rendering\D3DApp.h" />
     <ClInclude Include="src\Rendering\D3DUtil.h" />
     <ClInclude Include="src\Rendering\FrameResource.h" />
-    <ClInclude Include="src\Rendering\D3DApp.h" />
+    <ClInclude Include="src\Rendering\RenderTexture.h" />
     <ClInclude Include="src\Rendering\UploadBuffer.h" />
     <ClInclude Include="src\Rendering\Window.h" />
     <ClInclude Include="src\Rendering\d3dx12.h" />
@@ -149,9 +150,10 @@
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Rendering\D3DApp.cpp" />
     <ClCompile Include="src\Rendering\D3DUtil.cpp" />
     <ClCompile Include="src\Rendering\FrameResource.cpp" />
-    <ClCompile Include="src\Rendering\D3DApp.cpp" />
+    <ClCompile Include="src\Rendering\RenderTexture.cpp" />
     <ClCompile Include="src\Rendering\Window.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -159,14 +161,14 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\DefaultPS.hlsl">
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="src\Shaders\DefaultVS.hlsl">
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>

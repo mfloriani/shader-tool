@@ -1,6 +1,6 @@
-workspace "Shadertool"
+workspace "ShaderTool"
 	architecture "x64"
-	startproject "Shadertool"
+	startproject "ShaderTool"
 	
 	configurations
 	{
@@ -10,8 +10,8 @@ workspace "Shadertool"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.architecture}"
 
-project "Shadertool"
-	location "Shadertool"
+project "ShaderTool"
+	location "ShaderTool"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"

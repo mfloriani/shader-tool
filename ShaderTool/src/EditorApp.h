@@ -4,8 +4,9 @@
 #include <unordered_map>
 #include <string>
 
-#include "Rendering\D3DApp.h"
 #include "GameTimer.h"
+#include "Rendering\D3DApp.h"
+#include "Rendering\RenderTexture.h"
 
 class EditorApp : public D3DApp
 {
@@ -55,4 +56,11 @@ private:
 	std::unordered_map<std::string, std::unique_ptr<D3DUtil::MeshGeometry>> _Meshes;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
+
+	// TODO: move this to the editor?
+	// Render-to-texture data
+	std::unique_ptr<RenderTexture>               _RenderTexture;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RTsrvDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RTrtvDescriptorHeap;
+
 };
