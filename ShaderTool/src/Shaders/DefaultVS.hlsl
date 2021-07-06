@@ -11,21 +11,29 @@ cbuffer cbPerFrame : register(b1)
 
 struct VSInput
 {
-    float3 pos : POSITION;
+    float3 Pos  : POSITION;
+    float3 Norm : NORMAL;
+    float2 TexC : TEXCOORD;
 };
 
 struct VSOutput
 {
     float4 PosH : SV_POSITION;
+    float3 Norm : NORMAL;
+    float2 TexC : TEXCOORD;
 };
 
 VSOutput main( VSInput vIn )
 {
     VSOutput vOut;
     
-    float4 posW = mul(float4(vIn.pos, 1.0), World);
+    float4 posW = mul(float4(vIn.Pos, 1.0), World);
     vOut.PosH = mul(posW, View);
     vOut.PosH = mul(vOut.PosH, Proj);
+    
+    vOut.Norm = mul(float4(vIn.Norm, 1.0), World);
+    
+    vOut.TexC = vIn.TexC;
     
 	return vOut;
 }

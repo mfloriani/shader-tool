@@ -30,11 +30,11 @@ public:
 	virtual void OnKeyUp(WPARAM key) override;
 	
 	void SwapFrameResource();
+	void CreateDescriptorHeaps();
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
 	void LoadDefaultMeshes();
-	void CreateDescriptorHeaps();
 
 	const GameTimer& GetTimer() const { return _Timer; }
 
@@ -58,10 +58,7 @@ private:
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
 
-	// TODO: move this to the editor?
-	// Render-to-texture data
+	// TODO: move this to the editor file?
 	std::unique_ptr<RenderTexture>               _RenderTexture;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RTsrvDescriptorHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RTrtvDescriptorHeap;
-
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RenderTexSrvDescriptorHeap;
 };

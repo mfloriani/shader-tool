@@ -44,6 +44,14 @@ bool EditorApp::Init()
 	if (!D3DApp::Init())
 		return false;
 
+	// RENDER-TO-TEXTURE
+	_RenderTexture = std::make_unique<RenderTexture>(
+		_Device.Get(),
+		_BackBufferFormat,
+		_CurrentBufferWidth,
+		_CurrentBufferHeight
+	);
+
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	_CommandList->Reset(commandAllocator.Get(), nullptr);
 
@@ -59,20 +67,26 @@ bool EditorApp::Init()
 
 	FlushCommandQueue();
 
-	// RENDER-TO-TEXTURE
-	_RenderTexture = std::make_unique<RenderTexture>(_BackBufferFormat);
-	if (!_RenderTexture->Init(
-		_Device.Get(),
-		_RTsrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-		_RTrtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()))
-		return false;
-	
-	_RenderTexture->SetSize(_CurrentBufferWidth, _CurrentBufferHeight);
-	//
-
 	color_editor.Init();
 
 	return true;
+}
+
+void EditorApp::CreateDescriptorHeaps()
+{
+	// SRV descriptor heap for render-to-texture
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RenderTexSrvDescriptorHeap)));
+
+	_RenderTexture->CreateDescriptors(
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(_RenderTexSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, _CbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(_RenderTexSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, _CbvSrvUavDescriptorSize),
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), NUM_BACK_BUFFERS, _RtvDescriptorSize)
+	);
+
 }
 
 void EditorApp::Run()
@@ -116,6 +130,10 @@ void EditorApp::OnResize(uint32_t width, uint32_t height)
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&_Proj, P);
+
+	// TODO: move this to the resize event of the render target node 
+	if(_RenderTexture)
+		_RenderTexture->OnResize(width, height);
 }
 
 void EditorApp::UpdateCamera()
@@ -209,8 +227,7 @@ void EditorApp::OnRender()
 	commandAllocator->Reset();
 	_CommandList->Reset(commandAllocator.Get(), _PSOs["default"].Get());
 	
-
-	auto dsv = _DSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	auto dsv = _DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
 
@@ -223,9 +240,15 @@ void EditorApp::OnRender()
 	//////////////////////////// 
 	// 
 	// RENDER TO TEXTURE
-		
-	_RenderTexture->Clear(_CommandList.Get());
 	
+	_CommandList->ResourceBarrier(
+		1, 
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTexture->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	_CommandList->ClearRenderTargetView(_RenderTexture->RTV(), _RenderTexture->GetClearColor(), 0, nullptr);
 	_CommandList->ClearDepthStencilView(
 		dsv,
 		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
@@ -233,7 +256,7 @@ void EditorApp::OnRender()
 		0, 0,
 		nullptr
 	);
-	_CommandList->OMSetRenderTargets(1, &_RTrtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), true, &dsv);
+	_CommandList->OMSetRenderTargets(1, &_RenderTexture->RTV(), true, &dsv);
 	
 	// BOX
 	{
@@ -259,6 +282,13 @@ void EditorApp::OnRender()
 			0);
 	}
 
+	_CommandList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTexture->GetResource(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_GENERIC_READ));
+
 	//////////////////////////
 
 	
@@ -274,9 +304,9 @@ void EditorApp::OnRender()
 
 	FLOAT clearColor[] = { 0.7f, 0.7f, 1.0f, 1.0f };
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(
-		_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+		_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		_CurrentBackBufferIndex,
-		_RTVDescriptorSize
+		_RtvDescriptorSize
 	);
 
 	_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
@@ -289,10 +319,15 @@ void EditorApp::OnRender()
 	);
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
+	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
 	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
 
-	// TODO: Render texture to a Quad and render the Quad
-
+	//CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_RenderTexSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	//tex.Offset(0, _CbvSrvUavDescriptorSize);
+	ID3D12DescriptorHeap* const descHeapList[] = { _RenderTexSrvDescriptorHeap.Get() };
+	_CommandList->SetDescriptorHeaps(_countof(descHeapList), descHeapList);
+	_CommandList->SetGraphicsRootDescriptorTable(2, _RenderTexture->SRV());
+	
 	// QUAD
 	{
 		auto& quad = _Meshes["quad_geo"]; // TODO: avoid direct access
@@ -373,74 +408,56 @@ void EditorApp::SwapFrameResource()
 	}
 }
 
-void EditorApp::CreateDescriptorHeaps()
-{
-	//
-	// Render-to-texture
-
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	rtvHeapDesc.NumDescriptors = 1;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	rtvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(_RTrtvDescriptorHeap.GetAddressOf())));
-
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.NumDescriptors = 1;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RTsrvDescriptorHeap)));
-
-	//
-}
-
 void EditorApp::BuildRootSignature()
 {
-	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
-
-	// Create root CBV.
-	rootParameters[0].InitAsConstantBufferView(0);
-	rootParameters[1].InitAsConstantBufferView(1);
-	
-	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	
-	rootParameters[2].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	auto staticSamplers = D3DUtil::GetStaticSamplers();
-
-	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
-		3, 
-		rootParameters, 
-		static_cast<UINT>(staticSamplers.size()), 
-		staticSamplers.data(), 
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-	ComPtr<ID3DBlob> serializedRootSig = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	HRESULT hr = D3D12SerializeRootSignature(
-		&rootSigDesc, 
-		D3D_ROOT_SIGNATURE_VERSION_1,
-		serializedRootSig.GetAddressOf(), 
-		errorBlob.GetAddressOf());
-
-	if (errorBlob != nullptr)
+	// 2 CBV and 1 SRV signature
 	{
-		LOG_ERROR("Error at D3D12SerializeRootSignature()");
-		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	}
-	ThrowIfFailed(hr);
+		// Root parameter can be a table, root descriptor or root constants.
+		CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
 
-	ThrowIfFailed(
-		_Device->CreateRootSignature(
-			0,
-			serializedRootSig->GetBufferPointer(),
-			serializedRootSig->GetBufferSize(),
-			IID_PPV_ARGS(_RootSignature.GetAddressOf()))
-	);
+		// Create root CBV.
+		rootParameters[0].InitAsConstantBufferView(0);
+		rootParameters[1].InitAsConstantBufferView(1);
+	
+		CD3DX12_DESCRIPTOR_RANGE texTable;
+		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	
+		rootParameters[2].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+
+		auto staticSamplers = D3DUtil::GetStaticSamplers();
+
+		// A root signature is an array of root parameters.
+		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+			3, 
+			rootParameters, 
+			static_cast<UINT>(staticSamplers.size()), 
+			staticSamplers.data(), 
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+		// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+		ComPtr<ID3DBlob> serializedRootSig = nullptr;
+		ComPtr<ID3DBlob> errorBlob = nullptr;
+		HRESULT hr = D3D12SerializeRootSignature(
+			&rootSigDesc, 
+			D3D_ROOT_SIGNATURE_VERSION_1,
+			serializedRootSig.GetAddressOf(), 
+			errorBlob.GetAddressOf());
+
+		if (errorBlob != nullptr)
+		{
+			LOG_ERROR("Error at D3D12SerializeRootSignature()");
+			::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		}
+		ThrowIfFailed(hr);
+
+		ThrowIfFailed(
+			_Device->CreateRootSignature(
+				0,
+				serializedRootSig->GetBufferPointer(),
+				serializedRootSig->GetBufferSize(),
+				IID_PPV_ARGS(_RootSignature.GetAddressOf()))
+		);
+	}
 }
 
 void EditorApp::BuildShadersAndInputLayout()

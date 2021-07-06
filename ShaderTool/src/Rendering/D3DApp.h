@@ -33,7 +33,7 @@ public:
 
 	bool HasToResizeBuffer(int w, int h) const { return _CurrentBufferWidth != w || _CurrentBufferHeight != h; }
 	ID3D12Device* GetDevice() const { return _Device.Get(); }
-	ID3D12DescriptorHeap* GetSRVDescriptorHeap() const { return _SRVDescriptorHeap.Get(); }
+	ID3D12DescriptorHeap* GetSRVDescriptorHeap() const { return _ImGuiSrvDescriptorHeap.Get(); }
 	ID3D12GraphicsCommandList* GetCommandList() const { return _CommandList.Get(); }
 	DXGI_FORMAT GetBackBufferFormat() const { return _BackBufferFormat; }
 	DXGI_FORMAT GetDepthStencilFormat() const { return _DepthStencilFormat; }
@@ -69,14 +69,14 @@ protected:
 
 	Microsoft::WRL::ComPtr<ID3D12Device>              _Device;
 	Microsoft::WRL::ComPtr<IDXGISwapChain4>           _SwapChain;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>      _RTVDescriptorHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>      _DSVDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>      _RtvDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>      _DsvDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	  _ImGuiSrvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12Resource>		      _BackBuffers[NUM_BACK_BUFFERS];
 	Microsoft::WRL::ComPtr<ID3D12Resource>			  _DepthStencilBuffer;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>        _CommandQueue;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> _CommandList;
 	Microsoft::WRL::ComPtr<ID3D12Fence>				  _Fence;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	  _SRVDescriptorHeap; // ImGui usage
 
 	
 	D3D12_VIEWPORT _ScreenViewport{};
@@ -88,8 +88,8 @@ protected:
 	bool _TearingSupport{ false };
 	bool _VSync{ true };
 	uint16_t _CurrentBackBufferIndex{ 0 };
-	uint32_t _RTVDescriptorSize{ 0 };
-	uint32_t _DSVDescriptorSize{ 0 };
+	uint32_t _RtvDescriptorSize{ 0 };
+	uint32_t _DsvDescriptorSize{ 0 };
 	uint32_t _CbvSrvUavDescriptorSize{ 0 };
 	uint64_t _CurrentFenceValue{ 0 };
 	uint32_t _CurrentBufferWidth{ 0 };

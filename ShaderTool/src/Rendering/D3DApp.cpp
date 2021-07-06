@@ -157,38 +157,35 @@ void D3DApp::CreateSwapChain( HWND hWnd, uint32_t width, uint32_t height )
 void D3DApp::CreateRTVAndDSVDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-    rtvHeapDesc.NumDescriptors = NUM_BACK_BUFFERS;
+    rtvHeapDesc.NumDescriptors = NUM_BACK_BUFFERS + 1; // TODO: refactor this (+1 for render-to-texture)
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     rtvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(_Device->CreateDescriptorHeap( &rtvHeapDesc, IID_PPV_ARGS(_RTVDescriptorHeap.GetAddressOf())));
+    ThrowIfFailed(_Device->CreateDescriptorHeap( &rtvHeapDesc, IID_PPV_ARGS(_RtvDescriptorHeap.GetAddressOf())));
 
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
     dsvHeapDesc.NumDescriptors = 1;
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     dsvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(_Device->CreateDescriptorHeap( &dsvHeapDesc, IID_PPV_ARGS(_DSVDescriptorHeap.GetAddressOf())));
+    ThrowIfFailed(_Device->CreateDescriptorHeap( &dsvHeapDesc, IID_PPV_ARGS(_DsvDescriptorHeap.GetAddressOf())));
 
     // Used by ImGui
     D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
     srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     srvHeapDesc.NumDescriptors = 1;
     srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_SRVDescriptorHeap)));
-
-    
-
+    ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_ImGuiSrvDescriptorHeap)));
 }
 
 void D3DApp::CreateRenderTargetViews()
 {
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
     for (int i = 0; i < NUM_BACK_BUFFERS; ++i)
     {
         ThrowIfFailed(_SwapChain->GetBuffer(i, IID_PPV_ARGS(&_BackBuffers[i])));
         _Device->CreateRenderTargetView(_BackBuffers[i].Get(), nullptr, rtvHandle);
-        rtvHandle.Offset(1, _RTVDescriptorSize);
+        rtvHandle.Offset(1, _RtvDescriptorSize);
     }
 }
 
@@ -280,7 +277,7 @@ void D3DApp::CreateDSVBuffer()
     dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
     dsvDesc.Format = _DepthStencilFormat;
     dsvDesc.Texture2D.MipSlice = 0;
-    _Device->CreateDepthStencilView(_DepthStencilBuffer.Get(), &dsvDesc, _DSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    _Device->CreateDepthStencilView(_DepthStencilBuffer.Get(), &dsvDesc, _DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
     // Transition the resource from its initial state to be used as a depth buffer.
     _CommandList->ResourceBarrier(
@@ -334,8 +331,8 @@ bool D3DApp::InitDirect3D()
     ComPtr<IDXGIAdapter4> adapter = ::GetAdapter(false);
     ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&_Device)));
 
-    _RTVDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    _DSVDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    _RtvDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    _DsvDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     _CbvSrvUavDescriptorSize = _Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     // Check 4X MSAA quality support for our back buffer format.
@@ -438,9 +435,9 @@ bool D3DApp::InitGUI()
         _Device.Get(),
         NUM_BACK_BUFFERS,
         _BackBufferFormat,
-        _SRVDescriptorHeap.Get(),
-        _SRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-        _SRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart()
+        _ImGuiSrvDescriptorHeap.Get(),
+        _ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+        _ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart()
     ))
     {
         LOG_CRITICAL("Error ImGui_ImplDX12_Init");
@@ -505,8 +502,8 @@ void D3DApp::RenderUI()
 {
     ImGui::Render();
 
-    ID3D12DescriptorHeap* const descHeapList[] = { _SRVDescriptorHeap.Get() };
-    _CommandList->SetDescriptorHeaps(1, descHeapList);
+    ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
+    _CommandList->SetDescriptorHeaps(_countof(descHeapList), descHeapList);
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), _CommandList.Get());
 
     ImGuiIO& io = ImGui::GetIO(); (void)io;

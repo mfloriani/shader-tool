@@ -1,6 +1,8 @@
 struct PSInput
 {
     float4 PosH : SV_POSITION;
+    float3 Norm : NORMAL;
+    float2 TexC : TEXCOORD;
 };
 
 float4 main(PSInput pIn) : SV_TARGET

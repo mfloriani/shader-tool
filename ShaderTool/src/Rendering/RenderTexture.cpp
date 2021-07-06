@@ -3,94 +3,82 @@
 
 using namespace D3DUtil;
 
-RenderTexture::RenderTexture(DXGI_FORMAT format) noexcept :
+RenderTexture::RenderTexture(
+    ID3D12Device* device,
+    DXGI_FORMAT format,
+    uint32_t w, 
+    uint32_t h
+    ) noexcept :
+    _Device(device),
     _State(D3D12_RESOURCE_STATE_COMMON),
-    _SrvDescHandle{},
-    _RtvDescHandle{},
     _ClearColor{},
     _Format(format),
-    _Width(0),
-    _Height(0)
+    _Width(w),
+    _Height(h)
 {
+    CreateResource();
 }
 
 RenderTexture::~RenderTexture() noexcept
 {
-    Release();
+    
 }
 
-void RenderTexture::Release()
+void RenderTexture::CreateDescriptors(
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu,
+    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu,
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCpu)
 {
-    _Resource.Reset();
-    _Device.Reset();
+    _SrvCpuDescHandle = srvCpu;
+    _SrvGpuDescHandle = srvGpu;
+    _RtvCpuDescHandle = rtvCpu;
 
-    _State = D3D12_RESOURCE_STATE_COMMON;
-    _Width = 0;
-    _Height = 0;
-    _SrvDescHandle.ptr = 0;
-    _RtvDescHandle.ptr = 0;
+    CreateDescriptors();
 }
 
-bool RenderTexture::Init(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE srvDescHandle, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescHandle)
+void RenderTexture::CreateDescriptors()
 {
-    {
-        D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { _Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
-        if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport))))
-        {
-            LOG_CRITICAL("RenderTexture::Init -> Error checking feature suport");
-            return false;
-        }
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = _Format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Texture2D.MipLevels = 1;
 
-        UINT required = D3D12_FORMAT_SUPPORT1_TEXTURE2D | D3D12_FORMAT_SUPPORT1_RENDER_TARGET;
-        if ((formatSupport.Support1 & required) != required)
-        {
-            LOG_CRITICAL("RenderTexture::Init -> Device does not support the requested format {0}!", _Format);
-            return false;
-        }
-    }
-
-    if (!srvDescHandle.ptr || !rtvDescHandle.ptr)
-    {
-        LOG_CRITICAL("RenderTexture::Init -> Invalid descriptors");
-        return false;
-    }
-
-    _Device = device;
-    _SrvDescHandle = srvDescHandle;
-    _RtvDescHandle = rtvDescHandle;
-
-    return true;
+    _Device->CreateShaderResourceView(_Resource.Get(), &srvDesc, _SrvCpuDescHandle);
+    _Device->CreateRenderTargetView(_Resource.Get(), nullptr, _RtvCpuDescHandle);
 }
 
-void RenderTexture::SetSize(uint32_t w, uint32_t h)
+void RenderTexture::OnResize(UINT newWidth, UINT newHeight)
 {
-    if (w == _Width && h == _Height)
-        return;
-
-    if (!_Device)
+    if ((_Width != newWidth) || (_Height != newHeight))
     {
-        LOG_ERROR("RenderTexture::OnResize -> Device is not set");
-        return;
+        _Width = newWidth;
+        _Height = newHeight;
+
+        CreateResource();
+        CreateDescriptors();
     }
+}
 
-    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-    D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(
+void RenderTexture::CreateResource()
+{
+    CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(
         _Format,
-        static_cast<UINT64>(w),
-        static_cast<UINT>(h),
+        static_cast<UINT64>(_Width),
+        static_cast<UINT>(_Height),
         1, 1, 1, 0,
         D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
     D3D12_CLEAR_VALUE clearValue = { _Format, {} };
     memcpy(clearValue.Color, _ClearColor, sizeof(clearValue.Color));
 
-    _State = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    _State = D3D12_RESOURCE_STATE_GENERIC_READ;
 
     // Create a render target
     ThrowIfFailed(
         _Device->CreateCommittedResource(
-            &heapProperties,
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
             &desc,
             _State,
@@ -98,32 +86,4 @@ void RenderTexture::SetSize(uint32_t w, uint32_t h)
             IID_PPV_ARGS(_Resource.ReleaseAndGetAddressOf()))
     );
     _Resource->SetName(L"RenderTexture");
-
-    _Device->CreateRenderTargetView(_Resource.Get(), nullptr, _RtvDescHandle);
-    _Device->CreateShaderResourceView(_Resource.Get(), nullptr, _SrvDescHandle);
-
-    _Width = w;
-    _Height = h;
-}
-
-void RenderTexture::Clear(ID3D12GraphicsCommandList* cmdList)
-{
-    cmdList->ClearRenderTargetView(_RtvDescHandle, _ClearColor, 0, nullptr);
-}
-
-void RenderTexture::BeginRender(ID3D12GraphicsCommandList* cmdList)
-{
-    TransitionTo(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-}
-
-void RenderTexture::EndRender(ID3D12GraphicsCommandList* cmdList)
-{
-    TransitionTo(cmdList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-}
-
-void RenderTexture::TransitionTo(ID3D12GraphicsCommandList* cmdList, D3D12_RESOURCE_STATES afterState)
-{
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(_Resource.Get(), _State, afterState);
-    cmdList->ResourceBarrier(1, &barrier);
-    _State = afterState;
 }
