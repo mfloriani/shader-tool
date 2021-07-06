@@ -19,6 +19,26 @@ EditorApp::~EditorApp()
 	color_editor.Quit();
 }
 
+void EditorApp::OnKeyDown(WPARAM key)
+{
+	switch (key)
+	{
+	case VK_ESCAPE:
+	{
+		LOG_TRACE("ESC pressed");
+		PostQuitMessage(0);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void EditorApp::OnKeyUp(WPARAM key)
+{
+
+}
+
 bool EditorApp::Init()
 {
 	if (!D3DApp::Init())
@@ -27,6 +47,7 @@ bool EditorApp::Init()
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	_CommandList->Reset(commandAllocator.Get(), nullptr);
 
+	CreateDescriptorHeaps();
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
 	BuildPSO();
@@ -38,31 +59,15 @@ bool EditorApp::Init()
 
 	FlushCommandQueue();
 
-	//
-	// Render-to-texture
-
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	rtvHeapDesc.NumDescriptors = 1;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	rtvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(_RTrtvDescriptorHeap.GetAddressOf())));
-
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.NumDescriptors = 1;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RTsrvDescriptorHeap)));
-
+	// RENDER-TO-TEXTURE
 	_RenderTexture = std::make_unique<RenderTexture>(_BackBufferFormat);
 	if (!_RenderTexture->Init(
-			_Device.Get(), 
-			_RTsrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 
-			_RTrtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()))
+		_Device.Get(),
+		_RTsrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+		_RTrtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()))
 		return false;
-
+	
 	_RenderTexture->SetSize(_CurrentBufferWidth, _CurrentBufferHeight);
-
 	//
 
 	color_editor.Init();
@@ -162,13 +167,29 @@ void EditorApp::UpdatePerObjectCB()
 	auto currObjectCB = _CurrFrameResource->ObjectCB.get();
 	XMMATRIX world = XMMatrixIdentity();
 
-	world = XMMatrixRotationY(_Timer.TotalTime());
+	// BOX ROTATION
+	{
+		world = XMMatrixRotationY(_Timer.TotalTime());
 
-	ObjectConstants objConstants;
-	XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+		ObjectConstants objConstants;
+		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 
-	int objCBIndex = 0; // only one object at the moment
-	currObjectCB->CopyData(objCBIndex, objConstants);
+		int objCBIndex = 0; // TODO: handle multiple objects
+		currObjectCB->CopyData(objCBIndex, objConstants);
+	}
+
+	// QUAD
+	{
+		//world = XMMatrixIdentity();
+		world = XMMatrixScaling(3.f, 3.f, 3.f);
+	
+		ObjectConstants objConstants;
+		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+
+		int objCBIndex = 1; // TODO: handle multiple objects
+		currObjectCB->CopyData(objCBIndex, objConstants);
+	}
+
 }
 
 void EditorApp::OnUpdate()
@@ -187,7 +208,7 @@ void EditorApp::OnRender()
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	commandAllocator->Reset();
 	_CommandList->Reset(commandAllocator.Get(), _PSOs["default"].Get());
-	//_CommandList->SetPipelineState(_PSOs["default"].Get());
+	
 
 	auto dsv = _DSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
@@ -195,6 +216,9 @@ void EditorApp::OnRender()
 
 	auto frameCB = _CurrFrameResource->FrameCB->Resource();
 	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+
+	_CommandList->RSSetViewports(1, &_ScreenViewport);
+	_CommandList->RSSetScissorRects(1, &_ScissorRect);
 
 	//////////////////////////// 
 	// 
@@ -209,31 +233,31 @@ void EditorApp::OnRender()
 		0, 0,
 		nullptr
 	);
-
 	_CommandList->OMSetRenderTargets(1, &_RTrtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), true, &dsv);
-	_CommandList->RSSetViewports(1, &_ScreenViewport);
-	_CommandList->RSSetScissorRects(1, &_ScissorRect);
 	
-	auto& shapes = _Meshes["shapes"];
+	// BOX
+	{
+		auto& box = _Meshes["box_geo"]; // TODO: avoid direct access
 
-	_CommandList->IASetVertexBuffers(0, 1, &shapes->VertexBufferView());
-	_CommandList->IASetIndexBuffer(&shapes->IndexBufferView());
-	_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_CommandList->IASetVertexBuffers(0, 1, &box->VertexBufferView());
+		_CommandList->IASetIndexBuffer(&box->IndexBufferView());
+		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-	auto objectCB = _CurrFrameResource->ObjectCB->Resource();
+		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
 
-	UINT objCBIndex = 0; // TODO: check this
-	D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-	objCBAddress += objCBIndex * objCBByteSize;
+		UINT objCBIndex = 0; // TODO: check this
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+		objCBAddress += objCBIndex * objCBByteSize;
 
-	_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-	_CommandList->DrawIndexedInstanced(
-		shapes->DrawArgs["box"].IndexCount,
-		1,
-		shapes->DrawArgs["box"].StartIndexLocation,
-		shapes->DrawArgs["box"].BaseVertexLocation,
-		0);
+		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+		_CommandList->DrawIndexedInstanced(
+			box->DrawArgs["box"].IndexCount,
+			1,
+			box->DrawArgs["box"].StartIndexLocation,
+			box->DrawArgs["box"].BaseVertexLocation,
+			0);
+	}
 
 	//////////////////////////
 
@@ -255,8 +279,6 @@ void EditorApp::OnRender()
 		_RTVDescriptorSize
 	);
 
-	
-
 	_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	_CommandList->ClearDepthStencilView(
 		dsv,
@@ -267,12 +289,33 @@ void EditorApp::OnRender()
 	);
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
-	_CommandList->RSSetViewports(1, &_ScreenViewport);
-	_CommandList->RSSetScissorRects(1, &_ScissorRect);
+	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
 
-	// TODO: Render texture to Quad and render the Quad
+	// TODO: Render texture to a Quad and render the Quad
 
+	// QUAD
+	{
+		auto& quad = _Meshes["quad_geo"]; // TODO: avoid direct access
 
+		_CommandList->IASetVertexBuffers(0, 1, &quad->VertexBufferView());
+		_CommandList->IASetIndexBuffer(&quad->IndexBufferView());
+		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
+
+		UINT objCBIndex = 1; // TODO: this should not be hardcoded
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+		objCBAddress += objCBIndex * objCBByteSize;
+
+		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+		_CommandList->DrawIndexedInstanced(
+			quad->DrawArgs["quad"].IndexCount,
+			1,
+			quad->DrawArgs["quad"].StartIndexLocation,
+			quad->DrawArgs["quad"].BaseVertexLocation,
+			0);
+	}
 
 
 	
@@ -330,42 +373,49 @@ void EditorApp::SwapFrameResource()
 	}
 }
 
-void EditorApp::OnKeyDown(WPARAM key)
+void EditorApp::CreateDescriptorHeaps()
 {
-	switch (key)
-	{
-	case VK_ESCAPE:
-	{
-		LOG_TRACE("ESC pressed");
-		PostQuitMessage(0);
-		break;
-	}
-	default:
-		break;
-	}
+	//
+	// Render-to-texture
+
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
+	rtvHeapDesc.NumDescriptors = 1;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	rtvHeapDesc.NodeMask = 0;
+	ThrowIfFailed(_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(_RTrtvDescriptorHeap.GetAddressOf())));
+
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RTsrvDescriptorHeap)));
+
+	//
 }
-
-void EditorApp::OnKeyUp(WPARAM key)
-{
-
-}
-
 
 void EditorApp::BuildRootSignature()
 {
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER rootParameters[2] = {};
+	CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
 
 	// Create root CBV.
 	rootParameters[0].InitAsConstantBufferView(0);
 	rootParameters[1].InitAsConstantBufferView(1);
+	
+	CD3DX12_DESCRIPTOR_RANGE texTable;
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	
+	rootParameters[2].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	auto staticSamplers = D3DUtil::GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
-		2, 
+		3, 
 		rootParameters, 
-		0, 
-		nullptr, 
+		static_cast<UINT>(staticSamplers.size()), 
+		staticSamplers.data(), 
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
@@ -395,13 +445,27 @@ void EditorApp::BuildRootSignature()
 
 void EditorApp::BuildShadersAndInputLayout()
 {
-	ComPtr<ID3DBlob> vsBlob;
-	ThrowIfFailed(D3DReadFileToBlob(L"DefaultVS.cso", &vsBlob));
-	_Shaders.insert(std::pair("default_vs", vsBlob));
+	// default
+	{
+		ComPtr<ID3DBlob> vsBlob;
+		ThrowIfFailed(D3DReadFileToBlob(L"DefaultVS.cso", &vsBlob));
+		_Shaders.insert(std::pair("default_vs", vsBlob));
 
-	ComPtr<ID3DBlob> psBlob;
-	ThrowIfFailed(D3DReadFileToBlob(L"DefaultPS.cso", &psBlob));
-	_Shaders.insert(std::pair("default_ps", psBlob));
+		ComPtr<ID3DBlob> psBlob;
+		ThrowIfFailed(D3DReadFileToBlob(L"DefaultPS.cso", &psBlob));
+		_Shaders.insert(std::pair("default_ps", psBlob));
+	}
+
+	// quad
+	{
+		ComPtr<ID3DBlob> vsBlob;
+		ThrowIfFailed(D3DReadFileToBlob(L"QuadVS.cso", &vsBlob));
+		_Shaders.insert(std::pair("quad_vs", vsBlob));
+
+		ComPtr<ID3DBlob> psBlob;
+		ThrowIfFailed(D3DReadFileToBlob(L"QuadPS.cso", &psBlob));
+		_Shaders.insert(std::pair("quad_ps", psBlob));
+	}
 
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -412,115 +476,211 @@ void EditorApp::BuildShadersAndInputLayout()
 
 void EditorApp::BuildPSO()
 {
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC defaultPSO;
-	ZeroMemory(&defaultPSO, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC defaultPSO;
+		ZeroMemory(&defaultPSO, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 
-	defaultPSO.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
-	defaultPSO.pRootSignature = _RootSignature.Get();
-	defaultPSO.VS =
-	{
-		reinterpret_cast<BYTE*>(_Shaders["default_vs"]->GetBufferPointer()),
-		_Shaders["default_vs"]->GetBufferSize()
-	};
-	defaultPSO.PS =
-	{
-		reinterpret_cast<BYTE*>(_Shaders["default_ps"]->GetBufferPointer()),
-		_Shaders["default_ps"]->GetBufferSize()
-	};
-	defaultPSO.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	defaultPSO.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	defaultPSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	defaultPSO.SampleMask = UINT_MAX;
-	defaultPSO.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	defaultPSO.NumRenderTargets = 1;
-	defaultPSO.RTVFormats[0] = _BackBufferFormat;
-	defaultPSO.SampleDesc.Count = _4xMsaaState ? 4 : 1;
-	defaultPSO.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-	defaultPSO.DSVFormat = _DepthStencilFormat;
+		defaultPSO.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
+		defaultPSO.pRootSignature = _RootSignature.Get();
+		defaultPSO.VS =
+		{
+			reinterpret_cast<BYTE*>(_Shaders["default_vs"]->GetBufferPointer()),
+			_Shaders["default_vs"]->GetBufferSize()
+		};
+		defaultPSO.PS =
+		{
+			reinterpret_cast<BYTE*>(_Shaders["default_ps"]->GetBufferPointer()),
+			_Shaders["default_ps"]->GetBufferSize()
+		};
+		defaultPSO.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		defaultPSO.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+		defaultPSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		defaultPSO.SampleMask = UINT_MAX;
+		defaultPSO.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		defaultPSO.NumRenderTargets = 1;
+		defaultPSO.RTVFormats[0] = _BackBufferFormat;
+		defaultPSO.SampleDesc.Count = _4xMsaaState ? 4 : 1;
+		defaultPSO.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
+		defaultPSO.DSVFormat = _DepthStencilFormat;
 	
-	ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["default"])));
+		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["default"])));
+	}
+
+	// render target Quad
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+		ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+
+		psoDesc.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
+		psoDesc.pRootSignature = _RootSignature.Get();
+		psoDesc.VS =
+		{
+			reinterpret_cast<BYTE*>(_Shaders["quad_vs"]->GetBufferPointer()),
+			_Shaders["quad_vs"]->GetBufferSize()
+		};
+		psoDesc.PS =
+		{
+			reinterpret_cast<BYTE*>(_Shaders["quad_ps"]->GetBufferPointer()),
+			_Shaders["quad_ps"]->GetBufferSize()
+		};
+		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = _BackBufferFormat;
+		psoDesc.SampleDesc.Count = _4xMsaaState ? 4 : 1;
+		psoDesc.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
+		psoDesc.DSVFormat = _DepthStencilFormat;
+
+		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&_PSOs["render_target"])));
+	}
+
+
 }
 
 void EditorApp::LoadDefaultMeshes()
 {
-	std::array<Vertex, 8> vertices =
+	// Box
 	{
-		Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f)}),
-		Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f)}),
-		Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f)}),
-		Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f)}),
-		Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f)}),
-		Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f)}),
-		Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f)}),
-		Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f)}),
-	};
+		std::array<Vertex, 8> vertices =
+		{
+			Vertex( XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+			Vertex( XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+			Vertex( XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+			Vertex( XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+			Vertex( XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+			Vertex( XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+			Vertex( XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+			Vertex( XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f) ),
+		};
 
-	std::array<std::uint16_t, 36> indices =
+		std::array<std::uint16_t, 36> indices =
+		{
+			// front face
+			0, 1, 2,
+			0, 2, 3,
+
+			// back face
+			4, 6, 5,
+			4, 7, 6,
+
+			// left face
+			4, 5, 1,
+			4, 1, 0,
+
+			// right face
+			3, 2, 6,
+			3, 6, 7,
+
+			// top face
+			1, 5, 6,
+			1, 6, 2,
+
+			// bottom face
+			4, 0, 3,
+			4, 3, 7
+		};
+
+		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+		auto geo = std::make_unique<MeshGeometry>();
+		geo->Name = "box_geo";
+
+		ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+		CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+		ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+		CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+		geo->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(
+			_Device.Get(),
+			_CommandList.Get(),
+			vertices.data(),
+			vbByteSize,
+			geo->VertexBufferUploader);
+
+		geo->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(
+			_Device.Get(),
+			_CommandList.Get(),
+			indices.data(),
+			ibByteSize,
+			geo->IndexBufferUploader);
+
+		geo->VertexByteStride = sizeof(Vertex);
+		geo->VertexBufferByteSize = vbByteSize;
+		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+		geo->IndexBufferByteSize = ibByteSize;
+
+		SubmeshGeometry submesh;
+		submesh.IndexCount = (UINT)indices.size();
+		submesh.StartIndexLocation = 0;
+		submesh.BaseVertexLocation = 0;
+
+		geo->DrawArgs["box"] = submesh;
+
+		_Meshes[geo->Name] = std::move(geo);
+	}
+
+	// Quad
 	{
-		// front face
-		0, 1, 2,
-		0, 2, 3,
+		std::array<Vertex, 4> vertices =
+		{
+			Vertex( XMFLOAT3(0.0f,-1.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(0.f,1.f)),
+			Vertex( XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(0.f,0.f)),
+			Vertex( XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(1.f,0.f)),
+			Vertex( XMFLOAT3(1.0f,-1.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(1.f,1.f)),
+		};
 
-		// back face
-		4, 6, 5,
-		4, 7, 6,
+		std::array<std::uint16_t, 6> indices =
+		{
+			0,1,2,
+			0,2,3
+		};
 
-		// left face
-		4, 5, 1,
-		4, 1, 0,
+		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-		// right face
-		3, 2, 6,
-		3, 6, 7,
+		auto geo = std::make_unique<MeshGeometry>();
+		geo->Name = "quad_geo";
 
-		// top face
-		1, 5, 6,
-		1, 6, 2,
+		ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+		CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-		// bottom face
-		4, 0, 3,
-		4, 3, 7
-	};
+		ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+		CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+		geo->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(
+			_Device.Get(),
+			_CommandList.Get(),
+			vertices.data(),
+			vbByteSize,
+			geo->VertexBufferUploader);
 
-	auto mBoxGeo = std::make_unique<MeshGeometry>();
-	mBoxGeo->Name = "boxGeo";
+		geo->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(
+			_Device.Get(),
+			_CommandList.Get(),
+			indices.data(),
+			ibByteSize,
+			geo->IndexBufferUploader);
 
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
-	CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+		geo->VertexByteStride = sizeof(Vertex);
+		geo->VertexBufferByteSize = vbByteSize;
+		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+		geo->IndexBufferByteSize = ibByteSize;
 
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
-	CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-	
-	mBoxGeo->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(
-		_Device.Get(),
-		_CommandList.Get(), 
-		vertices.data(), 
-		vbByteSize, 
-		mBoxGeo->VertexBufferUploader);
+		SubmeshGeometry submesh;
+		submesh.IndexCount = (UINT)indices.size();
+		submesh.StartIndexLocation = 0;
+		submesh.BaseVertexLocation = 0;
 
-	mBoxGeo->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(
-		_Device.Get(),
-		_CommandList.Get(), 
-		indices.data(), 
-		ibByteSize, 
-		mBoxGeo->IndexBufferUploader);
+		geo->DrawArgs["quad"] = submesh;
 
-	mBoxGeo->VertexByteStride = sizeof(Vertex);
-	mBoxGeo->VertexBufferByteSize = vbByteSize;
-	mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	mBoxGeo->IndexBufferByteSize = ibByteSize;
+		_Meshes[geo->Name] = std::move(geo);
+	}
 
-	SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;
-
-	mBoxGeo->DrawArgs["box"] = submesh;
-
-	_Meshes.insert(std::make_pair("shapes", std::move(mBoxGeo)));
 }
 
 void EditorApp::RenderUIDockSpace()

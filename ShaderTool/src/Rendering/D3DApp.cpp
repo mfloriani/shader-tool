@@ -176,6 +176,9 @@ void D3DApp::CreateRTVAndDSVDescriptorHeaps()
     srvHeapDesc.NumDescriptors = 1;
     srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_SRVDescriptorHeap)));
+
+    
+
 }
 
 void D3DApp::CreateRenderTargetViews()
@@ -350,9 +353,9 @@ bool D3DApp::InitDirect3D()
     _4xMsaaQuality = msQualityLevels.NumQualityLevels;
     assert(_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 
-
+    // TODO: this should be in the external layer not here
     for (int i = 0; i < NUM_FRAMES; ++i)
-        _FrameResources[i] = std::make_unique<FrameResource>(_Device.Get(), 1, 1);
+        _FrameResources[i] = std::make_unique<FrameResource>(_Device.Get(), 1, 2);
 
     CreateCommandObjects();
 

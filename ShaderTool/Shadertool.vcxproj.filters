@@ -124,5 +124,7 @@
   <ItemGroup>
     <FxCompile Include="src\Shaders\DefaultPS.hlsl" />
     <FxCompile Include="src\Shaders\DefaultVS.hlsl" />
+    <FxCompile Include="src\Shaders\QuadVS.hlsl" />
+    <FxCompile Include="src\Shaders\QuadPS.hlsl" />
   </ItemGroup>
 </Project>

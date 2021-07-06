@@ -34,6 +34,7 @@ public:
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
 	void LoadDefaultMeshes();
+	void CreateDescriptorHeaps();
 
 	const GameTimer& GetTimer() const { return _Timer; }
 

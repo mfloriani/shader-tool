@@ -52,7 +52,8 @@ namespace D3DUtil
 		const void* initData,
 		UINT64 byteSize,
 		Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
-
+	
+	std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 	
 	// Defines a subrange of geometry in a MeshGeometry.  This is for when multiple
 	// geometries are stored in one vertex and index buffer.  It provides the offsets
