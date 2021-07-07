@@ -61,5 +61,5 @@ private:
 
 	// TODO: move this to the editor file?
 	std::unique_ptr<RenderTexture>               _RenderTexture;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RenderTexSrvDescriptorHeap;
+	//Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RenderTexSrvDescriptorHeap;
 };

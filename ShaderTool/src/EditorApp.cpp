@@ -84,15 +84,23 @@ bool EditorApp::Init()
 void EditorApp::CreateDescriptorHeaps()
 {
 	// SRV descriptor heap for render-to-texture
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RenderTexSrvDescriptorHeap)));
+	//D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	//srvHeapDesc.NumDescriptors = 1;
+	//srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	//srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	//ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RenderTexSrvDescriptorHeap)));
+
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc(_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	//CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuDesc(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+	//auto srvCpuStart = hCpuDesc.Offset(1, _CbvSrvUavDescriptorSize);
+	//auto srvGpuStart = hGpuDesc.Offset(1, _CbvSrvUavDescriptorSize);
+
+	//auto rtvCpuStart = _RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	_RenderTexture->CreateDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(_RenderTexSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, _CbvSrvUavDescriptorSize),
-		CD3DX12_GPU_DESCRIPTOR_HANDLE(_RenderTexSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 0, _CbvSrvUavDescriptorSize),
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), NUM_BACK_BUFFERS, _RtvDescriptorSize)
 	);
 
@@ -334,7 +342,8 @@ void EditorApp::OnRender()
 
 	//CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_RenderTexSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	//tex.Offset(0, _CbvSrvUavDescriptorSize);
-	ID3D12DescriptorHeap* const descHeapList[] = { _RenderTexSrvDescriptorHeap.Get() };
+	//ID3D12DescriptorHeap* const descHeapList[] = { _RenderTexSrvDescriptorHeap.Get() };
+	ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
 	_CommandList->SetDescriptorHeaps(_countof(descHeapList), descHeapList);
 	_CommandList->SetGraphicsRootDescriptorTable(2, _RenderTexture->SRV());
 	
@@ -362,12 +371,22 @@ void EditorApp::OnRender()
 			0);
 	}
 
-
-	
-#if 0
+#if 1
 	NewUIFrame();
-	RenderUIDockSpace();
-	color_editor.show();
+
+	static int w = 256;
+	static int h = 256;
+	ImGui::Begin("DirectX12 Texture Test");
+	//ImGui::Text("CPU handle = %p", _RenderTexture->SRV().ptr);
+	ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
+	ImGui::Text("size = %d x %d", w, h);
+	// Note that we pass the GPU SRV handle here, *not* the CPU handle. We're passing the internal pointer value, cast to an ImTextureID
+	ImGui::Image((ImTextureID)_RenderTexture->SRV().ptr, ImVec2((float)w, (float)h));
+	ImGui::End();
+
+
+	//RenderUIDockSpace();
+	//color_editor.show();
 	RenderUI();
 #endif
 
