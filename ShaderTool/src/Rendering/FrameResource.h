@@ -20,6 +20,8 @@ struct FrameConstants
 {
     DirectX::XMFLOAT4X4 View{ D3DUtil::Identity4x4() };
     DirectX::XMFLOAT4X4 Proj{ D3DUtil::Identity4x4() };
+    
+    DirectX::XMFLOAT4X4 RTProj{ D3DUtil::Identity4x4() };
 
     //DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
     //DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();

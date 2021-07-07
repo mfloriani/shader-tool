@@ -7,6 +7,7 @@ cbuffer cbPerFrame : register(b1)
 {
     float4x4 View;
     float4x4 Proj;
+    float4x4 RTProj;
 }
 
 struct VSInput
@@ -29,7 +30,8 @@ VSOutput main( VSInput vIn )
     
     float4 posW = mul(float4(vIn.Pos, 1.0), World);
     vOut.PosH = mul(posW, View);
-    vOut.PosH = mul(vOut.PosH, Proj);
+    //vOut.PosH = mul(vOut.PosH, Proj);
+    vOut.PosH = mul(vOut.PosH, RTProj);
     
     vOut.Norm = mul(float4(vIn.Norm, 1.0), World);
     

@@ -10,18 +10,30 @@ RenderTexture::RenderTexture(
     uint32_t h
     ) noexcept :
     _Device(device),
-    _State(D3D12_RESOURCE_STATE_COMMON),
     _ClearColor{},
     _Format(format),
     _Width(w),
     _Height(h)
 {
+    CreateViewportScissor();
     CreateResource();
 }
 
 RenderTexture::~RenderTexture() noexcept
 {
     
+}
+
+void RenderTexture::CreateViewportScissor()
+{
+    _Viewport.TopLeftX = 0;
+    _Viewport.TopLeftY = 0;
+    _Viewport.Width = static_cast<float>(_Width);
+    _Viewport.Height = static_cast<float>(_Height);
+    _Viewport.MinDepth = 0.0f;
+    _Viewport.MaxDepth = 1.0f;
+
+    _ScissorRect = { 0, 0, static_cast<LONG>(_Width), static_cast<LONG>(_Height) };
 }
 
 void RenderTexture::CreateDescriptors(
@@ -73,15 +85,12 @@ void RenderTexture::CreateResource()
     D3D12_CLEAR_VALUE clearValue = { _Format, {} };
     memcpy(clearValue.Color, _ClearColor, sizeof(clearValue.Color));
 
-    _State = D3D12_RESOURCE_STATE_GENERIC_READ;
-
-    // Create a render target
     ThrowIfFailed(
         _Device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
             &desc,
-            _State,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
             &clearValue,
             IID_PPV_ARGS(_Resource.ReleaseAndGetAddressOf()))
     );

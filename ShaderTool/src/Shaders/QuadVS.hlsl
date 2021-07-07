@@ -26,16 +26,19 @@ struct VSOutput
 VSOutput main(VSInput vIn)
 {
     VSOutput vOut;
-    
-    //float4 posW = mul(float4(vIn.Pos, 1.0), World);
-    //vOut.PosH = mul(posW, View);
-    //vOut.PosH = mul(vOut.PosH, Proj);
+#if 1
+    float4 posW = mul(float4(vIn.Pos, 1.0), World);
+    vOut.PosH = mul(posW, View);
+    vOut.PosH = mul(vOut.PosH, Proj);
+#else
+    vOut.PosH = float4(2.0f * vOut.TexC.x - 1.0f, 1.0f - 2.0f * vOut.TexC.y, 0.0f, 1.0f);
+#endif
     
     vOut.Norm = mul(float4(vIn.Norm, 1.0), World);
     
     vOut.TexC = vIn.TexC;
     
-    vOut.PosH = float4(2.0f * vOut.TexC.x - 1.0f, 1.0f - 2.0f * vOut.TexC.y, 0.0f, 1.0f);
+    
     
     
     return vOut;

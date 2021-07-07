@@ -43,13 +43,22 @@ bool EditorApp::Init()
 {
 	if (!D3DApp::Init())
 		return false;
+	
+	//OnResize(_CurrentBufferWidth, _CurrentBufferHeight);
+
+	// The window resized, so update the aspect ratio and recompute the projection matrix.
+	UINT width = 1024;
+	UINT height = 1024;
+	auto aspectRatio = static_cast<float>(width) / height;
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspectRatio, 1.0f, 1000.0f);
+	XMStoreFloat4x4(&_RTProj, P);
 
 	// RENDER-TO-TEXTURE
 	_RenderTexture = std::make_unique<RenderTexture>(
 		_Device.Get(),
 		_BackBufferFormat,
-		_CurrentBufferWidth,
-		_CurrentBufferHeight
+		width,
+		height
 	);
 
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
@@ -156,6 +165,7 @@ void EditorApp::UpdatePerFrameCB()
 {
 	XMMATRIX view = XMLoadFloat4x4(&_View);
 	XMMATRIX proj = XMLoadFloat4x4(&_Proj);
+	XMMATRIX rtProj = XMLoadFloat4x4(&_RTProj);
 
 	//XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 	//XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
@@ -165,6 +175,7 @@ void EditorApp::UpdatePerFrameCB()
 	XMStoreFloat4x4(&_FrameCB.View, XMMatrixTranspose(view));
 	//XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
 	XMStoreFloat4x4(&_FrameCB.Proj, XMMatrixTranspose(proj));
+	XMStoreFloat4x4(&_FrameCB.RTProj, XMMatrixTranspose(rtProj));
 	//XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
 	//XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
 	//XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
@@ -187,7 +198,11 @@ void EditorApp::UpdatePerObjectCB()
 
 	// BOX ROTATION
 	{
-		world = XMMatrixRotationY(_Timer.TotalTime());
+		FLOAT size = 10.f;
+		auto scale = XMMatrixScaling(1.f * size, 1.f * size, 1.f * size);
+		auto rotation = XMMatrixRotationY(_Timer.TotalTime());
+
+		world = XMMatrixMultiply(scale, rotation);
 
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
@@ -199,7 +214,8 @@ void EditorApp::UpdatePerObjectCB()
 	// QUAD
 	{
 		//world = XMMatrixIdentity();
-		world = XMMatrixScaling(3.f, 3.f, 3.f);
+		FLOAT size = 10.f;
+		world = XMMatrixScaling(1.f * size, 1.f * size, 1.f * size);
 	
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
@@ -225,17 +241,12 @@ void EditorApp::OnRender()
 	auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	commandAllocator->Reset();
-	_CommandList->Reset(commandAllocator.Get(), _PSOs["default"].Get());
 	
-	auto dsv = _DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-
+	_CommandList->Reset(commandAllocator.Get(), _PSOs["render_target"].Get());
 	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
 
 	auto frameCB = _CurrFrameResource->FrameCB->Resource();
 	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
-
-	_CommandList->RSSetViewports(1, &_ScreenViewport);
-	_CommandList->RSSetScissorRects(1, &_ScissorRect);
 
 	//////////////////////////// 
 	// 
@@ -248,15 +259,10 @@ void EditorApp::OnRender()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+	_CommandList->RSSetViewports(1, &_RenderTexture->GetViewPort());
+	_CommandList->RSSetScissorRects(1, &_RenderTexture->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTexture->RTV(), _RenderTexture->GetClearColor(), 0, nullptr);
-	_CommandList->ClearDepthStencilView(
-		dsv,
-		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-		1.0f,
-		0, 0,
-		nullptr
-	);
-	_CommandList->OMSetRenderTargets(1, &_RenderTexture->RTV(), true, &dsv);
+	_CommandList->OMSetRenderTargets(1, &_RenderTexture->RTV(), true, nullptr);
 	
 	// BOX
 	{
@@ -309,6 +315,10 @@ void EditorApp::OnRender()
 		_RtvDescriptorSize
 	);
 
+	auto dsv = _DsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+	_CommandList->RSSetViewports(1, &_ScreenViewport);
+	_CommandList->RSSetScissorRects(1, &_ScissorRect);
 	_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	_CommandList->ClearDepthStencilView(
 		dsv,
@@ -320,7 +330,7 @@ void EditorApp::OnRender()
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
 	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
-	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
+	_CommandList->SetPipelineState(_PSOs["back_buffer"].Get());
 
 	//CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_RenderTexSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	//tex.Offset(0, _CbvSrvUavDescriptorSize);
@@ -511,16 +521,16 @@ void EditorApp::BuildPSO()
 		};
 		defaultPSO.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		defaultPSO.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-		defaultPSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		//defaultPSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 		defaultPSO.SampleMask = UINT_MAX;
 		defaultPSO.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		defaultPSO.NumRenderTargets = 1;
 		defaultPSO.RTVFormats[0] = _BackBufferFormat;
 		defaultPSO.SampleDesc.Count = _4xMsaaState ? 4 : 1;
 		defaultPSO.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-		defaultPSO.DSVFormat = _DepthStencilFormat;
+		//defaultPSO.DSVFormat = _DepthStencilFormat;
 	
-		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["default"])));
+		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["render_target"])));
 	}
 
 	// render target Quad
@@ -551,7 +561,7 @@ void EditorApp::BuildPSO()
 		psoDesc.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
 		psoDesc.DSVFormat = _DepthStencilFormat;
 
-		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&_PSOs["render_target"])));
+		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&_PSOs["back_buffer"])));
 	}
 
 

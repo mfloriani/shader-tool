@@ -43,6 +43,7 @@ private:
 	DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4X4 _View = D3DUtil::Identity4x4();
 	DirectX::XMFLOAT4X4 _Proj = D3DUtil::Identity4x4();
+	DirectX::XMFLOAT4X4 _RTProj = D3DUtil::Identity4x4();
 	float _Theta = 1.5f * DirectX::XM_PI;
 	float _Phi = DirectX::XM_PIDIV2 - 0.1f;
 	float _Radius = 50.0f;
