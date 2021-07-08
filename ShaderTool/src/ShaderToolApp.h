@@ -8,13 +8,13 @@
 #include "Rendering\D3DApp.h"
 #include "Rendering\RenderTexture.h"
 
-class EditorApp : public D3DApp
+class ShaderToolApp : public D3DApp
 {
 public:
-	EditorApp(HINSTANCE hInstance);
-	EditorApp(const EditorApp& other) = delete;
-	void operator=(const EditorApp& other) = delete;
-	~EditorApp();
+	ShaderToolApp(HINSTANCE hInstance);
+	ShaderToolApp(const ShaderToolApp& other) = delete;
+	void operator=(const ShaderToolApp& other) = delete;
+	~ShaderToolApp();
 
 	bool Init();
 	void Run();
@@ -61,5 +61,4 @@ private:
 
 	// TODO: move this to the editor file?
 	std::unique_ptr<RenderTexture>               _RenderTexture;
-	//Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _RenderTexSrvDescriptorHeap;
 };

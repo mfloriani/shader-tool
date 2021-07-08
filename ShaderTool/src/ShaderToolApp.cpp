@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "EditorApp.h"
+#include "ShaderToolApp.h"
 #include "Editor\NodeGraphEditor.h"
 
 using namespace DirectX;
@@ -7,19 +7,19 @@ using namespace D3DUtil;
 
 using Microsoft::WRL::ComPtr;
 
-EditorApp::EditorApp(HINSTANCE hInstance) : D3DApp(hInstance)
+ShaderToolApp::ShaderToolApp(HINSTANCE hInstance) : D3DApp(hInstance)
 {
 
 }
 
-EditorApp::~EditorApp()
+ShaderToolApp::~ShaderToolApp()
 {
-	LOG_TRACE("EditorApp::~EditorApp()");
+	LOG_TRACE("ShaderToolApp::~ShaderToolApp()");
 	FlushCommandQueue();
-	color_editor.Quit();
+	NodeGraphEd.Quit();
 }
 
-void EditorApp::OnKeyDown(WPARAM key)
+void ShaderToolApp::OnKeyDown(WPARAM key)
 {
 	switch (key)
 	{
@@ -34,18 +34,16 @@ void EditorApp::OnKeyDown(WPARAM key)
 	}
 }
 
-void EditorApp::OnKeyUp(WPARAM key)
+void ShaderToolApp::OnKeyUp(WPARAM key)
 {
 
 }
 
-bool EditorApp::Init()
+bool ShaderToolApp::Init()
 {
 	if (!D3DApp::Init())
 		return false;
 	
-	//OnResize(_CurrentBufferWidth, _CurrentBufferHeight);
-
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	UINT width = 1024;
 	UINT height = 1024;
@@ -76,28 +74,13 @@ bool EditorApp::Init()
 
 	FlushCommandQueue();
 
-	color_editor.Init();
+	NodeGraphEd.Init();
 
 	return true;
 }
 
-void EditorApp::CreateDescriptorHeaps()
+void ShaderToolApp::CreateDescriptorHeaps()
 {
-	// SRV descriptor heap for render-to-texture
-	//D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	//srvHeapDesc.NumDescriptors = 1;
-	//srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	//srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	//ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_RenderTexSrvDescriptorHeap)));
-
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc(_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	//CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuDesc(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-	//auto srvCpuStart = hCpuDesc.Offset(1, _CbvSrvUavDescriptorSize);
-	//auto srvGpuStart = hGpuDesc.Offset(1, _CbvSrvUavDescriptorSize);
-
-	//auto rtvCpuStart = _RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-
 	_RenderTexture->CreateDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
 		CD3DX12_GPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
@@ -106,7 +89,7 @@ void EditorApp::CreateDescriptorHeaps()
 
 }
 
-void EditorApp::Run()
+void ShaderToolApp::Run()
 {
 	Log::Init();
 
@@ -140,7 +123,7 @@ void EditorApp::Run()
 	}
 }
 
-void EditorApp::OnResize(uint32_t width, uint32_t height)
+void ShaderToolApp::OnResize(uint32_t width, uint32_t height)
 {
 	D3DApp::OnResize(width, height);
 
@@ -153,7 +136,7 @@ void EditorApp::OnResize(uint32_t width, uint32_t height)
 		_RenderTexture->OnResize(width, height);
 }
 
-void EditorApp::UpdateCamera()
+void ShaderToolApp::UpdateCamera()
 {
 	// Convert Spherical to Cartesian coordinates.
 	_EyePos.x = _Radius * sinf(_Phi) * cosf(_Theta);
@@ -169,7 +152,7 @@ void EditorApp::UpdateCamera()
 	XMStoreFloat4x4(&_View, view);
 }
 
-void EditorApp::UpdatePerFrameCB()
+void ShaderToolApp::UpdatePerFrameCB()
 {
 	XMMATRIX view = XMLoadFloat4x4(&_View);
 	XMMATRIX proj = XMLoadFloat4x4(&_Proj);
@@ -199,7 +182,7 @@ void EditorApp::UpdatePerFrameCB()
 	currPassCB->CopyData(0, _FrameCB);
 }
 
-void EditorApp::UpdatePerObjectCB()
+void ShaderToolApp::UpdatePerObjectCB()
 {
 	auto currObjectCB = _CurrFrameResource->ObjectCB.get();
 	XMMATRIX world = XMMatrixIdentity();
@@ -234,7 +217,7 @@ void EditorApp::UpdatePerObjectCB()
 
 }
 
-void EditorApp::OnUpdate()
+void ShaderToolApp::OnUpdate()
 {
 	_Timer.Tick();
 	UpdateCamera();
@@ -243,7 +226,7 @@ void EditorApp::OnUpdate()
 	UpdatePerFrameCB();
 }
 
-void EditorApp::OnRender()
+void ShaderToolApp::OnRender()
 {
 	// CLEAR
 	auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
@@ -340,9 +323,7 @@ void EditorApp::OnRender()
 	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
 	_CommandList->SetPipelineState(_PSOs["back_buffer"].Get());
 
-	//CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_RenderTexSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	//tex.Offset(0, _CbvSrvUavDescriptorSize);
-	//ID3D12DescriptorHeap* const descHeapList[] = { _RenderTexSrvDescriptorHeap.Get() };
+#if 0 // draw to backbuffer
 	ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
 	_CommandList->SetDescriptorHeaps(_countof(descHeapList), descHeapList);
 	_CommandList->SetGraphicsRootDescriptorTable(2, _RenderTexture->SRV());
@@ -370,23 +351,22 @@ void EditorApp::OnRender()
 			quad->DrawArgs["quad"].BaseVertexLocation,
 			0);
 	}
+#endif
 
 #if 1
 	NewUIFrame();
+	RenderUIDockSpace();
+	NodeGraphEd.Render();
 
 	static int w = 256;
 	static int h = 256;
-	ImGui::Begin("DirectX12 Texture Test");
+	ImGui::Begin("Render Target");
 	//ImGui::Text("CPU handle = %p", _RenderTexture->SRV().ptr);
-	ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
+	//ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
 	ImGui::Text("size = %d x %d", w, h);
-	// Note that we pass the GPU SRV handle here, *not* the CPU handle. We're passing the internal pointer value, cast to an ImTextureID
 	ImGui::Image((ImTextureID)_RenderTexture->SRV().ptr, ImVec2((float)w, (float)h));
 	ImGui::End();
 
-
-	//RenderUIDockSpace();
-	//color_editor.show();
 	RenderUI();
 #endif
 
@@ -421,7 +401,7 @@ void EditorApp::OnRender()
 }
 
 // cycle through frames to continue writing commands avoiding the GPU getting idle
-void EditorApp::SwapFrameResource()
+void ShaderToolApp::SwapFrameResource()
 {
 	_CurrFrameResourceIndex = (_CurrFrameResourceIndex + 1) % NUM_FRAMES;
 	_CurrFrameResource = _FrameResources[_CurrFrameResourceIndex].get();
@@ -437,7 +417,7 @@ void EditorApp::SwapFrameResource()
 	}
 }
 
-void EditorApp::BuildRootSignature()
+void ShaderToolApp::BuildRootSignature()
 {
 	// 2 CBV and 1 SRV signature
 	{
@@ -489,7 +469,7 @@ void EditorApp::BuildRootSignature()
 	}
 }
 
-void EditorApp::BuildShadersAndInputLayout()
+void ShaderToolApp::BuildShadersAndInputLayout()
 {
 	// default
 	{
@@ -520,7 +500,7 @@ void EditorApp::BuildShadersAndInputLayout()
 	};
 }
 
-void EditorApp::BuildPSO()
+void ShaderToolApp::BuildPSO()
 {
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC defaultPSO;
@@ -586,7 +566,7 @@ void EditorApp::BuildPSO()
 
 }
 
-void EditorApp::LoadDefaultMeshes()
+void ShaderToolApp::LoadDefaultMeshes()
 {
 	// Box
 	{
@@ -729,7 +709,7 @@ void EditorApp::LoadDefaultMeshes()
 
 }
 
-void EditorApp::RenderUIDockSpace()
+void ShaderToolApp::RenderUIDockSpace()
 {
 	static bool docking_open = true;
 	static bool docking_opt_fullscreen = true;

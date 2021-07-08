@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "EditorApp.h"
+#include "ShaderToolApp.h"
 
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -17,7 +17,7 @@ int WINAPI WinMain(
 	int nCmdShow
 )
 {
-	EditorApp app(hInstance);
+	ShaderToolApp app(hInstance);
 	app.Run();
 	return 0;
 }

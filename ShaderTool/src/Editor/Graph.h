@@ -9,242 +9,70 @@
 #include <vector>
 #include <iostream>
 
-template<typename ElementType>
-struct Span
-{
-    using iterator = ElementType*;
+#include "Edge.h"
+#include "IdMap.h"
 
-    template<typename Container>
-    Span(Container& c) : begin_(c.data()), end_(begin_ + c.size()), size_(c.size())
-    {
-    }
 
-    iterator begin() const { return begin_; }
-    iterator end() const { return end_; }
-
-    size_t size() const { return size_; }
-
-private:
-    iterator begin_;
-    iterator end_;
-    size_t size_;
-};
-
-template<typename ElementType>
-class IdMap
-{
-public:
-    using iterator = typename std::vector<ElementType>::iterator;
-    using const_iterator = typename std::vector<ElementType>::const_iterator;
-
-    // Iterators
-
-    const_iterator begin() const { return elements_.begin(); }
-    const_iterator end() const { return elements_.end(); }
-
-    // Element access
-
-    Span<const ElementType> elements() const { return elements_; }
-    const std::vector<int>& ids() const { return sorted_ids_; }
-
-    // Capacity
-
-    bool   empty() const { return sorted_ids_.empty(); }
-    size_t size() const { return sorted_ids_.size(); }
-
-    // Modifiers
-
-    std::pair<iterator, bool> insert(int id, const ElementType& element);
-    std::pair<iterator, bool> insert(int id, ElementType&& element);
-    size_t                    erase(int id);
-    void                      clear();
-
-    // Lookup
-
-    iterator       find(int id);
-    const_iterator find(int id) const;
-    bool           contains(int id) const;
-
-private:
-    std::vector<ElementType> elements_;
-    std::vector<int>         sorted_ids_;
-};
-
-template<typename ElementType>
-std::pair<typename IdMap<ElementType>::iterator, bool> IdMap<ElementType>::insert(
-    const int          id,
-    const ElementType& element)
-{
-    auto lower_bound = std::lower_bound(sorted_ids_.begin(), sorted_ids_.end(), id);
-
-    if (lower_bound != sorted_ids_.end() && id == *lower_bound)
-    {
-        return std::make_pair(std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound)), false);
-    }
-
-    auto insert_element_at = std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound));
-
-    sorted_ids_.insert(lower_bound, id);
-    return std::make_pair(elements_.insert(insert_element_at, element), true);
-}
-
-template<typename ElementType>
-std::pair<typename IdMap<ElementType>::iterator, bool> IdMap<ElementType>::insert(
-    const int     id,
-    ElementType&& element)
-{
-    auto lower_bound = std::lower_bound(sorted_ids_.begin(), sorted_ids_.end(), id);
-
-    if (lower_bound != sorted_ids_.end() && id == *lower_bound)
-    {
-        return std::make_pair(std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound)), false);
-    }
-
-    auto insert_element_at = std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound));
-
-    sorted_ids_.insert(lower_bound, id);
-    return std::make_pair(elements_.insert(insert_element_at, std::move(element)), true);
-}
-
-template<typename ElementType>
-size_t IdMap<ElementType>::erase(const int id)
-{
-    auto lower_bound = std::lower_bound(sorted_ids_.begin(), sorted_ids_.end(), id);
-
-    if (lower_bound == sorted_ids_.end() || id != *lower_bound)
-    {
-        return 0ull;
-    }
-
-    auto erase_element_at =
-        std::next(elements_.begin(), std::distance(sorted_ids_.begin(), lower_bound));
-
-    sorted_ids_.erase(lower_bound);
-    elements_.erase(erase_element_at);
-
-    return 1ull;
-}
-
-template<typename ElementType>
-void IdMap<ElementType>::clear()
-{
-    elements_.clear();
-    sorted_ids_.clear();
-}
-
-template<typename ElementType>
-typename IdMap<ElementType>::iterator IdMap<ElementType>::find(const int id)
-{
-    const auto lower_bound = std::lower_bound(sorted_ids_.cbegin(), sorted_ids_.cend(), id);
-    return (lower_bound == sorted_ids_.cend() || *lower_bound != id)
-        ? elements_.end()
-        : std::next(elements_.begin(), std::distance(sorted_ids_.cbegin(), lower_bound));
-}
-
-template<typename ElementType>
-typename IdMap<ElementType>::const_iterator IdMap<ElementType>::find(const int id) const
-{
-    const auto lower_bound = std::lower_bound(sorted_ids_.cbegin(), sorted_ids_.cend(), id);
-    return (lower_bound == sorted_ids_.cend() || *lower_bound != id)
-        ? elements_.cend()
-        : std::next(elements_.cbegin(), std::distance(sorted_ids_.cbegin(), lower_bound));
-}
-
-template<typename ElementType>
-bool IdMap<ElementType>::contains(const int id) const
-{
-    const auto lower_bound = std::lower_bound(sorted_ids_.cbegin(), sorted_ids_.cend(), id);
-
-    if (lower_bound == sorted_ids_.cend())
-    {
-        return false;
-    }
-
-    return *lower_bound == id;
-}
-
-// a very simple directional graph
+// directional graph
 template<typename NodeT>
 class Graph
 {
 public:
-    Graph() : current_id_(0), nodes_(), edges_from_node_(), node_neighbors_(), edges_() {}
-
-    struct Edge
-    {
-        int id;
-        int from, to;
-
-        Edge() = default;
-        Edge(const int id, const int f, const int t) : id(id), from(f), to(t) {}
-
-        inline int  opposite(const int n) const { return n == from ? to : from; }
-        inline bool contains(const int n) const { return n == from || n == to; }
-
-        friend std::ostream& operator<<(std::ostream& out, const Edge& e)
-        {
-            out << e.id
-                << " "
-                << e.from
-                << " "
-                << e.to;
-            return out;
-        }
-    };
+    Graph() : _CurrentId(0) {}
 
     // Element access
 
-    NodeT& node(int node_id);
-    const NodeT& node(int node_id) const;
-    Span<const int>  neighbors(int node_id) const;
-    Span<const Edge> edges() const;
-    const std::vector<int>& nodes() const { return nodes_.ids(); }
+    NodeT& GetNode(int node_id);
+    const NodeT& GetNode(int node_id) const;
+    Span<const int>  GetNeighbors(int node_id) const;
+    Span<const Edge> GetEdges() const;
+    const std::vector<int>& GetNodes() const { return _Nodes.ids(); }
     
-    const std::vector<int>& edgesFromNodeIds() const { return edges_from_node_.ids(); }
-    Span<const int> edgesFromNode() const { return edges_from_node_.elements(); }
+    const std::vector<int>& GetEdgesFromNodeIds() const { return _EdgesFromNode.ids(); }
+    Span<const int> GetEdgesFromNode() const { return _EdgesFromNode.elements(); }
     
-    const std::vector<int>& allNeighborIds() const { return node_neighbors_.ids(); }
-    Span<const std::vector<int>> allNeighbors() const { return node_neighbors_.elements(); }
+    const std::vector<int>& GetAllNeighborIds() const { return _Neighbors.ids(); }
+    Span<const std::vector<int>> GetAllNeighbors() const { return _Neighbors.elements(); }
 
-    int GetCurrentId() const { return current_id_; }
-    
-
-    size_t GetNodesCount() const { return nodes_.size(); }
+    int GetCurrentId() const { return _CurrentId; }
+    size_t GetNodesCount() const { return _Nodes.size(); }
 
     // Capacity
-
-    size_t num_edges_from_node(int node_id) const;
+    
+    size_t GetNumEdgesFromNode(int node_id) const;
 
     // Modifiers
-    int create_node(const NodeT& node);        
-    void erase_node(int node_id);
 
-    int  create_edge(int from, int to);    
-    void erase_edge(int edge_id);
+    int CreateNode(const NodeT& node);        
+    void EraseNode(int node_id);
 
-    void SetCurrentId(int currentId) { current_id_ = currentId; }
+    int  CreateEdge(int from, int to);    
+    void EraseEdge(int edge_id);
 
-    void reset()
+    void SetCurrentId(int currentId) { _CurrentId = currentId; }
+
+    void Reset()
     {
-        int current_id_ = 0;
-        nodes_.clear();
-        edges_from_node_.clear();
-        node_neighbors_.clear();
-        edges_.clear();
+        int _CurrentId = 0;
+        _Nodes.clear();
+        _EdgesFromNode.clear();
+        _Neighbors.clear();
+        _Edges.clear();
     }
+    
     
     friend std::ostream& operator<<(std::ostream& out, const Graph<NodeT>& g)
     {
-        out << g.current_id_ << "\n";
-        out << g.nodes_.size() << "\n";
+        out << g._CurrentId << "\n";
+        out << g._Nodes.size() << "\n";
         
-        auto& ids = g.nodes_.ids();
+        auto& ids = g._Nodes.ids();
         int i = 0;
-        for (auto it = g.nodes_.begin(); it != g.nodes_.end(); ++it, ++i)
+        for (auto it = g._Nodes.begin(); it != g._Nodes.end(); ++it, ++i)
             out << "n " << ids[i] << " " << *it << "\n";
 
-        out << g.edges_.size() << "\n";
-        auto edges = g.edges_.elements();
+        out << g._Edges.size() << "\n";
+        auto edges = g._Edges.elements();
         for (auto it = edges.begin(); it != edges.end(); ++it)
             out << "e " << *it << "\n";
         
@@ -255,7 +83,7 @@ public:
     {
         std::string comment;
         int numNodes;
-        in >> comment >> g.current_id_ >> numNodes;
+        in >> comment >> g._CurrentId >> numNodes;
 
         std::string nLabel;
         int nId, nType;
@@ -267,7 +95,7 @@ public:
             //LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
             NodeT node(static_cast<NodeType>(nType));
             node.value = nValue;
-            g.insert_node(nId, node);
+            g.InsertNode(nId, node);
         }
 
         int numEdges;
@@ -280,89 +108,88 @@ public:
         {
             in >> eLabel >> eId >> eFrom >> eTo;
             //LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
-            g.insert_edge(eId, eFrom, eTo);
+            g.InsertEdge(eId, eFrom, eTo);
         }
 
         return in;
     }
     
 private:
-    int  insert_node(const int id, const NodeT& node);
-    int  insert_edge(const int id, int from, int to);
+    int  InsertNode(const int id, const NodeT& node);
+    int  InsertEdge(const int id, int from, int to);
 
 private:
-    int current_id_;
+    int _CurrentId;
     // These contains map to the node id
-    IdMap<NodeT>            nodes_;
-    IdMap<int>              edges_from_node_;
-    IdMap<std::vector<int>> node_neighbors_;
+    IdMap<NodeT>            _Nodes;
+    IdMap<int>              _EdgesFromNode;
+    IdMap<std::vector<int>> _Neighbors;
 
     // This container maps to the edge id
-    IdMap<Edge> edges_;
+    IdMap<Edge> _Edges;
 };
 
 template<typename NodeT>
-NodeT& Graph<NodeT>::node(const int id)
+NodeT& Graph<NodeT>::GetNode(const int id)
 {
-    return const_cast<NodeT&>(static_cast<const Graph*>(this)->node(id));
+    return const_cast<NodeT&>(static_cast<const Graph*>(this)->GetNode(id));
 }
 
 template<typename NodeT>
-const NodeT& Graph<NodeT>::node(const int id) const
+const NodeT& Graph<NodeT>::GetNode(const int id) const
 {
-    const auto iter = nodes_.find(id);
-    assert(iter != nodes_.end());
+    const auto iter = _Nodes.find(id);
+    assert(iter != _Nodes.end());
     return *iter;
 }
 
 template<typename NodeT>
-Span<const int> Graph<NodeT>::neighbors(int node_id) const
+Span<const int> Graph<NodeT>::GetNeighbors(int node_id) const
 {
-    const auto iter = node_neighbors_.find(node_id);
-    assert(iter != node_neighbors_.end());
+    const auto iter = _Neighbors.find(node_id);
+    assert(iter != _Neighbors.end());
     return *iter;
 }
 
 template<typename NodeT>
-Span<const typename Graph<NodeT>::Edge> Graph<NodeT>::edges() const
+Span<const typename Edge> Graph<NodeT>::GetEdges() const
 {
-    return edges_.elements();
+    return _Edges.elements();
 }
 
 template<typename NodeT>
-size_t Graph<NodeT>::num_edges_from_node(const int id) const
+size_t Graph<NodeT>::GetNumEdgesFromNode(const int id) const
 {
-    auto iter = edges_from_node_.find(id);
-    assert(iter != edges_from_node_.end());
+    auto iter = _EdgesFromNode.find(id);
+    assert(iter != _EdgesFromNode.end());
     return *iter;
 }
 
 template<typename NodeT>
-int Graph<NodeT>::create_node(const NodeT& node)
+int Graph<NodeT>::CreateNode(const NodeT& node)
 {
-    const int id = current_id_++;    
-    return insert_node(id, node);
+    const int id = _CurrentId++;    
+    return InsertNode(id, node);
 }
 
 template<typename NodeT>
-int Graph<NodeT>::insert_node(const int id, const NodeT& node)
+int Graph<NodeT>::InsertNode(const int id, const NodeT& node)
 {
-    assert(!nodes_.contains(id));
-    nodes_.insert(id, node);
-    edges_from_node_.insert(id, 0);
-    node_neighbors_.insert(id, std::vector<int>());
+    assert(!_Nodes.contains(id));
+    _Nodes.insert(id, node);
+    _EdgesFromNode.insert(id, 0);
+    _Neighbors.insert(id, std::vector<int>());
     return id;
 }
 
 template<typename NodeT>
-void Graph<NodeT>::erase_node(const int id)
+void Graph<NodeT>::EraseNode(const int id)
 {
-
     // first, remove any potential dangling edges
     {
         static std::vector<int> edges_to_erase;
 
-        for (const Edge& edge : edges_.elements())
+        for (const Edge& edge : _Edges.elements())
         {
             if (edge.contains(id))
             {
@@ -372,67 +199,68 @@ void Graph<NodeT>::erase_node(const int id)
 
         for (const int edge_id : edges_to_erase)
         {
-            erase_edge(edge_id);
+            EraseEdge(edge_id);
         }
 
         edges_to_erase.clear();
     }
 
-    nodes_.erase(id);
-    edges_from_node_.erase(id);
-    node_neighbors_.erase(id);
+    _Nodes.erase(id);
+    _EdgesFromNode.erase(id);
+    _Neighbors.erase(id);
 }
 
 template<typename NodeT>
-int Graph<NodeT>::create_edge(const int from, const int to)
+int Graph<NodeT>::CreateEdge(const int from, const int to)
 {
-    const int id = current_id_++;
-    return insert_edge(id, from, to);
+    const int id = _CurrentId++;
+    return InsertEdge(id, from, to);
 }
 
 template<typename NodeT>
-int Graph<NodeT>::insert_edge(const int id, const int from, const int to)
+int Graph<NodeT>::InsertEdge(const int id, const int from, const int to)
 {
-    assert(!edges_.contains(id));
-    assert(nodes_.contains(from));
-    assert(nodes_.contains(to));
-    edges_.insert(id, Edge(id, from, to));
+    assert(!_Edges.contains(id));
+    assert(_Nodes.contains(from));
+    assert(_Nodes.contains(to));
+    _Edges.insert(id, Edge(id, from, to));
 
     // update neighbor count
-    assert(edges_from_node_.contains(from));
-    *edges_from_node_.find(from) += 1;
+    assert(_EdgesFromNode.contains(from));
+    *_EdgesFromNode.find(from) += 1;
     // update neighbor list
-    assert(node_neighbors_.contains(from));
-    node_neighbors_.find(from)->push_back(to);
+    assert(_Neighbors.contains(from));
+    _Neighbors.find(from)->push_back(to);
 
     return id;
 }
 
 template<typename NodeT>
-void Graph<NodeT>::erase_edge(const int edge_id)
+void Graph<NodeT>::EraseEdge(const int edge_id)
 {
     // This is a bit lazy, we find the pointer here, but we refind it when we erase the edge based
     // on id key.
-    assert(edges_.contains(edge_id));
-    const Edge& edge = *edges_.find(edge_id);
+    assert(_Edges.contains(edge_id));
+    const Edge& edge = *_Edges.find(edge_id);
 
     // update neighbor count
-    assert(edges_from_node_.contains(edge.from));
-    int& edge_count = *edges_from_node_.find(edge.from);
+    assert(_EdgesFromNode.contains(edge.from));
+    int& edge_count = *_EdgesFromNode.find(edge.from);
     assert(edge_count > 0);
     edge_count -= 1;
 
     // update neighbor list
     {
-        assert(node_neighbors_.contains(edge.from));
-        auto neighbors = node_neighbors_.find(edge.from);
+        assert(_Neighbors.contains(edge.from));
+        auto neighbors = _Neighbors.find(edge.from);
         auto iter = std::find(neighbors->begin(), neighbors->end(), edge.to);
         assert(iter != neighbors->end());
         neighbors->erase(iter);
     }
 
-    edges_.erase(edge_id);
+    _Edges.erase(edge_id);
 }
+
 
 template<typename NodeT, typename Visitor>
 void dfs_traverse(const Graph<NodeT>& graph, const int start_node, Visitor visitor)
@@ -448,7 +276,7 @@ void dfs_traverse(const Graph<NodeT>& graph, const int start_node, Visitor visit
 
         visitor(current_node);
 
-        for (const int neighbor : graph.neighbors(current_node))
+        for (const int neighbor : graph.GetNeighbors(current_node))
         {
             stack.push(neighbor);
         }

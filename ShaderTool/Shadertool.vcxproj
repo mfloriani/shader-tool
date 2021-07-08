@@ -97,7 +97,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Defines.h" />
+    <ClInclude Include="src\Editor\Edge.h" />
     <ClInclude Include="src\Editor\Graph.h" />
+    <ClInclude Include="src\Editor\IdMap.h" />
     <ClInclude Include="src\Editor\ImGui\imconfig.h" />
     <ClInclude Include="src\Editor\ImGui\imgui.h" />
     <ClInclude Include="src\Editor\ImGui\imgui_impl_dx12.h" />
@@ -109,7 +111,8 @@
     <ClInclude Include="src\Editor\ImGui\imstb_textedit.h" />
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h" />
     <ClInclude Include="src\Editor\NodeGraphEditor.h" />
-    <ClInclude Include="src\EditorApp.h" />
+    <ClInclude Include="src\Node.h" />
+    <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Rendering\D3DApp.h" />
@@ -146,7 +149,8 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\EditorApp.cpp" />
+    <ClCompile Include="src\Editor\NodeGraphEditor.cpp" />
+    <ClCompile Include="src\ShaderToolApp.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />

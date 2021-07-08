@@ -49,7 +49,7 @@
     <ClInclude Include="src\Editor\NodeGraphEditor.h">
       <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="src\EditorApp.h" />
+    <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Rendering\D3DApp.h">
@@ -74,6 +74,9 @@
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\Node.h" />
+    <ClInclude Include="src\Editor\Edge.h" />
+    <ClInclude Include="src\Editor\IdMap.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
@@ -100,7 +103,7 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="src\EditorApp.cpp" />
+    <ClCompile Include="src\ShaderToolApp.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -120,6 +123,7 @@
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\Editor\NodeGraphEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\DefaultPS.hlsl" />
