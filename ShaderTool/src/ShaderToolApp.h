@@ -39,6 +39,7 @@ public:
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
 	void LoadDefaultMeshes();
+	void RenderToTexture();
 
 	const GameTimer& GetTimer() const { return _Timer; }
 

@@ -610,6 +610,18 @@ void ShaderToolApp::RenderNodeGraph()
 	ImGui::Begin("output color");
 	ImGui::End();
 	ImGui::PopStyleColor();
+
+
+
+	static int w = 256;
+	static int h = 256;
+	ImGui::Begin("Render Target");
+	//ImGui::Text("CPU handle = %p", _RenderTexture->SRV().ptr);
+	//ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
+	ImGui::Text("size = %d x %d", w, h);
+	ImGui::Image((ImTextureID)_RenderTexture->SRV().ptr, ImVec2((float)w, (float)h));
+	ImGui::End();
+
 }
 
 void ShaderToolApp::Save()

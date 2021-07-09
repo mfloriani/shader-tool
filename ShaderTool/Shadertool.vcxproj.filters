@@ -100,7 +100,7 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="src\ShaderToolApp.cpp" />
+    <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -121,6 +121,7 @@
     </ClCompile>
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
+    <ClCompile Include="src\ShaderToolApp_Init.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\DefaultPS.hlsl" />

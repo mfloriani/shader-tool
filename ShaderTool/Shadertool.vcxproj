@@ -148,7 +148,7 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\ShaderToolApp.cpp" />
+    <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -160,6 +160,7 @@
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\ShaderToolApp_Init.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
   </ItemGroup>
   <ItemGroup>
