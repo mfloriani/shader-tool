@@ -15,7 +15,6 @@
 #define VK_N 0x4E
 
 static float current_time_seconds = 0.f;
-static GameTimer _Timer;
 
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
