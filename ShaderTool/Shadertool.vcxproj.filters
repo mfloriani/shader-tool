@@ -46,9 +46,6 @@
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\NodeGraphEditor.h">
-      <Filter>Editor</Filter>
-    </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
@@ -74,7 +71,7 @@
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Node.h" />
+    <ClInclude Include="src\Editor\Node.h" />
     <ClInclude Include="src\Editor\Edge.h" />
     <ClInclude Include="src\Editor\IdMap.h" />
   </ItemGroup>
@@ -123,7 +120,7 @@
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\Editor\NodeGraphEditor.cpp" />
+    <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\DefaultPS.hlsl" />

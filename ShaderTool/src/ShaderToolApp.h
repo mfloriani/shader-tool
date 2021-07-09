@@ -7,6 +7,9 @@
 #include "GameTimer.h"
 #include "Rendering\D3DApp.h"
 #include "Rendering\RenderTexture.h"
+#include "Editor\Node.h"
+#include "Editor\Graph.h"
+
 
 class ShaderToolApp : public D3DApp
 {
@@ -22,6 +25,7 @@ public:
 	void UpdateCamera();
 	void UpdatePerFrameCB();
 	void UpdatePerObjectCB();
+	void RenderNodeGraph();
 
 	virtual void OnUpdate() override;
 	virtual void OnRender() override;
@@ -58,7 +62,17 @@ private:
 	std::unordered_map<std::string, std::unique_ptr<D3DUtil::MeshGeometry>> _Meshes;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
-
+	
 	// TODO: move this to the editor file?
 	std::unique_ptr<RenderTexture>               _RenderTexture;
+
+private: // Node Graph
+	Graph<Node>         _Graph;
+	std::vector<UiNode> _UINodes;
+	int                 _RootNodeId;
+
+	void Reset();
+	void Save();
+	void Load();
+
 };

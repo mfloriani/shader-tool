@@ -1,13 +1,12 @@
 #include "pch.h"
 #include "ShaderToolApp.h"
-#include "Editor\NodeGraphEditor.h"
 
 using namespace DirectX;
 using namespace D3DUtil;
 
 using Microsoft::WRL::ComPtr;
 
-ShaderToolApp::ShaderToolApp(HINSTANCE hInstance) : D3DApp(hInstance)
+ShaderToolApp::ShaderToolApp(HINSTANCE hInstance) : D3DApp(hInstance), _RootNodeId(-1)
 {
 
 }
@@ -16,7 +15,6 @@ ShaderToolApp::~ShaderToolApp()
 {
 	LOG_TRACE("ShaderToolApp::~ShaderToolApp()");
 	FlushCommandQueue();
-	NodeGraphEd.Quit();
 }
 
 void ShaderToolApp::OnKeyDown(WPARAM key)
@@ -74,7 +72,10 @@ bool ShaderToolApp::Init()
 
 	FlushCommandQueue();
 
-	NodeGraphEd.Init();
+	// Node graph
+	_Timer.Reset();
+	ImNodesIO& io = ImNodes::GetIO();
+	io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
 	return true;
 }
@@ -217,6 +218,8 @@ void ShaderToolApp::UpdatePerObjectCB()
 
 }
 
+
+
 void ShaderToolApp::OnUpdate()
 {
 	_Timer.Tick();
@@ -356,7 +359,8 @@ void ShaderToolApp::OnRender()
 #if 1
 	NewUIFrame();
 	RenderUIDockSpace();
-	NodeGraphEd.Render();
+	
+	RenderNodeGraph();
 
 	static int w = 256;
 	static int h = 256;
@@ -770,3 +774,4 @@ void ShaderToolApp::RenderUIDockSpace()
 
 	ImGui::End();
 }
+
