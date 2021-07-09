@@ -19,7 +19,7 @@ bool ShaderToolApp::Init()
 	XMStoreFloat4x4(&_RTProj, P);
 
 	// RENDER-TO-TEXTURE
-	_RenderTexture = std::make_unique<RenderTexture>(
+	_RenderTarget = std::make_unique<RenderTexture>(
 		_Device.Get(),
 		_BackBufferFormat,
 		width,
@@ -51,7 +51,7 @@ bool ShaderToolApp::Init()
 
 void ShaderToolApp::CreateDescriptorHeaps()
 {
-	_RenderTexture->CreateDescriptors(
+	_RenderTarget->CreateDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
 		CD3DX12_GPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), NUM_BACK_BUFFERS, _RtvDescriptorSize)

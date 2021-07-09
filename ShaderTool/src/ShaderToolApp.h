@@ -64,14 +64,13 @@ private:
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
 	
-	// TODO: move this to the editor file?
-	std::unique_ptr<RenderTexture>               _RenderTexture;
-
 private: // Node Graph
 	Graph<Node>         _Graph;
 	std::vector<UiNode> _UINodes;
 	int                 _RootNodeId;
 
+	std::unique_ptr<RenderTexture> _RenderTarget; // TODO: at the moment only 1 render target supported
+		
 	void Reset();
 	void Save();
 	void Load();

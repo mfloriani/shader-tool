@@ -80,8 +80,8 @@ void ShaderToolApp::OnResize(uint32_t width, uint32_t height)
 	XMStoreFloat4x4(&_Proj, P);
 
 	// TODO: move this to the resize event of the render target node 
-	if(_RenderTexture)
-		_RenderTexture->OnResize(width, height);
+	//if(_RenderTarget)
+	//	_RenderTarget->OnResize(width, height);
 }
 
 void ShaderToolApp::UpdateCamera()
@@ -378,14 +378,14 @@ void ShaderToolApp::RenderToTexture()
 	_CommandList->ResourceBarrier(
 		1,
 		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTexture->GetResource(),
+			_RenderTarget->GetResource(),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	_CommandList->RSSetViewports(1, &_RenderTexture->GetViewPort());
-	_CommandList->RSSetScissorRects(1, &_RenderTexture->GetScissorRect());
-	_CommandList->ClearRenderTargetView(_RenderTexture->RTV(), _RenderTexture->GetClearColor(), 0, nullptr);
-	_CommandList->OMSetRenderTargets(1, &_RenderTexture->RTV(), true, nullptr);
+	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
+	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
+	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
+	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
 
 	// BOX
 	{
@@ -414,7 +414,7 @@ void ShaderToolApp::RenderToTexture()
 	_CommandList->ResourceBarrier(
 		1,
 		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTexture->GetResource(),
+			_RenderTarget->GetResource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_GENERIC_READ));
 }

@@ -39,4 +39,5 @@ private:
 	DXGI_FORMAT			                   _Format;
 	UINT                                   _Width;
 	UINT                                   _Height;
+	UINT                                   _SrvDescHandleOffset;
 };

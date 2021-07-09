@@ -123,6 +123,14 @@ struct UiNode
         }
         case UiNodeType::time:
             break;
+
+        case UiNodeType::renderTarget:
+
+            // TODO: the input should point to the draw node
+            out << " "
+                << n.renderTarget.input;
+            break;
+
         default:
             LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(n.type));
             break;
@@ -167,6 +175,13 @@ struct UiNode
         case UiNodeType::time:
             //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
             break;
+
+        case UiNodeType::renderTarget:
+            //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
+
+            in >> uiNode.renderTarget.input;
+            break;
+
         default:
             LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(uiNode.type));
             break;

@@ -66,6 +66,19 @@ ImU32 evaluate(const Graph<Node>& graph, const int rootId)
 			valueStack.push(current_time_seconds);
 		}
 		break;
+
+		case NodeType::renderTarget:
+		{
+			const float x = valueStack.top();
+			valueStack.pop();
+			//const float res = std::abs(std::sin(x));
+			valueStack.push(x);
+		}
+		break;
+
+		
+
+
 		case NodeType::value:
 		{
 			// If the edge does not have an edge connecting to another node, then just use the value
@@ -77,15 +90,7 @@ ImU32 evaluate(const Graph<Node>& graph, const int rootId)
 			}
 		}
 		break;
-		case NodeType::renderTarget:
-		{
-			const float x = valueStack.top();
-			valueStack.pop();
-			//const float res = std::abs(std::sin(x));
-			valueStack.push(x);
-		}
-		break;
-
+		
 		default:
 			break;
 		}
@@ -441,8 +446,7 @@ void ShaderToolApp::RenderNodeGraph()
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.sine.input).value, 0.01f, 0.f, 1.0f);
+					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.sine.input).value, 0.01f, 0.f, 1.0f);
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
@@ -493,21 +497,24 @@ void ShaderToolApp::RenderNodeGraph()
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.renderTarget.input).value, 0.01f, 0.f, 1.0f);
+					
+					// TODO: handle the output from "draw" node
+					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.renderTarget.input).value, 1.f, 0.f, 1000.f);
+
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
+
+
+				static int w = 256;
+				static int h = 256;
+				//ImGui::Text("size = %d x %d", w, h);
+				ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
+
 			}
 
 			
-			static int w = 256;
-			static int h = 256;
-			//ImGui::Begin("Render Target");
-			//ImGui::Text("CPU handle = %p", _RenderTexture->SRV().ptr);
-			//ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
-			ImGui::Text("size = %d x %d", w, h);
-			ImGui::Image((ImTextureID)_RenderTexture->SRV().ptr, ImVec2((float)w, (float)h));
-			//ImGui::End();
+			
 
 
 			ImNodes::EndNode();
@@ -685,15 +692,15 @@ void ShaderToolApp::RenderNodeGraph()
 	ImGui::PopStyleColor();
 
 
-
-	static int w = 256;
-	static int h = 256;
-	ImGui::Begin("Render Target");
-	//ImGui::Text("CPU handle = %p", _RenderTexture->SRV().ptr);
-	//ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
-	ImGui::Text("size = %d x %d", w, h);
-	ImGui::Image((ImTextureID)_RenderTexture->SRV().ptr, ImVec2((float)w, (float)h));
-	ImGui::End();
+	// Window with the render texture
+	//static int w = 256;
+	//static int h = 256;
+	//ImGui::Begin("Render Target");
+	////ImGui::Text("CPU handle = %p", _RenderTexture->SRV().ptr);
+	////ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
+	//ImGui::Text("size = %d x %d", w, h);
+	//ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
+	//ImGui::End();
 
 }
 
