@@ -77,6 +77,15 @@ ImU32 evaluate(const Graph<Node>& graph, const int rootId)
 			}
 		}
 		break;
+		case NodeType::renderTarget:
+		{
+			const float x = valueStack.top();
+			valueStack.pop();
+			//const float res = std::abs(std::sin(x));
+			valueStack.push(x);
+		}
+		break;
+
 		default:
 			break;
 		}
@@ -121,6 +130,8 @@ void ShaderToolApp::RenderNodeGraph()
 			ImGui::OpenPopup("add node");
 		}
 
+		// ADD NEW UI NODE
+
 		if (ImGui::BeginPopup("add node"))
 		{
 			const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
@@ -161,21 +172,21 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
-			if (ImGui::MenuItem("output") && _RootNodeId == -1)
+			if (ImGui::MenuItem("draw") && _RootNodeId == -1)
 			{
 				const Node value(NodeType::value, 0.f);
-				const Node out(NodeType::output);
+				const Node out(NodeType::draw);
 
 				UiNode ui_node;
-				ui_node.type = UiNodeType::output;
-				ui_node.output.r = _Graph.CreateNode(value);
-				ui_node.output.g = _Graph.CreateNode(value);
-				ui_node.output.b = _Graph.CreateNode(value);
+				ui_node.type = UiNodeType::draw;
+				ui_node.draw.r = _Graph.CreateNode(value);
+				ui_node.draw.g = _Graph.CreateNode(value);
+				ui_node.draw.b = _Graph.CreateNode(value);
 				ui_node.id = _Graph.CreateNode(out);
 
-				_Graph.CreateEdge(ui_node.id, ui_node.output.r);
-				_Graph.CreateEdge(ui_node.id, ui_node.output.g);
-				_Graph.CreateEdge(ui_node.id, ui_node.output.b);
+				_Graph.CreateEdge(ui_node.id, ui_node.draw.r);
+				_Graph.CreateEdge(ui_node.id, ui_node.draw.g);
+				_Graph.CreateEdge(ui_node.id, ui_node.draw.b);
 
 				_UINodes.push_back(ui_node);
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
@@ -208,10 +219,28 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
+			if (ImGui::MenuItem("render target"))
+			{
+				const Node value(NodeType::value, 0.f);
+				const Node op(NodeType::renderTarget);
+
+				UiNode ui_node;
+				ui_node.type = UiNodeType::renderTarget;
+				ui_node.renderTarget.input = _Graph.CreateNode(value);
+				ui_node.id = _Graph.CreateNode(op);
+
+				_Graph.CreateEdge(ui_node.id, ui_node.renderTarget.input);
+
+				_UINodes.push_back(ui_node);
+				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+			}
+
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleVar();
 	}
+
+	// RENDER UI NODES
 
 	for (const UiNode& node : _UINodes)
 	{
@@ -318,7 +347,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNode();
 		}
 		break;
-		case UiNodeType::output:
+		case UiNodeType::draw:
 		{
 			const float node_width = 100.0f;
 			ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
@@ -327,20 +356,19 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("output");
+			ImGui::TextUnformatted("draw");
 			ImNodes::EndNodeTitleBar();
 
 			ImGui::Dummy(ImVec2(node_width, 0.f));
 			{
-				ImNodes::BeginInputAttribute(node.output.r);
+				ImNodes::BeginInputAttribute(node.draw.r);
 				const float label_width = ImGui::CalcTextSize("r").x;
 				ImGui::TextUnformatted("r");
-				if (_Graph.GetNumEdgesFromNode(node.output.r) == 0ull)
+				if (_Graph.GetNumEdgesFromNode(node.draw.r) == 0ull)
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.output.r).value, 0.01f, 0.f, 1.0f);
+					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
@@ -349,15 +377,15 @@ void ShaderToolApp::RenderNodeGraph()
 			ImGui::Spacing();
 
 			{
-				ImNodes::BeginInputAttribute(node.output.g);
+				ImNodes::BeginInputAttribute(node.draw.g);
 				const float label_width = ImGui::CalcTextSize("g").x;
 				ImGui::TextUnformatted("g");
-				if (_Graph.GetNumEdgesFromNode(node.output.g) == 0ull)
+				if (_Graph.GetNumEdgesFromNode(node.draw.g) == 0ull)
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
 					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.output.g).value, 0.01f, 0.f, 1.f);
+						"##hidelabel", &_Graph.GetNode(node.draw.g).value, 0.01f, 0.f, 1.f);
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
@@ -366,19 +394,30 @@ void ShaderToolApp::RenderNodeGraph()
 			ImGui::Spacing();
 
 			{
-				ImNodes::BeginInputAttribute(node.output.b);
+				ImNodes::BeginInputAttribute(node.draw.b);
 				const float label_width = ImGui::CalcTextSize("b").x;
 				ImGui::TextUnformatted("b");
-				if (_Graph.GetNumEdgesFromNode(node.output.b) == 0ull)
+				if (_Graph.GetNumEdgesFromNode(node.draw.b) == 0ull)
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
 					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.output.b).value, 0.01f, 0.f, 1.0f);
+						"##hidelabel", &_Graph.GetNode(node.draw.b).value, 0.01f, 0.f, 1.0f);
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
 			}
+
+			ImGui::Spacing();
+
+			{
+				ImNodes::BeginOutputAttribute(node.id);
+				const float label_width = ImGui::CalcTextSize("output").x;
+				ImGui::Indent(node_width - label_width);
+				ImGui::TextUnformatted("output");
+				ImNodes::EndInputAttribute();
+			}
+
 			ImNodes::EndNode();
 			ImNodes::PopColorStyle();
 			ImNodes::PopColorStyle();
@@ -437,6 +476,42 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNode();
 		}
 		break;
+		case UiNodeType::renderTarget:
+		{
+			const float node_width = 100.0f;
+			ImNodes::BeginNode(node.id);
+
+			ImNodes::BeginNodeTitleBar();
+			ImGui::TextUnformatted("render target");
+			ImNodes::EndNodeTitleBar();
+
+			{
+				ImNodes::BeginInputAttribute(node.renderTarget.input);
+				const float label_width = ImGui::CalcTextSize("input").x;
+				ImGui::TextUnformatted("input");
+				if (_Graph.GetNumEdgesFromNode(node.renderTarget.input) == 0ull)
+				{
+					ImGui::SameLine();
+					ImGui::PushItemWidth(node_width - label_width);
+					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.renderTarget.input).value, 0.01f, 0.f, 1.0f);
+					ImGui::PopItemWidth();
+				}
+				ImNodes::EndInputAttribute();
+			}
+
+			//ImGui::Spacing();
+
+			//{
+			//	ImNodes::BeginOutputAttribute(node.id);
+			//	const float label_width = ImGui::CalcTextSize("output").x;
+			//	ImGui::Indent(node_width - label_width);
+			//	ImGui::TextUnformatted("output");
+			//	ImNodes::EndInputAttribute();
+			//}
+
+			ImNodes::EndNode();
+		}
+		break;
 		}
 	}
 
@@ -450,12 +525,6 @@ void ShaderToolApp::RenderNodeGraph()
 
 		ImNodes::Link(edge.id, edge.from, edge.to);
 	}
-
-
-
-
-
-
 
 
 
@@ -533,14 +602,17 @@ void ShaderToolApp::RenderNodeGraph()
 					_Graph.EraseNode(iter->multiply.lhs);
 					_Graph.EraseNode(iter->multiply.rhs);
 					break;
-				case UiNodeType::output:
-					_Graph.EraseNode(iter->output.r);
-					_Graph.EraseNode(iter->output.g);
-					_Graph.EraseNode(iter->output.b);
+				case UiNodeType::draw:
+					_Graph.EraseNode(iter->draw.r);
+					_Graph.EraseNode(iter->draw.g);
+					_Graph.EraseNode(iter->draw.b);
 					_RootNodeId = -1;
 					break;
 				case UiNodeType::sine:
 					_Graph.EraseNode(iter->sine.input);
+					break;
+				case UiNodeType::renderTarget:
+					_Graph.EraseNode(iter->renderTarget.input);
 					break;
 				default:
 					break;

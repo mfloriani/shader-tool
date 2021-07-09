@@ -6,19 +6,21 @@ enum class UiNodeType
 {
     add,
     multiply,
-    output,
+    draw,
     sine,
     time,
+    renderTarget
 };
 
 enum class NodeType
 {
     add,
     multiply,
-    output,
+    draw,
     sine,
     time,
-    value
+    value,
+    renderTarget
 };
 
 struct Node
@@ -66,12 +68,17 @@ struct UiNode
         struct
         {
             int r, g, b;
-        } output;
+        } draw;
 
         struct
         {
             int input;
         } sine;
+
+        struct
+        {
+            int input;
+        } renderTarget;
     };
 
     friend std::ostream& operator<<(std::ostream& out, const UiNode& n)
@@ -98,14 +105,14 @@ struct UiNode
                 << n.multiply.rhs;
             break;
         }
-        case UiNodeType::output:
+        case UiNodeType::draw:
         {
             out << " "
-                << n.output.r
+                << n.draw.r
                 << " "
-                << n.output.g
+                << n.draw.g
                 << " "
-                << n.output.b;
+                << n.draw.b;
             break;
         }
         case UiNodeType::sine:
@@ -145,9 +152,9 @@ struct UiNode
             //LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
             break;
         }
-        case UiNodeType::output:
+        case UiNodeType::draw:
         {
-            in >> uiNode.output.r >> uiNode.output.g >> uiNode.output.b;
+            in >> uiNode.draw.r >> uiNode.draw.g >> uiNode.draw.b;
             //LOG_TRACE("{0} {1} {2} {3} {4}", uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
             break;
         }
