@@ -111,6 +111,7 @@
     <ClInclude Include="src\Editor\ImGui\imstb_textedit.h" />
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h" />
     <ClInclude Include="src\Editor\Node.h" />
+    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />

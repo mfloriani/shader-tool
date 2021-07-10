@@ -74,6 +74,7 @@
     <ClInclude Include="src\Editor\Node.h" />
     <ClInclude Include="src\Editor\Edge.h" />
     <ClInclude Include="src\Editor\IdMap.h" />
+    <ClInclude Include="src\Entity.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">

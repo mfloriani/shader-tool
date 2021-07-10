@@ -137,19 +137,21 @@ void ShaderToolApp::UpdatePerObjectCB()
 
 	// BOX ROTATION
 	{
-		FLOAT size = 10.f;
-		auto scale = XMMatrixScaling(1.f * size, 1.f * size, 1.f * size);
-		auto rotation = XMMatrixRotationY(_Timer.TotalTime());
-
+		_Cube.Rotation = { 0.f, _Timer.TotalTime(), 0.f };
+		auto rotation = XMMatrixRotationY(_Cube.Rotation.y);
+		auto scale = XMMatrixScaling(_Cube.Scale.x, _Cube.Scale.y, _Cube.Scale.z);
 		world = XMMatrixMultiply(scale, rotation);
 
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+		
+		objConstants.Color = _Cube.Color;
 
-		int objCBIndex = 0; // TODO: handle multiple objects
+		int objCBIndex = _Cube.Id; // TODO: handle multiple objects
 		currObjectCB->CopyData(objCBIndex, objConstants);
 	}
 
+#if 0
 	// QUAD
 	{
 		//world = XMMatrixIdentity();
@@ -162,7 +164,7 @@ void ShaderToolApp::UpdatePerObjectCB()
 		int objCBIndex = 1; // TODO: handle multiple objects
 		currObjectCB->CopyData(objCBIndex, objConstants);
 	}
-
+#endif
 }
 
 
@@ -183,13 +185,13 @@ void ShaderToolApp::OnRender()
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	commandAllocator->Reset();
 	
-	_CommandList->Reset(commandAllocator.Get(), _PSOs["render_target"].Get());
+	_CommandList->Reset(commandAllocator.Get(), nullptr);
 	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
 
 	auto frameCB = _CurrFrameResource->FrameCB->Resource();
 	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
 	
-	RenderToTexture();
+	EvaluateGraph();
 	
 	// Render to back buffer
 	{
@@ -382,6 +384,7 @@ void ShaderToolApp::RenderToTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
@@ -389,7 +392,8 @@ void ShaderToolApp::RenderToTexture()
 
 	// BOX
 	{
-		auto& box = _Meshes["box_geo"]; // TODO: avoid direct access
+		//auto box = _Cube.Mesh;
+		auto box = _Meshes["box_geo"].get(); // TODO: avoid direct access to map, the value might not exists
 
 		_CommandList->IASetVertexBuffers(0, 1, &box->VertexBufferView());
 		_CommandList->IASetIndexBuffer(&box->IndexBufferView());
@@ -398,7 +402,7 @@ void ShaderToolApp::RenderToTexture()
 		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
 
-		UINT objCBIndex = 0; // TODO: check this
+		UINT objCBIndex = _Cube.Id; // TODO: check this
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
 		objCBAddress += objCBIndex * objCBByteSize;
 

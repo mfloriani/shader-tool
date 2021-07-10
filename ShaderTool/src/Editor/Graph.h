@@ -266,7 +266,6 @@ template<typename NodeT, typename Visitor>
 void dfs_traverse(const Graph<NodeT>& graph, const int start_node, Visitor visitor)
 {
     std::stack<int> stack;
-
     stack.push(start_node);
 
     while (!stack.empty())

@@ -21,17 +21,21 @@ void mini_map_node_hovering_callback(int nodeId, void* userData)
 	ImGui::SetTooltip("This is node %d", nodeId);
 }
 
-ImU32 evaluate(const Graph<Node>& graph, const int rootId)
+void ShaderToolApp::EvaluateGraph()
 {
+	if (_RootNodeId == -1)
+		return;
+	//ImU32 color = IM_COL32(1.f, 0.f, 1.f, 255);
+
 	std::stack<int> postorder;
-	dfs_traverse(graph, rootId, [&postorder](const int nodeId) -> void { postorder.push(nodeId); });
+	dfs_traverse(_Graph, _RootNodeId, [&postorder](const int nodeId) -> void { postorder.push(nodeId); });
 
 	std::stack<float> valueStack;
 	while (!postorder.empty())
 	{
 		const int id = postorder.top();
 		postorder.pop();
-		const Node node = graph.GetNode(id);
+		const Node node = _Graph.GetNode(id);
 
 		switch (node.type)
 		{
@@ -77,14 +81,35 @@ ImU32 evaluate(const Graph<Node>& graph, const int rootId)
 		break;
 
 		
+		case NodeType::draw:
+		{
+			// The final output node isn't evaluated in the loop -- instead we just pop
+			// the three values which should be in the stack.
+			assert(valueStack.size() == 3ull);
+			//const int b = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
+			const float b = std::clamp(valueStack.top(), 0.f, 1.f);
+			valueStack.pop();
+			//const int g = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
+			const float g = std::clamp(valueStack.top(), 0.f, 1.f);
+			valueStack.pop();
+			//const int r = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
+			const float r = std::clamp(valueStack.top(), 0.f, 1.f);
+			valueStack.pop();
 
+			//color = IM_COL32(r, g, b, 255);
+			_Cube.Color = { r, g, b };
+
+			RenderToTexture();
+
+		}
+		break;
 
 		case NodeType::value:
 		{
 			// If the edge does not have an edge connecting to another node, then just use the value
 			// at this node. It means the node's input pin has not been connected to anything and
 			// the value comes from the node's UI.
-			if (graph.GetNumEdgesFromNode(id) == 0ull)
+			if (_Graph.GetNumEdgesFromNode(id) == 0ull)
 			{
 				valueStack.push(node.value);
 			}
@@ -95,18 +120,6 @@ ImU32 evaluate(const Graph<Node>& graph, const int rootId)
 			break;
 		}
 	}
-
-	// The final output node isn't evaluated in the loop -- instead we just pop
-	// the three values which should be in the stack.
-	assert(valueStack.size() == 3ull);
-	const int b = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
-	valueStack.pop();
-	const int g = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
-	valueStack.pop();
-	const int r = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
-	valueStack.pop();
-
-	return IM_COL32(r, g, b, 255);
 }
 
 
@@ -195,6 +208,7 @@ void ShaderToolApp::RenderNodeGraph()
 
 				_UINodes.push_back(ui_node);
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+
 				_RootNodeId = ui_node.id;
 			}
 
@@ -238,6 +252,8 @@ void ShaderToolApp::RenderNodeGraph()
 
 				_UINodes.push_back(ui_node);
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+
+				//_RootNodeId = ui_node.id;
 			}
 
 			ImGui::EndPopup();
@@ -389,8 +405,7 @@ void ShaderToolApp::RenderNodeGraph()
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.draw.g).value, 0.01f, 0.f, 1.f);
+					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.g).value, 0.01f, 0.f, 1.f);
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
@@ -406,8 +421,7 @@ void ShaderToolApp::RenderNodeGraph()
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.draw.b).value, 0.01f, 0.f, 1.0f);
+					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.b).value, 0.01f, 0.f, 1.0f);
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
@@ -499,7 +513,7 @@ void ShaderToolApp::RenderNodeGraph()
 					ImGui::PushItemWidth(node_width - label_width);
 					
 					// TODO: handle the output from "draw" node
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.renderTarget.input).value, 1.f, 0.f, 1000.f);
+					//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.renderTarget.input).value, 1.f, 0.f, 1000.f);
 
 					ImGui::PopItemWidth();
 				}
@@ -512,10 +526,6 @@ void ShaderToolApp::RenderNodeGraph()
 				ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
 
 			}
-
-			
-			
-
 
 			ImNodes::EndNode();
 		}
@@ -621,6 +631,7 @@ void ShaderToolApp::RenderNodeGraph()
 					break;
 				case UiNodeType::renderTarget:
 					_Graph.EraseNode(iter->renderTarget.input);
+					
 					break;
 				default:
 					break;
@@ -680,28 +691,7 @@ void ShaderToolApp::RenderNodeGraph()
 		Reset();
 	}
 
-
-
 	ImGui::End();
-
-	// The color output window
-	const ImU32 color = _RootNodeId != -1 ? evaluate(_Graph, _RootNodeId) : IM_COL32(255, 20, 147, 255);
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, color);
-	ImGui::Begin("output color");
-	ImGui::End();
-	ImGui::PopStyleColor();
-
-
-	// Window with the render texture
-	//static int w = 256;
-	//static int h = 256;
-	//ImGui::Begin("Render Target");
-	////ImGui::Text("CPU handle = %p", _RenderTexture->SRV().ptr);
-	////ImGui::Text("GPU handle = %p", _RenderTexture->SRV().ptr);
-	//ImGui::Text("size = %d x %d", w, h);
-	//ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
-	//ImGui::End();
-
 }
 
 void ShaderToolApp::Save()

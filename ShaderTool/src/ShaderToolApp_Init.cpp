@@ -46,6 +46,13 @@ bool ShaderToolApp::Init()
 	ImNodesIO& io = ImNodes::GetIO();
 	io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
+	// TODO: move this to the proper place
+	_Cube.Id = 0;
+	//_Cube.Mesh = _Meshes["box"].get();
+	_Cube.Position = {0.f, 0.f, 0.f};
+	_Cube.Scale = {10.f, 10.f, 10.f};
+	_Cube.Rotation = {0.f, 0.f, 0.f};
+	
 	return true;
 }
 

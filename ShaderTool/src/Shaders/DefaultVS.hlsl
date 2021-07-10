@@ -1,6 +1,7 @@
 cbuffer cbPerObject : register(b0)
 {
     float4x4 World;
+    float3 Color;
 }
 
 cbuffer cbPerFrame : register(b1)
@@ -22,6 +23,7 @@ struct VSOutput
     float4 PosH : SV_POSITION;
     float3 Norm : NORMAL;
     float2 TexC : TEXCOORD;
+    float3 Color: COLOR;
 };
 
 VSOutput main( VSInput vIn )
@@ -33,9 +35,9 @@ VSOutput main( VSInput vIn )
     //vOut.PosH = mul(vOut.PosH, Proj);
     vOut.PosH = mul(vOut.PosH, RTProj);
     
-    vOut.Norm = mul(float4(vIn.Norm, 1.0), World);
-    
+    vOut.Norm = mul(float4(vIn.Norm, 1.0), World);    
     vOut.TexC = vIn.TexC;
+    vOut.Color = Color;
     
 	return vOut;
 }

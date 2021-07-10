@@ -14,6 +14,7 @@
 struct ObjectConstants
 {
     DirectX::XMFLOAT4X4 World{ D3DUtil::Identity4x4() };
+    DirectX::XMFLOAT3 Color{ 0.f, 0.f, 0.f };
 };
 
 struct FrameConstants

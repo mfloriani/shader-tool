@@ -9,7 +9,7 @@
 #include "Rendering\RenderTexture.h"
 #include "Editor\Node.h"
 #include "Editor\Graph.h"
-
+#include "Entity.h"
 
 class ShaderToolApp : public D3DApp
 {
@@ -39,8 +39,7 @@ public:
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
 	void LoadDefaultMeshes();
-	void RenderToTexture();
-
+	
 	const GameTimer& GetTimer() const { return _Timer; }
 
 private:
@@ -68,11 +67,14 @@ private: // Node Graph
 	Graph<Node>         _Graph;
 	std::vector<UiNode> _UINodes;
 	int                 _RootNodeId;
+	Entity              _Cube;
 
 	std::unique_ptr<RenderTexture> _RenderTarget; // TODO: at the moment only 1 render target supported
 		
 	void Reset();
 	void Save();
 	void Load();
+	void EvaluateGraph();
+	void RenderToTexture();
 
 };
