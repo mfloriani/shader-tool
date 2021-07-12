@@ -1,6 +1,6 @@
 #pragma once
 
-//#include "Rendering\D3DUtil.h"
+#include "Rendering\Mesh.h"
 #include <DirectXMath.h>
 
 struct Entity
@@ -10,5 +10,6 @@ struct Entity
 	DirectX::XMFLOAT3 Rotation;
 	DirectX::XMFLOAT3 Scale;
 	DirectX::XMFLOAT3 Color; // TODO: temporary
-	//Mesh* Mesh;
+	Mesh* Mesh;
+	Submesh Submesh;
 };

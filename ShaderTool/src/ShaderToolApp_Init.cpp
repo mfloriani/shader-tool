@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ShaderToolApp.h"
+#include "GeometryGenerator.h"
 
 using namespace DirectX;
 using namespace D3DUtil;
@@ -47,11 +48,12 @@ bool ShaderToolApp::Init()
 	io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
 	// TODO: move this to the proper place
-	_Cube.Id = 0;
-	//_Cube.Mesh = _Meshes["box"].get();
-	_Cube.Position = {0.f, 0.f, 0.f};
-	_Cube.Scale = {10.f, 10.f, 10.f};
-	_Cube.Rotation = {0.f, 0.f, 0.f};
+	_Entity.Id = 0;
+	_Entity.Mesh = _Meshes["primitives"].get();
+	_Entity.Submesh = _Entity.Mesh->DrawArgs["cube"];
+	_Entity.Position = {0.f, 0.f, 0.f};
+	_Entity.Scale = {10.f, 10.f, 10.f};
+	_Entity.Rotation = {0.f, 0.f, 0.f};
 	
 	return true;
 }
@@ -218,143 +220,75 @@ void ShaderToolApp::BuildPSO()
 
 void ShaderToolApp::LoadDefaultMeshes()
 {
-	// Box
-	{
-		std::array<Vertex, 8> vertices =
-		{
-			Vertex(-1.0f, -1.0f, -1.0f,    0.f, 0.f, 0.f, 	   0.f, 0.f, 0.f,    0.f,0.f),
-			Vertex(-1.0f, +1.0f, -1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
-			Vertex(+1.0f, +1.0f, -1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
-			Vertex(+1.0f, -1.0f, -1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
-			Vertex(-1.0f, -1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
-			Vertex(-1.0f, +1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
-			Vertex(+1.0f, +1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
-			Vertex(+1.0f, -1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
-		};
+	GeometryGenerator geoGen;
 
-		std::array<std::uint16_t, 36> indices =
-		{
-			// front face
-			0, 1, 2,
-			0, 2, 3,
+	GeometryGenerator::MeshData cube = geoGen.CreateBox(1.f, 1.f, 1.f, 0u);
+	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(1.f, 20u, 20u);
+	GeometryGenerator::MeshData grid = geoGen.CreateGrid(10.f, 10.f, 10u, 10u);
 
-			// back face
-			4, 6, 5,
-			4, 7, 6,
+	auto mesh = std::make_unique<Mesh>();
+	mesh->Name = "primitives";
 
-			// left face
-			4, 5, 1,
-			4, 1, 0,
+	// The meshes MUST be stored and in the exact same way they are indexed in the submeshes
 
-			// right face
-			3, 2, 6,
-			3, 6, 7,
+	Submesh cubeSubmesh;
+	cubeSubmesh.IndexCount = (UINT)cube.Indices32.size();
+	cubeSubmesh.StartIndexLocation = 0;
+	cubeSubmesh.BaseVertexLocation = 0;
+	mesh->DrawArgs["cube"] = cubeSubmesh;
 
-			// top face
-			1, 5, 6,
-			1, 6, 2,
+	Submesh sphereSubmesh;
+	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
+	sphereSubmesh.StartIndexLocation = (UINT)cube.Indices32.size();
+	sphereSubmesh.BaseVertexLocation = (UINT)cube.Vertices.size();
+	mesh->DrawArgs["sphere"] = sphereSubmesh;
 
-			// bottom face
-			4, 0, 3,
-			4, 3, 7
-		};
+	Submesh gridSubmesh;
+	gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
+	gridSubmesh.StartIndexLocation = sphereSubmesh.StartIndexLocation + (UINT)sphere.Indices32.size();
+	gridSubmesh.BaseVertexLocation = sphereSubmesh.BaseVertexLocation + (UINT)sphere.Vertices.size();
+	mesh->DrawArgs["grid"] = gridSubmesh;
 
-		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+	// the order that vertices and indices are inserted MUST be the same as the index offsets set in the submeshes
 
-		auto geo = std::make_unique<Mesh>();
-		geo->Name = "box_geo";
+	std::vector<Vertex> vertices;
+	vertices.insert(vertices.end(), cube.Vertices.begin(), cube.Vertices.end());
+	vertices.insert(vertices.end(), sphere.Vertices.begin(), sphere.Vertices.end());
+	vertices.insert(vertices.end(), grid.Vertices.begin(), grid.Vertices.end());
 
-		ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-		CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+	std::vector<uint32_t> indices;
+	indices.insert(indices.end(), cube.Indices32.begin(), cube.Indices32.end());
+	indices.insert(indices.end(), sphere.Indices32.begin(), sphere.Indices32.end());
+	indices.insert(indices.end(), grid.Indices32.begin(), grid.Indices32.end());
 
-		ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-		CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+	const UINT vbByteSize = static_cast<UINT>(vertices.size()) * sizeof(Vertex);
+	const UINT ibByteSize = static_cast<UINT>(indices.size()) * sizeof(uint32_t);
 
-		geo->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(
-			_Device.Get(),
-			_CommandList.Get(),
-			vertices.data(),
-			vbByteSize,
-			geo->VertexBufferUploader);
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &mesh->VertexBufferCPU));
+	CopyMemory(mesh->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-		geo->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(
-			_Device.Get(),
-			_CommandList.Get(),
-			indices.data(),
-			ibByteSize,
-			geo->IndexBufferUploader);
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &mesh->IndexBufferCPU));
+	CopyMemory(mesh->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-		geo->VertexByteStride = sizeof(Vertex);
-		geo->VertexBufferByteSize = vbByteSize;
-		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-		geo->IndexBufferByteSize = ibByteSize;
+	mesh->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(
+		_Device.Get(),
+		_CommandList.Get(),
+		vertices.data(),
+		vbByteSize,
+		mesh->VertexBufferUploader);
 
-		Submesh submesh;
-		submesh.IndexCount = (UINT)indices.size();
-		submesh.StartIndexLocation = 0;
-		submesh.BaseVertexLocation = 0;
+	mesh->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(
+		_Device.Get(),
+		_CommandList.Get(),
+		indices.data(),
+		ibByteSize,
+		mesh->IndexBufferUploader);
 
-		geo->DrawArgs["box"] = submesh;
+	mesh->VertexByteStride = sizeof(Vertex);
+	mesh->VertexBufferByteSize = vbByteSize;
+	mesh->IndexFormat = DXGI_FORMAT_R32_UINT;
+	mesh->IndexBufferByteSize = ibByteSize;
 
-		_Meshes[geo->Name] = std::move(geo);
-	}
-
-	// Quad
-	{
-		std::array<Vertex, 4> vertices =
-		{
-			Vertex(0.0f,-1.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   0.f,1.f),
-			Vertex(0.0f, 0.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   0.f,0.f),
-			Vertex(1.0f, 0.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   1.f,0.f),
-			Vertex(1.0f,-1.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   1.f,1.f),
-		};
-
-		std::array<std::uint16_t, 6> indices =
-		{
-			0,1,2,
-			0,2,3
-		};
-
-		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-
-		auto geo = std::make_unique<Mesh>();
-		geo->Name = "quad_geo";
-
-		ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-		CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-		ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-		CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-		geo->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(
-			_Device.Get(),
-			_CommandList.Get(),
-			vertices.data(),
-			vbByteSize,
-			geo->VertexBufferUploader);
-
-		geo->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(
-			_Device.Get(),
-			_CommandList.Get(),
-			indices.data(),
-			ibByteSize,
-			geo->IndexBufferUploader);
-
-		geo->VertexByteStride = sizeof(Vertex);
-		geo->VertexBufferByteSize = vbByteSize;
-		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-		geo->IndexBufferByteSize = ibByteSize;
-
-		Submesh submesh;
-		submesh.IndexCount = (UINT)indices.size();
-		submesh.StartIndexLocation = 0;
-		submesh.BaseVertexLocation = 0;
-
-		geo->DrawArgs["quad"] = submesh;
-
-		_Meshes[geo->Name] = std::move(geo);
-	}
+	_Meshes[mesh->Name] = std::move(mesh);
 
 }

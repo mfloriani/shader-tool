@@ -25,7 +25,6 @@ void ShaderToolApp::EvaluateGraph()
 {
 	if (_RootNodeId == -1)
 		return;
-	//ImU32 color = IM_COL32(1.f, 0.f, 1.f, 255);
 
 	std::stack<int> postorder;
 	dfs_traverse(_Graph, _RootNodeId, [&postorder](const int nodeId) -> void { postorder.push(nodeId); });
@@ -39,6 +38,18 @@ void ShaderToolApp::EvaluateGraph()
 
 		switch (node.type)
 		{
+		case NodeType::Value:
+		{
+			// If the edge does not have an edge connecting to another node, then just use the value
+			// at this node. It means the node's input pin has not been connected to anything and
+			// the value comes from the node's UI.
+			if (_Graph.GetNumEdgesFromNode(id) == 0ull)
+			{
+				valueStack.push(node.value);
+			}
+		}
+		break;
+
 		case NodeType::Add:
 		{
 			const float rhs = valueStack.top();
@@ -48,6 +59,7 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.push(lhs + rhs);
 		}
 		break;
+
 		case NodeType::Multiply:
 		{
 			const float rhs = valueStack.top();
@@ -57,6 +69,7 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.push(rhs * lhs);
 		}
 		break;
+
 		case NodeType::Sine:
 		{
 			const float x = valueStack.top();
@@ -65,6 +78,7 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.push(res);
 		}
 		break;
+
 		case NodeType::Time:
 		{
 			valueStack.push(current_time_seconds);
@@ -96,23 +110,19 @@ void ShaderToolApp::EvaluateGraph()
 			const float r = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
 
-			//color = IM_COL32(r, g, b, 255);
-			_Cube.Color = { r, g, b };
+			_Entity.Color = { r, g, b };
 
 			RenderToTexture();
 
 		}
 		break;
 
-		case NodeType::Value:
+		case NodeType::Primitive:
 		{
-			// If the edge does not have an edge connecting to another node, then just use the value
-			// at this node. It means the node's input pin has not been connected to anything and
-			// the value comes from the node's UI.
-			if (_Graph.GetNumEdgesFromNode(id) == 0ull)
-			{
-				valueStack.push(node.value);
-			}
+			//assert(valueStack.size() == 1ull && "Testing the assert");
+			
+			//_Entity.Submesh = valueStack
+
 		}
 		break;
 		
@@ -561,6 +571,13 @@ void ShaderToolApp::RenderNodeGraph()
 			ImGui::PopItemWidth();
 			inputNode.value = static_cast<float>(value);   // TODO: this seems weird
 			
+			// TODO: temporary... have to sort it out
+			if (value == 0)
+				_Entity.Submesh = _Entity.Mesh->DrawArgs["cube"];
+			else if (value == 1)
+				_Entity.Submesh = _Entity.Mesh->DrawArgs["sphere"];
+			else if (value == 2)
+				_Entity.Submesh = _Entity.Mesh->DrawArgs["grid"];
 
 			ImNodes::BeginOutputAttribute(node.id);
 			const float label_width = ImGui::CalcTextSize("output").x;

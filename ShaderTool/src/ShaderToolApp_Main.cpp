@@ -137,17 +137,17 @@ void ShaderToolApp::UpdatePerObjectCB()
 
 	// BOX ROTATION
 	{
-		_Cube.Rotation = { 0.f, _Timer.TotalTime(), 0.f };
-		auto rotation = XMMatrixRotationY(_Cube.Rotation.y);
-		auto scale = XMMatrixScaling(_Cube.Scale.x, _Cube.Scale.y, _Cube.Scale.z);
+		_Entity.Rotation = { 0.f, _Timer.TotalTime(), 0.f };
+		auto rotation = XMMatrixRotationY(_Entity.Rotation.y);
+		auto scale = XMMatrixScaling(_Entity.Scale.x, _Entity.Scale.y, _Entity.Scale.z);
 		world = XMMatrixMultiply(scale, rotation);
 
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		
-		objConstants.Color = _Cube.Color;
+		objConstants.Color = _Entity.Color;
 
-		int objCBIndex = _Cube.Id; // TODO: handle multiple objects
+		int objCBIndex = _Entity.Id; // TODO: handle multiple objects
 		currObjectCB->CopyData(objCBIndex, objConstants);
 	}
 
@@ -392,8 +392,7 @@ void ShaderToolApp::RenderToTexture()
 
 	// BOX
 	{
-		//auto box = _Cube.Mesh;
-		auto box = _Meshes["box_geo"].get(); // TODO: avoid direct access to map, the value might not exists
+		auto box = _Entity.Mesh; // TODO: avoid direct access to map, the value might not exists
 
 		_CommandList->IASetVertexBuffers(0, 1, &box->VertexBufferView());
 		_CommandList->IASetIndexBuffer(&box->IndexBufferView());
@@ -402,16 +401,16 @@ void ShaderToolApp::RenderToTexture()
 		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
 
-		UINT objCBIndex = _Cube.Id; // TODO: check this
+		UINT objCBIndex = _Entity.Id; // TODO: check this
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
 		objCBAddress += objCBIndex * objCBByteSize;
 
 		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 		_CommandList->DrawIndexedInstanced(
-			box->DrawArgs["box"].IndexCount,
+			_Entity.Submesh.IndexCount,
 			1,
-			box->DrawArgs["box"].StartIndexLocation,
-			box->DrawArgs["box"].BaseVertexLocation,
+			_Entity.Submesh.StartIndexLocation,
+			_Entity.Submesh.BaseVertexLocation,
 			0);
 	}
 

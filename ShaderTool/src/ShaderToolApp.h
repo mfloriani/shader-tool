@@ -69,7 +69,7 @@ private: // Node Graph
 	Graph<Node>         _Graph;
 	std::vector<UiNode> _UINodes;
 	int                 _RootNodeId;
-	Entity              _Cube;
+	Entity              _Entity;
 
 	std::unique_ptr<RenderTexture> _RenderTarget; // TODO: at the moment only 1 render target supported
 		
