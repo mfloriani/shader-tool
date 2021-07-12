@@ -5,11 +5,13 @@
 #include <string>
 
 #include "GameTimer.h"
+#include "Entity.h"
 #include "Rendering\D3DApp.h"
 #include "Rendering\RenderTexture.h"
+#include "Rendering\Vertex.h"
+#include "Rendering\Mesh.h"
 #include "Editor\Node.h"
 #include "Editor\Graph.h"
-#include "Entity.h"
 
 class ShaderToolApp : public D3DApp
 {
@@ -59,7 +61,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RootSignature{ nullptr };
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
-	std::unordered_map<std::string, std::unique_ptr<D3DUtil::MeshGeometry>> _Meshes;
+	std::unordered_map<std::string, std::unique_ptr<Mesh>> _Meshes;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
 	

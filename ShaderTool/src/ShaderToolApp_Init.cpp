@@ -145,7 +145,8 @@ void ShaderToolApp::BuildShadersAndInputLayout()
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 }
 
@@ -221,14 +222,14 @@ void ShaderToolApp::LoadDefaultMeshes()
 	{
 		std::array<Vertex, 8> vertices =
 		{
-			Vertex(XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT3(0.f, 0.f, 0.f), XMFLOAT2(0.f,0.f)),
+			Vertex(-1.0f, -1.0f, -1.0f,    0.f, 0.f, 0.f, 	   0.f, 0.f, 0.f,    0.f,0.f),
+			Vertex(-1.0f, +1.0f, -1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
+			Vertex(+1.0f, +1.0f, -1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
+			Vertex(+1.0f, -1.0f, -1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
+			Vertex(-1.0f, -1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
+			Vertex(-1.0f, +1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
+			Vertex(+1.0f, +1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
+			Vertex(+1.0f, -1.0f, +1.0f,    0.f, 0.f, 0.f,      0.f, 0.f, 0.f,    0.f,0.f),
 		};
 
 		std::array<std::uint16_t, 36> indices =
@@ -261,7 +262,7 @@ void ShaderToolApp::LoadDefaultMeshes()
 		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-		auto geo = std::make_unique<MeshGeometry>();
+		auto geo = std::make_unique<Mesh>();
 		geo->Name = "box_geo";
 
 		ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
@@ -289,7 +290,7 @@ void ShaderToolApp::LoadDefaultMeshes()
 		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
+		Submesh submesh;
 		submesh.IndexCount = (UINT)indices.size();
 		submesh.StartIndexLocation = 0;
 		submesh.BaseVertexLocation = 0;
@@ -303,10 +304,10 @@ void ShaderToolApp::LoadDefaultMeshes()
 	{
 		std::array<Vertex, 4> vertices =
 		{
-			Vertex(XMFLOAT3(0.0f,-1.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(0.f,1.f)),
-			Vertex(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(0.f,0.f)),
-			Vertex(XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(1.f,0.f)),
-			Vertex(XMFLOAT3(1.0f,-1.0f, 0.0f), XMFLOAT3(0.f, 0.f, -1.f), XMFLOAT2(1.f,1.f)),
+			Vertex(0.0f,-1.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   0.f,1.f),
+			Vertex(0.0f, 0.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   0.f,0.f),
+			Vertex(1.0f, 0.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   1.f,0.f),
+			Vertex(1.0f,-1.0f, 0.0f,   0.f, 0.f, -1.f,   0.f, 0.f, 0.f,   1.f,1.f),
 		};
 
 		std::array<std::uint16_t, 6> indices =
@@ -318,7 +319,7 @@ void ShaderToolApp::LoadDefaultMeshes()
 		const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-		auto geo = std::make_unique<MeshGeometry>();
+		auto geo = std::make_unique<Mesh>();
 		geo->Name = "quad_geo";
 
 		ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
@@ -346,7 +347,7 @@ void ShaderToolApp::LoadDefaultMeshes()
 		geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 		geo->IndexBufferByteSize = ibByteSize;
 
-		SubmeshGeometry submesh;
+		Submesh submesh;
 		submesh.IndexCount = (UINT)indices.size();
 		submesh.StartIndexLocation = 0;
 		submesh.BaseVertexLocation = 0;

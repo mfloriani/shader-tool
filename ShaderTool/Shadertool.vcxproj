@@ -112,6 +112,10 @@
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h" />
     <ClInclude Include="src\Editor\Node.h" />
     <ClInclude Include="src\Entity.h" />
+    <ClInclude Include="src\AssetManager.h" />
+    <ClInclude Include="src\GeometryGenerator.h" />
+    <ClInclude Include="src\Rendering\Mesh.h" />
+    <ClInclude Include="src\Rendering\Vertex.h" />
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\Log.h" />
@@ -125,6 +129,7 @@
     <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AssetManager.cpp" />
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -149,6 +154,7 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\GeometryGenerator.cpp" />
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />

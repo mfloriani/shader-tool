@@ -11,6 +11,7 @@ struct PSInput
 {
     float4 PosH : SV_POSITION;
     float3 Norm : NORMAL;
+    float3 Tang : TANGENT;
     float2 TexC : TEXCOORD;
 };
 

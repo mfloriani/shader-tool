@@ -4,23 +4,25 @@
 
 enum class UiNodeType
 {
-    add,
-    multiply,
-    draw,
-    sine,
-    time,
-    renderTarget
+    Add,
+    Multiply,
+    Draw,
+    Sine,
+    Time,
+    RenderTarget,
+    Primitive
 };
 
 enum class NodeType
 {
-    add,
-    multiply,
-    draw,
-    sine,
-    time,
-    value,
-    renderTarget
+    Value,
+    Add,
+    Multiply,
+    Draw,
+    Sine,
+    Time,
+    RenderTarget,
+    Primitive
 };
 
 struct Node
@@ -79,6 +81,11 @@ struct UiNode
         {
             int input;
         } renderTarget;
+
+        struct
+        {
+            int input;
+        } primitive;
     };
 
     friend std::ostream& operator<<(std::ostream& out, const UiNode& n)
@@ -89,7 +96,7 @@ struct UiNode
 
         switch (n.type)
         {
-        case UiNodeType::add:
+        case UiNodeType::Add:
         {
             out << " "
                 << n.add.lhs
@@ -97,7 +104,7 @@ struct UiNode
                 << n.add.rhs;
             break;
         }
-        case UiNodeType::multiply:
+        case UiNodeType::Multiply:
         {
             out << " "
                 << n.multiply.lhs
@@ -105,7 +112,7 @@ struct UiNode
                 << n.multiply.rhs;
             break;
         }
-        case UiNodeType::draw:
+        case UiNodeType::Draw:
         {
             out << " "
                 << n.draw.r
@@ -115,20 +122,27 @@ struct UiNode
                 << n.draw.b;
             break;
         }
-        case UiNodeType::sine:
+        case UiNodeType::Sine:
         {
             out << " "
                 << n.sine.input;
             break;
         }
-        case UiNodeType::time:
+
+        case UiNodeType::Time:
             break;
 
-        case UiNodeType::renderTarget:
+        case UiNodeType::RenderTarget:
 
             // TODO: the input should point to the draw node
             out << " "
                 << n.renderTarget.input;
+            break;
+
+        case UiNodeType::Primitive:
+
+            out << " "
+                << n.primitive.input;
             break;
 
         default:
@@ -148,38 +162,44 @@ struct UiNode
 
         switch (uiNode.type)
         {
-        case UiNodeType::add:
+        case UiNodeType::Add:
         {
             in >> uiNode.add.lhs >> uiNode.add.rhs;
             //LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.add.lhs, uiNode.add.rhs);
             break;
         }
-        case UiNodeType::multiply:
+        case UiNodeType::Multiply:
         {
             in >> uiNode.multiply.lhs >> uiNode.multiply.rhs;
             //LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
             break;
         }
-        case UiNodeType::draw:
+        case UiNodeType::Draw:
         {
             in >> uiNode.draw.r >> uiNode.draw.g >> uiNode.draw.b;
             //LOG_TRACE("{0} {1} {2} {3} {4}", uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
             break;
         }
-        case UiNodeType::sine:
+        case UiNodeType::Sine:
         {
             in >> uiNode.sine.input;
             //LOG_TRACE("{0} {1} {2}", uiNode.type, uiNode.id, uiNode.sine.input);
             break;
         }
-        case UiNodeType::time:
+        case UiNodeType::Time:
             //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
             break;
 
-        case UiNodeType::renderTarget:
+        case UiNodeType::RenderTarget:
             //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
 
             in >> uiNode.renderTarget.input;
+            break;
+
+        case UiNodeType::Primitive:
+            //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
+
+            in >> uiNode.primitive.input;
             break;
 
         default:

@@ -10,5 +10,5 @@ struct Entity
 	DirectX::XMFLOAT3 Rotation;
 	DirectX::XMFLOAT3 Scale;
 	DirectX::XMFLOAT3 Color; // TODO: temporary
-	//MeshGeometry* Mesh;
+	//Mesh* Mesh;
 };

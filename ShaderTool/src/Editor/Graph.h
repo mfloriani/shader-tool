@@ -53,7 +53,7 @@ public:
 
     void Reset()
     {
-        int _CurrentId = 0;
+        _CurrentId = 0;
         _Nodes.clear();
         _EdgesFromNode.clear();
         _Neighbors.clear();

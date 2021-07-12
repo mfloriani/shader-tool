@@ -39,7 +39,7 @@ void ShaderToolApp::EvaluateGraph()
 
 		switch (node.type)
 		{
-		case NodeType::add:
+		case NodeType::Add:
 		{
 			const float rhs = valueStack.top();
 			valueStack.pop();
@@ -48,7 +48,7 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.push(lhs + rhs);
 		}
 		break;
-		case NodeType::multiply:
+		case NodeType::Multiply:
 		{
 			const float rhs = valueStack.top();
 			valueStack.pop();
@@ -57,7 +57,7 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.push(rhs * lhs);
 		}
 		break;
-		case NodeType::sine:
+		case NodeType::Sine:
 		{
 			const float x = valueStack.top();
 			valueStack.pop();
@@ -65,13 +65,13 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.push(res);
 		}
 		break;
-		case NodeType::time:
+		case NodeType::Time:
 		{
 			valueStack.push(current_time_seconds);
 		}
 		break;
 
-		case NodeType::renderTarget:
+		case NodeType::RenderTarget:
 		{
 			const float x = valueStack.top();
 			valueStack.pop();
@@ -81,7 +81,7 @@ void ShaderToolApp::EvaluateGraph()
 		break;
 
 		
-		case NodeType::draw:
+		case NodeType::Draw:
 		{
 			// The final output node isn't evaluated in the loop -- instead we just pop
 			// the three values which should be in the stack.
@@ -104,7 +104,7 @@ void ShaderToolApp::EvaluateGraph()
 		}
 		break;
 
-		case NodeType::value:
+		case NodeType::Value:
 		{
 			// If the edge does not have an edge connecting to another node, then just use the value
 			// at this node. It means the node's input pin has not been connected to anything and
@@ -155,11 +155,11 @@ void ShaderToolApp::RenderNodeGraph()
 
 			if (ImGui::MenuItem("Add"))
 			{
-				const Node value(NodeType::value, 0.f);
-				const Node op(NodeType::add);
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::Add);
 
 				UiNode ui_node;
-				ui_node.type = UiNodeType::add;
+				ui_node.type = UiNodeType::Add;
 				ui_node.add.lhs = _Graph.CreateNode(value);
 				ui_node.add.rhs = _Graph.CreateNode(value);
 				ui_node.id = _Graph.CreateNode(op);
@@ -173,11 +173,11 @@ void ShaderToolApp::RenderNodeGraph()
 
 			if (ImGui::MenuItem("Multiply"))
 			{
-				const Node value(NodeType::value, 0.f);
-				const Node op(NodeType::multiply);
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::Multiply);
 
 				UiNode ui_node;
-				ui_node.type = UiNodeType::multiply;
+				ui_node.type = UiNodeType::Multiply;
 				ui_node.multiply.lhs = _Graph.CreateNode(value);
 				ui_node.multiply.rhs = _Graph.CreateNode(value);
 				ui_node.id = _Graph.CreateNode(op);
@@ -191,11 +191,11 @@ void ShaderToolApp::RenderNodeGraph()
 
 			if (ImGui::MenuItem("Draw") && _RootNodeId == -1)
 			{
-				const Node value(NodeType::value, 0.f);
-				const Node out(NodeType::draw);
+				const Node value(NodeType::Value, 0.f);
+				const Node out(NodeType::Draw);
 
 				UiNode ui_node;
-				ui_node.type = UiNodeType::draw;
+				ui_node.type = UiNodeType::Draw;
 				ui_node.draw.r = _Graph.CreateNode(value);
 				ui_node.draw.g = _Graph.CreateNode(value);
 				ui_node.draw.b = _Graph.CreateNode(value);
@@ -213,11 +213,11 @@ void ShaderToolApp::RenderNodeGraph()
 
 			if (ImGui::MenuItem("Sine"))
 			{
-				const Node value(NodeType::value, 0.f);
-				const Node op(NodeType::sine);
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::Sine);
 
 				UiNode ui_node;
-				ui_node.type = UiNodeType::sine;
+				ui_node.type = UiNodeType::Sine;
 				ui_node.sine.input = _Graph.CreateNode(value);
 				ui_node.id = _Graph.CreateNode(op);
 
@@ -230,8 +230,8 @@ void ShaderToolApp::RenderNodeGraph()
 			if (ImGui::MenuItem("Time"))
 			{
 				UiNode ui_node;
-				ui_node.type = UiNodeType::time;
-				ui_node.id = _Graph.CreateNode(Node(NodeType::time));
+				ui_node.type = UiNodeType::Time;
+				ui_node.id = _Graph.CreateNode(Node(NodeType::Time));
 
 				_UINodes.push_back(ui_node);
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
@@ -239,11 +239,11 @@ void ShaderToolApp::RenderNodeGraph()
 
 			if (ImGui::MenuItem("Render Target"))
 			{
-				const Node value(NodeType::value, 0.f);
-				const Node op(NodeType::renderTarget);
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::RenderTarget);
 
 				UiNode ui_node;
-				ui_node.type = UiNodeType::renderTarget;
+				ui_node.type = UiNodeType::RenderTarget;
 				ui_node.renderTarget.input = _Graph.CreateNode(value);
 				ui_node.id = _Graph.CreateNode(op);
 
@@ -253,6 +253,22 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 
 				//_RootNodeId = ui_node.id;
+			}
+
+			if (ImGui::MenuItem("Primitive"))
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::Primitive);
+
+				UiNode ui_node;
+				ui_node.type = UiNodeType::Primitive;
+				ui_node.primitive.input = _Graph.CreateNode(value);
+				ui_node.id = _Graph.CreateNode(op);
+
+				_Graph.CreateEdge(ui_node.id, ui_node.primitive.input);
+
+				_UINodes.push_back(ui_node);
+				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
 			ImGui::EndPopup();
@@ -266,7 +282,7 @@ void ShaderToolApp::RenderNodeGraph()
 	{
 		switch (node.type)
 		{
-		case UiNodeType::add:
+		case UiNodeType::Add:
 		{
 			const float node_width = 100.f;
 			ImNodes::BeginNode(node.id);
@@ -315,7 +331,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNode();
 		}
 		break;
-		case UiNodeType::multiply:
+		case UiNodeType::Multiply:
 		{
 			const float node_width = 100.0f;
 			ImNodes::BeginNode(node.id);
@@ -367,7 +383,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNode();
 		}
 		break;
-		case UiNodeType::draw:
+		case UiNodeType::Draw:
 		{
 			const float node_width = 100.0f;
 			ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
@@ -442,7 +458,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::PopColorStyle();
 		}
 		break;
-		case UiNodeType::sine:
+		case UiNodeType::Sine:
 		{
 			const float node_width = 100.0f;
 			ImNodes::BeginNode(node.id);
@@ -478,7 +494,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNode();
 		}
 		break;
-		case UiNodeType::time:
+		case UiNodeType::Time:
 		{
 			ImNodes::BeginNode(node.id);
 
@@ -493,7 +509,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNode();
 		}
 		break;
-		case UiNodeType::renderTarget:
+		case UiNodeType::RenderTarget:
 		{
 			const float node_width = 100.0f;
 			ImNodes::BeginNode(node.id);
@@ -518,17 +534,44 @@ void ShaderToolApp::RenderNodeGraph()
 				}
 				ImNodes::EndInputAttribute();
 
-
 				static int w = 256;
 				static int h = 256;
 				//ImGui::Text("size = %d x %d", w, h);
 				ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
-
 			}
 
 			ImNodes::EndNode();
 		}
 		break;
+
+
+		case UiNodeType::Primitive:
+		{
+			const float node_width = 100.0f;
+			ImNodes::BeginNode(node.id);
+			ImNodes::BeginNodeTitleBar();
+			ImGui::TextUnformatted("PRIMITIVE");
+			ImNodes::EndNodeTitleBar();
+
+			ImGui::PushItemWidth(node_width);
+			const char* items[] = { "Cube", "Sphere", "Plane" };
+			auto &inputNode = _Graph.GetNode(node.primitive.input);
+			int value = static_cast<int>(inputNode.value); // TODO: this seems weird
+			ImGui::Combo("##hidelabel", &value, items, IM_ARRAYSIZE(items));
+			ImGui::PopItemWidth();
+			inputNode.value = static_cast<float>(value);   // TODO: this seems weird
+			
+
+			ImNodes::BeginOutputAttribute(node.id);
+			const float label_width = ImGui::CalcTextSize("output").x;
+			ImGui::Indent(node_width - label_width);
+			ImGui::Text("output");
+			ImNodes::EndOutputAttribute();
+
+			ImNodes::EndNode();
+		}
+		break; 
+
 		}
 	}
 
@@ -537,7 +580,7 @@ void ShaderToolApp::RenderNodeGraph()
 		// If edge doesn't start at value, then it's an internal edge, i.e.
 		// an edge which links a node's operation to its input. We don't
 		// want to render node internals with visible links.
-		if (_Graph.GetNode(edge.from).type != NodeType::value)
+		if (_Graph.GetNode(edge.from).type != NodeType::Value)
 			continue;
 
 		ImNodes::Link(edge.id, edge.from, edge.to);
@@ -562,7 +605,7 @@ void ShaderToolApp::RenderNodeGraph()
 			{
 				// Ensure the edge is always directed from the value to
 				// whatever produces the value
-				if (start_type != NodeType::value)
+				if (start_type != NodeType::Value)
 				{
 					std::swap(start_attr, end_attr);
 				}
@@ -611,24 +654,24 @@ void ShaderToolApp::RenderNodeGraph()
 				// Erase any additional internal nodes
 				switch (iter->type)
 				{
-				case UiNodeType::add:
+				case UiNodeType::Add:
 					_Graph.EraseNode(iter->add.lhs);
 					_Graph.EraseNode(iter->add.rhs);
 					break;
-				case UiNodeType::multiply:
+				case UiNodeType::Multiply:
 					_Graph.EraseNode(iter->multiply.lhs);
 					_Graph.EraseNode(iter->multiply.rhs);
 					break;
-				case UiNodeType::draw:
+				case UiNodeType::Draw:
 					_Graph.EraseNode(iter->draw.r);
 					_Graph.EraseNode(iter->draw.g);
 					_Graph.EraseNode(iter->draw.b);
 					_RootNodeId = -1;
 					break;
-				case UiNodeType::sine:
+				case UiNodeType::Sine:
 					_Graph.EraseNode(iter->sine.input);
 					break;
-				case UiNodeType::renderTarget:
+				case UiNodeType::RenderTarget:
 					_Graph.EraseNode(iter->renderTarget.input);
 					
 					break;
