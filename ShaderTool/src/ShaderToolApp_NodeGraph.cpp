@@ -136,9 +136,8 @@ void ShaderToolApp::RenderNodeGraph()
 	ImNodes::BeginNodeEditor();
 
 	// Handle new nodes
-	// These are driven by the user, so we place this code before rendering the nodes
 	{
-		const bool open_popup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+		const bool open_popup = (ImGui::IsWindowHovered() || ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) &&
 			ImNodes::IsEditorHovered() &&
 			ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right);
 
@@ -154,7 +153,7 @@ void ShaderToolApp::RenderNodeGraph()
 		{
 			const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
-			if (ImGui::MenuItem("add"))
+			if (ImGui::MenuItem("Add"))
 			{
 				const Node value(NodeType::value, 0.f);
 				const Node op(NodeType::add);
@@ -172,7 +171,7 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
-			if (ImGui::MenuItem("multiply"))
+			if (ImGui::MenuItem("Multiply"))
 			{
 				const Node value(NodeType::value, 0.f);
 				const Node op(NodeType::multiply);
@@ -190,7 +189,7 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
-			if (ImGui::MenuItem("draw") && _RootNodeId == -1)
+			if (ImGui::MenuItem("Draw") && _RootNodeId == -1)
 			{
 				const Node value(NodeType::value, 0.f);
 				const Node out(NodeType::draw);
@@ -212,7 +211,7 @@ void ShaderToolApp::RenderNodeGraph()
 				_RootNodeId = ui_node.id;
 			}
 
-			if (ImGui::MenuItem("sine"))
+			if (ImGui::MenuItem("Sine"))
 			{
 				const Node value(NodeType::value, 0.f);
 				const Node op(NodeType::sine);
@@ -228,7 +227,7 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
-			if (ImGui::MenuItem("time"))
+			if (ImGui::MenuItem("Time"))
 			{
 				UiNode ui_node;
 				ui_node.type = UiNodeType::time;
@@ -238,7 +237,7 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
-			if (ImGui::MenuItem("render target"))
+			if (ImGui::MenuItem("Render Target"))
 			{
 				const Node value(NodeType::value, 0.f);
 				const Node op(NodeType::renderTarget);
@@ -273,7 +272,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("add");
+			ImGui::TextUnformatted("ADD");
 			ImNodes::EndNodeTitleBar();
 			{
 				ImNodes::BeginInputAttribute(node.add.lhs);
@@ -322,7 +321,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("multiply");
+			ImGui::TextUnformatted("MULTIPLY");
 			ImNodes::EndNodeTitleBar();
 
 			{
@@ -377,7 +376,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("draw");
+			ImGui::TextUnformatted("DRAW");
 			ImNodes::EndNodeTitleBar();
 
 			ImGui::Dummy(ImVec2(node_width, 0.f));
@@ -449,7 +448,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("sine");
+			ImGui::TextUnformatted("SINE");
 			ImNodes::EndNodeTitleBar();
 
 			{
@@ -484,7 +483,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("time");
+			ImGui::TextUnformatted("TIME");
 			ImNodes::EndNodeTitleBar();
 
 			ImNodes::BeginOutputAttribute(node.id);
@@ -500,7 +499,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("render target");
+			ImGui::TextUnformatted("RENDER TARGET");
 			ImNodes::EndNodeTitleBar();
 
 			{
