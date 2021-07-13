@@ -55,7 +55,14 @@ bool ShaderToolApp::Init()
 	_Entity.Scale = {10.f, 10.f, 10.f};
 	_Entity.Rotation = {0.f, 0.f, 0.f};
 	
+	InitNodeGraph();
+
 	return true;
+}
+
+void ShaderToolApp::InitNodeGraph()
+{
+	
 }
 
 void ShaderToolApp::CreateDescriptorHeaps()
@@ -282,16 +289,19 @@ void ShaderToolApp::LoadPrimitiveModels()
 	model.StartIndexLocation = 0;
 	model.BaseVertexLocation = 0;
 	AssetManager::Get().AddModel("cube", model);
+	_Primitives.push_back("cube");
 
 	// Sphere
 	model.IndexCount = (UINT)sphere.Indices32.size();
 	model.StartIndexLocation = (UINT)cube.Indices32.size();
 	model.BaseVertexLocation = (UINT)cube.Vertices.size();
 	AssetManager::Get().AddModel("sphere", model);
+	_Primitives.push_back("sphere");
 
 	// Grid
 	model.IndexCount = (UINT)grid.Indices32.size();
 	model.StartIndexLocation += (UINT)sphere.Indices32.size();
 	model.BaseVertexLocation += (UINT)sphere.Vertices.size();
 	AssetManager::Get().AddModel("grid", model);
+	_Primitives.push_back("grid");
 }

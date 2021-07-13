@@ -156,7 +156,6 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\GeometryGenerator.cpp" />
-    <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />

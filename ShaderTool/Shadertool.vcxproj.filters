@@ -130,7 +130,6 @@
     <ClCompile Include="src\ShaderToolApp_Init.cpp" />
     <ClCompile Include="src\AssetManager.cpp" />
     <ClCompile Include="src\GeometryGenerator.cpp" />
-    <ClCompile Include="src\Model.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\DefaultPS.hlsl" />

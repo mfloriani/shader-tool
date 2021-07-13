@@ -24,6 +24,8 @@ public:
 	void AddModel(const std::string& name, Model& model);
 	Model GetModel(const std::string& name);
 
+
+
 private:
 	AssetManager() {}
 

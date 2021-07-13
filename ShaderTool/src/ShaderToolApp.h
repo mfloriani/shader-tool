@@ -13,6 +13,12 @@
 #include "Editor\Node.h"
 #include "Editor\Graph.h"
 
+struct Primitive
+{
+	uint16_t Id;
+	std::string Name;
+};
+
 class ShaderToolApp : public D3DApp
 {
 public:
@@ -70,10 +76,13 @@ private: // Node Graph
 	int                 _RootNodeId;
 	Entity              _Entity;
 
+	std::vector<const char*> _Primitives;
+
 	// TODO: at the moment only 1 render target supported
 	std::unique_ptr<RenderTexture> _RenderTarget; 
 	bool _RenderTargetReady{ false };
-		
+	
+	void InitNodeGraph();
 	void Reset();
 	void Save();
 	void Load();

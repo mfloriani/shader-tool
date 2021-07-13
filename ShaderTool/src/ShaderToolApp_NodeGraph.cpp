@@ -16,7 +16,6 @@
 #define VK_N 0x4E
 
 static float current_time_seconds = 0.f;
-//static std::vector<bool> gRenderTextures; // TODO: temporary, do it properly
 
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
@@ -119,18 +118,12 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.pop();
 
 			_Entity.Color = { r, g, b };
-			
-			// TODO: temporary... have to sort it out
-			if (model == 0)
-				_Entity.Model = AssetManager::Get().GetModel("cube");
-			else if (model == 1)
-				_Entity.Model = AssetManager::Get().GetModel("sphere");
-			else if (model == 2)
-				_Entity.Model = AssetManager::Get().GetModel("grid");
+			// TODO: at the moment only works with primitives, but later there will be loaded models
+			_Entity.Model = AssetManager::Get().GetModel(_Primitives[model]);
 			
 			RenderToTexture();
 
-			valueStack.push(1.f); // TODO: index where the texture is stored
+			valueStack.push(1.f); // TODO: index where the texture is stored, now only one texture
 		}
 		break;
 
@@ -593,10 +586,10 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNodeTitleBar();
 
 			ImGui::PushItemWidth(node_width);
-			const char* items[] = { "Cube", "Sphere", "Plane" };
+			//const char* items[] = { "Cube", "Sphere", "Plane" };
 			auto &inputNode = _Graph.GetNode(node.primitive.input);
 			int value = static_cast<int>(inputNode.value); // TODO: this seems weird
-			ImGui::Combo("##hidelabel", &value, items, IM_ARRAYSIZE(items));
+			ImGui::Combo("##hidelabel", &value, _Primitives.data(), (int)_Primitives.size());
 			ImGui::PopItemWidth();
 			inputNode.value = static_cast<float>(value);   // TODO: this seems weird
 			
@@ -675,6 +668,7 @@ void ShaderToolApp::RenderNodeGraph()
 		}
 	}
 
+	// Handle deleted nodes
 	{
 		const int num_selected = ImNodes::NumSelectedNodes();
 		if (num_selected > 0 && ImGui::IsKeyReleased(VK_DELETE))
@@ -701,6 +695,7 @@ void ShaderToolApp::RenderNodeGraph()
 					_Graph.EraseNode(iter->multiply.rhs);
 					break;
 				case UiNodeType::Draw:
+					_Graph.EraseNode(iter->draw.model);
 					_Graph.EraseNode(iter->draw.r);
 					_Graph.EraseNode(iter->draw.g);
 					_Graph.EraseNode(iter->draw.b);
@@ -712,6 +707,9 @@ void ShaderToolApp::RenderNodeGraph()
 					_Graph.EraseNode(iter->renderTarget.input);
 					_RootNodeId = -1;
 					break;
+				case UiNodeType::Primitive:
+					_Graph.EraseNode(iter->primitive.input);
+					break;
 				default:
 					break;
 				}
@@ -720,7 +718,7 @@ void ShaderToolApp::RenderNodeGraph()
 		}
 	}
 
-
+#if 0
 	if (ImGui::IsKeyReleased(VK_RETURN))
 	{
 		LOG_TRACE("###########################");
@@ -754,6 +752,7 @@ void ShaderToolApp::RenderNodeGraph()
 		}
 
 	}
+#endif
 
 	if (ImGui::IsKeyReleased(VK_S))
 	{
