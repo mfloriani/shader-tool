@@ -91,6 +91,8 @@ void ShaderToolApp::EvaluateGraph()
 			const int i = static_cast<int>(valueStack.top());
 			valueStack.pop();
 			
+			//LOG_TRACE("RenderTarget {0}", i);
+
 			// it should receive an index with the texture rendered by draw node
 			if (i > 0)
 				_RenderTargetReady = true;
@@ -212,7 +214,7 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
-			if (ImGui::MenuItem("Draw") && _RootNodeId == -1)
+			if (ImGui::MenuItem("Draw"))
 			{
 				const Node value(NodeType::Value, 0.f);
 				const Node out(NodeType::Draw);
@@ -232,8 +234,6 @@ void ShaderToolApp::RenderNodeGraph()
 
 				_UINodes.push_back(ui_node);
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-
-				_RootNodeId = ui_node.id;
 			}
 
 			if (ImGui::MenuItem("Sine"))
@@ -262,7 +262,7 @@ void ShaderToolApp::RenderNodeGraph()
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 			}
 
-			if (ImGui::MenuItem("Render Target"))
+			if (ImGui::MenuItem("Render Target") && _RootNodeId == -1)
 			{
 				const Node value(NodeType::Value, 0.f);
 				const Node op(NodeType::RenderTarget);
@@ -277,7 +277,7 @@ void ShaderToolApp::RenderNodeGraph()
 				_UINodes.push_back(ui_node);
 				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 
-				//_RootNodeId = ui_node.id;
+				_RootNodeId = ui_node.id;
 			}
 
 			if (ImGui::MenuItem("Primitive"))
@@ -703,14 +703,13 @@ void ShaderToolApp::RenderNodeGraph()
 					_Graph.EraseNode(iter->draw.r);
 					_Graph.EraseNode(iter->draw.g);
 					_Graph.EraseNode(iter->draw.b);
-					_RootNodeId = -1;
 					break;
 				case UiNodeType::Sine:
 					_Graph.EraseNode(iter->sine.input);
 					break;
 				case UiNodeType::RenderTarget:
 					_Graph.EraseNode(iter->renderTarget.input);
-					
+					_RootNodeId = -1;
 					break;
 				default:
 					break;
