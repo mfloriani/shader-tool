@@ -15,6 +15,7 @@
 #define VK_N 0x4E
 
 static float current_time_seconds = 0.f;
+//static std::vector<bool> gRenderTextures; // TODO: temporary, do it properly
 
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
@@ -87,10 +88,13 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::RenderTarget:
 		{
-			const float x = valueStack.top();
+			const int i = static_cast<int>(valueStack.top());
 			valueStack.pop();
-			//const float res = std::abs(std::sin(x));
-			valueStack.push(x);
+			
+			// it should receive an index with the texture rendered by draw node
+			if (i > 0)
+				_RenderTargetReady = true;
+			//	gRenderTextures[i] = true;
 		}
 		break;
 
@@ -99,30 +103,39 @@ void ShaderToolApp::EvaluateGraph()
 		{
 			// The final output node isn't evaluated in the loop -- instead we just pop
 			// the three values which should be in the stack.
-			assert(valueStack.size() == 3ull);
-			//const int b = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
+			assert(valueStack.size() == 4ull && "Draw node expects 4 inputs");
+			
 			const float b = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
-			//const int g = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
 			const float g = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
-			//const int r = static_cast<int>(255.f * std::clamp(valueStack.top(), 0.f, 1.f) + 0.5f);
 			const float r = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
 
-			_Entity.Color = { r, g, b };
+			const int model = static_cast<int>(valueStack.top());
+			valueStack.pop();
 
+			_Entity.Color = { r, g, b };
+			
+			// TODO: temporary... have to sort it out
+			if (model == 0)
+				_Entity.Submesh = _Entity.Mesh->DrawArgs["cube"];
+			else if (model == 1)
+				_Entity.Submesh = _Entity.Mesh->DrawArgs["sphere"];
+			else if (model == 2)
+				_Entity.Submesh = _Entity.Mesh->DrawArgs["grid"];
+			
 			RenderToTexture();
 
+			valueStack.push(1.f); // TODO: index where the texture is stored
 		}
 		break;
 
 		case NodeType::Primitive:
 		{
 			//assert(valueStack.size() == 1ull && "Testing the assert");
-			
-			//_Entity.Submesh = valueStack
-
+			valueStack.push(valueStack.top());
+			valueStack.pop();
 		}
 		break;
 		
@@ -206,11 +219,13 @@ void ShaderToolApp::RenderNodeGraph()
 
 				UiNode ui_node;
 				ui_node.type = UiNodeType::Draw;
+				ui_node.draw.model = _Graph.CreateNode(value);
 				ui_node.draw.r = _Graph.CreateNode(value);
 				ui_node.draw.g = _Graph.CreateNode(value);
 				ui_node.draw.b = _Graph.CreateNode(value);
 				ui_node.id = _Graph.CreateNode(out);
 
+				_Graph.CreateEdge(ui_node.id, ui_node.draw.model);
 				_Graph.CreateEdge(ui_node.id, ui_node.draw.r);
 				_Graph.CreateEdge(ui_node.id, ui_node.draw.g);
 				_Graph.CreateEdge(ui_node.id, ui_node.draw.b);
@@ -406,6 +421,23 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNodeTitleBar();
 
 			ImGui::Dummy(ImVec2(node_width, 0.f));
+			
+			{
+				ImNodes::BeginInputAttribute(node.draw.model);
+				const float label_width = ImGui::CalcTextSize("model").x;
+				ImGui::TextUnformatted("model");
+				if (_Graph.GetNumEdgesFromNode(node.draw.model) == 0ull)
+				{
+					ImGui::SameLine();
+					ImGui::PushItemWidth(node_width - label_width);
+					//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
+					ImGui::PopItemWidth();
+				}
+				ImNodes::EndInputAttribute();
+			}
+
+			ImGui::Spacing();
+
 			{
 				ImNodes::BeginInputAttribute(node.draw.r);
 				const float label_width = ImGui::CalcTextSize("r").x;
@@ -519,6 +551,7 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::EndNode();
 		}
 		break;
+
 		case UiNodeType::RenderTarget:
 		{
 			const float node_width = 100.0f;
@@ -536,24 +569,19 @@ void ShaderToolApp::RenderNodeGraph()
 				{
 					ImGui::SameLine();
 					ImGui::PushItemWidth(node_width - label_width);
-					
-					// TODO: handle the output from "draw" node
-					//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.renderTarget.input).value, 1.f, 0.f, 1000.f);
-
 					ImGui::PopItemWidth();
 				}
 				ImNodes::EndInputAttribute();
 
 				static int w = 256;
 				static int h = 256;
-				//ImGui::Text("size = %d x %d", w, h);
-				ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
+				//if(_RenderTargetReady)
+					ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
 			}
 
 			ImNodes::EndNode();
 		}
 		break;
-
 
 		case UiNodeType::Primitive:
 		{
@@ -571,14 +599,6 @@ void ShaderToolApp::RenderNodeGraph()
 			ImGui::PopItemWidth();
 			inputNode.value = static_cast<float>(value);   // TODO: this seems weird
 			
-			// TODO: temporary... have to sort it out
-			if (value == 0)
-				_Entity.Submesh = _Entity.Mesh->DrawArgs["cube"];
-			else if (value == 1)
-				_Entity.Submesh = _Entity.Mesh->DrawArgs["sphere"];
-			else if (value == 2)
-				_Entity.Submesh = _Entity.Mesh->DrawArgs["grid"];
-
 			ImNodes::BeginOutputAttribute(node.id);
 			const float label_width = ImGui::CalcTextSize("output").x;
 			ImGui::Indent(node_width - label_width);

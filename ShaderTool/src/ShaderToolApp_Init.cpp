@@ -34,7 +34,7 @@ bool ShaderToolApp::Init()
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
 	BuildPSO();
-	LoadDefaultMeshes();
+	LoadPrimitiveMeshes();
 
 	ThrowIfFailed(_CommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { _CommandList.Get() };
@@ -218,7 +218,7 @@ void ShaderToolApp::BuildPSO()
 
 }
 
-void ShaderToolApp::LoadDefaultMeshes()
+void ShaderToolApp::LoadPrimitiveMeshes()
 {
 	GeometryGenerator geoGen;
 

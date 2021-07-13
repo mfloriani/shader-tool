@@ -69,7 +69,7 @@ struct UiNode
 
         struct
         {
-            int r, g, b;
+            int r, g, b, model;
         } draw;
 
         struct
@@ -115,6 +115,8 @@ struct UiNode
         case UiNodeType::Draw:
         {
             out << " "
+                << n.draw.model
+                << " "
                 << n.draw.r
                 << " "
                 << n.draw.g
@@ -176,7 +178,7 @@ struct UiNode
         }
         case UiNodeType::Draw:
         {
-            in >> uiNode.draw.r >> uiNode.draw.g >> uiNode.draw.b;
+            in >> uiNode.draw.model >> uiNode.draw.r >> uiNode.draw.g >> uiNode.draw.b;
             //LOG_TRACE("{0} {1} {2} {3} {4}", uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
             break;
         }

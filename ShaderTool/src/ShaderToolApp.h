@@ -40,7 +40,7 @@ public:
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
-	void LoadDefaultMeshes();
+	void LoadPrimitiveMeshes();
 	
 	const GameTimer& GetTimer() const { return _Timer; }
 
@@ -72,6 +72,7 @@ private: // Node Graph
 	Entity              _Entity;
 
 	std::unique_ptr<RenderTexture> _RenderTarget; // TODO: at the moment only 1 render target supported
+	bool _RenderTargetReady{ false }; // TODO: at the moment only 1 render target supported
 		
 	void Reset();
 	void Save();
