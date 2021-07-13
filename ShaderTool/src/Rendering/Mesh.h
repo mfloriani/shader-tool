@@ -2,16 +2,6 @@
 
 #include "D3DUtil.h"
 
-#include <unordered_map>
-
-// Offsets for multiple meshes stored in one vertex and index buffer.
-struct Submesh
-{
-	UINT IndexCount = 0;
-	UINT StartIndexLocation = 0;
-	INT BaseVertexLocation = 0;
-};
-
 struct Mesh
 {
 	std::string Name;
@@ -32,11 +22,6 @@ struct Mesh
 	//DXGI_FORMAT IndexFormat = DXGI_FORMAT_R16_UINT;
 	DXGI_FORMAT IndexFormat = DXGI_FORMAT_R32_UINT;
 	UINT IndexBufferByteSize = 0;
-
-	// A Mesh may store multiple meshes in one vertex/index buffer.
-	// Use this container to define the Submeshes so we can draw
-	// the Submeshes individually.
-	std::unordered_map<std::string, Submesh> DrawArgs;
 
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferView()const
 	{

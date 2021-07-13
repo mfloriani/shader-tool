@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ShaderToolApp.h"
+#include "AssetManager.h"
 
 #include "Editor\ImGui\imnodes.h"
 #include "Editor\ImGui\imgui.h"
@@ -121,11 +122,11 @@ void ShaderToolApp::EvaluateGraph()
 			
 			// TODO: temporary... have to sort it out
 			if (model == 0)
-				_Entity.Submesh = _Entity.Mesh->DrawArgs["cube"];
+				_Entity.Model = AssetManager::Get().GetModel("cube");
 			else if (model == 1)
-				_Entity.Submesh = _Entity.Mesh->DrawArgs["sphere"];
+				_Entity.Model = AssetManager::Get().GetModel("sphere");
 			else if (model == 2)
-				_Entity.Submesh = _Entity.Mesh->DrawArgs["grid"];
+				_Entity.Model = AssetManager::Get().GetModel("grid");
 			
 			RenderToTexture();
 

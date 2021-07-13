@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ShaderToolApp.h"
 #include "GeometryGenerator.h"
+#include "AssetManager.h"
 
 using namespace DirectX;
 using namespace D3DUtil;
@@ -12,6 +13,7 @@ bool ShaderToolApp::Init()
 	if (!D3DApp::Init())
 		return false;
 
+	// TODO: review this render-texture perspective
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	UINT width = 1024;
 	UINT height = 1024;
@@ -19,7 +21,7 @@ bool ShaderToolApp::Init()
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspectRatio, 1.0f, 1000.0f);
 	XMStoreFloat4x4(&_RTProj, P);
 
-	// RENDER-TO-TEXTURE
+	// Render texture used by the render target node
 	_RenderTarget = std::make_unique<RenderTexture>(
 		_Device.Get(),
 		_BackBufferFormat,
@@ -34,7 +36,7 @@ bool ShaderToolApp::Init()
 	BuildRootSignature();
 	BuildShadersAndInputLayout();
 	BuildPSO();
-	LoadPrimitiveMeshes();
+	LoadPrimitiveModels();
 
 	ThrowIfFailed(_CommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { _CommandList.Get() };
@@ -42,15 +44,13 @@ bool ShaderToolApp::Init()
 
 	FlushCommandQueue();
 
-	// Node graph
 	_Timer.Reset();
 	ImNodesIO& io = ImNodes::GetIO();
 	io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
 	// TODO: move this to the proper place
 	_Entity.Id = 0;
-	_Entity.Mesh = _Meshes["primitives"].get();
-	_Entity.Submesh = _Entity.Mesh->DrawArgs["cube"];
+	_Entity.Model = AssetManager::Get().GetModel("cube");
 	_Entity.Position = {0.f, 0.f, 0.f};
 	_Entity.Scale = {10.f, 10.f, 10.f};
 	_Entity.Rotation = {0.f, 0.f, 0.f};
@@ -218,7 +218,7 @@ void ShaderToolApp::BuildPSO()
 
 }
 
-void ShaderToolApp::LoadPrimitiveMeshes()
+void ShaderToolApp::LoadPrimitiveModels()
 {
 	GeometryGenerator geoGen;
 
@@ -226,30 +226,10 @@ void ShaderToolApp::LoadPrimitiveMeshes()
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(1.f, 20u, 20u);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(10.f, 10.f, 10u, 10u);
 
-	auto mesh = std::make_unique<Mesh>();
+	auto mesh = std::make_shared<Mesh>();
 	mesh->Name = "primitives";
 
-	// The meshes MUST be stored and in the exact same way they are indexed in the submeshes
-
-	Submesh cubeSubmesh;
-	cubeSubmesh.IndexCount = (UINT)cube.Indices32.size();
-	cubeSubmesh.StartIndexLocation = 0;
-	cubeSubmesh.BaseVertexLocation = 0;
-	mesh->DrawArgs["cube"] = cubeSubmesh;
-
-	Submesh sphereSubmesh;
-	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
-	sphereSubmesh.StartIndexLocation = (UINT)cube.Indices32.size();
-	sphereSubmesh.BaseVertexLocation = (UINT)cube.Vertices.size();
-	mesh->DrawArgs["sphere"] = sphereSubmesh;
-
-	Submesh gridSubmesh;
-	gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
-	gridSubmesh.StartIndexLocation = sphereSubmesh.StartIndexLocation + (UINT)sphere.Indices32.size();
-	gridSubmesh.BaseVertexLocation = sphereSubmesh.BaseVertexLocation + (UINT)sphere.Vertices.size();
-	mesh->DrawArgs["grid"] = gridSubmesh;
-
-	// the order that vertices and indices are inserted MUST be the same as the index offsets set in the submeshes
+	// the order that vertices and indices are inserted MUST be the same as the offsets in the submeshes
 
 	std::vector<Vertex> vertices;
 	vertices.insert(vertices.end(), cube.Vertices.begin(), cube.Vertices.end());
@@ -289,6 +269,29 @@ void ShaderToolApp::LoadPrimitiveMeshes()
 	mesh->IndexFormat = DXGI_FORMAT_R32_UINT;
 	mesh->IndexBufferByteSize = ibByteSize;
 
-	_Meshes[mesh->Name] = std::move(mesh);
+	AssetManager::Get().AddMesh(mesh);
 
+	// The meshes MUST be stored and in the exact same way they are indexed in the submeshes
+
+	Model model;
+	model.VertexBufferView = mesh->VertexBufferView();
+	model.IndexBufferView = mesh->IndexBufferView();
+
+	// Cube
+	model.IndexCount = (UINT)cube.Indices32.size();
+	model.StartIndexLocation = 0;
+	model.BaseVertexLocation = 0;
+	AssetManager::Get().AddModel("cube", model);
+
+	// Sphere
+	model.IndexCount = (UINT)sphere.Indices32.size();
+	model.StartIndexLocation = (UINT)cube.Indices32.size();
+	model.BaseVertexLocation = (UINT)cube.Vertices.size();
+	AssetManager::Get().AddModel("sphere", model);
+
+	// Grid
+	model.IndexCount = (UINT)grid.Indices32.size();
+	model.StartIndexLocation += (UINT)sphere.Indices32.size();
+	model.BaseVertexLocation += (UINT)sphere.Vertices.size();
+	AssetManager::Get().AddModel("grid", model);
 }

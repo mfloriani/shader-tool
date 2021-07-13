@@ -161,7 +161,7 @@ void ShaderToolApp::UpdatePerObjectCB()
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 
-		int objCBIndex = 1; // TODO: handle multiple objects
+		int objCBIndex = 1;
 		currObjectCB->CopyData(objCBIndex, objConstants);
 	}
 #endif
@@ -234,7 +234,7 @@ void ShaderToolApp::OnRender()
 	
 	// QUAD
 	{
-		auto& quad = _Meshes["quad_geo"]; // TODO: avoid direct access
+		auto& quad = _Meshes["quad_geo"]; 
 
 		_CommandList->IASetVertexBuffers(0, 1, &quad->VertexBufferView());
 		_CommandList->IASetIndexBuffer(&quad->IndexBufferView());
@@ -243,7 +243,7 @@ void ShaderToolApp::OnRender()
 		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
 
-		UINT objCBIndex = 1; // TODO: this should not be hardcoded
+		UINT objCBIndex = 1;
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
 		objCBAddress += objCBIndex * objCBByteSize;
 
@@ -392,10 +392,8 @@ void ShaderToolApp::RenderToTexture()
 
 	// BOX
 	{
-		auto box = _Entity.Mesh; // TODO: avoid direct access to map, the value might not exists
-
-		_CommandList->IASetVertexBuffers(0, 1, &box->VertexBufferView());
-		_CommandList->IASetIndexBuffer(&box->IndexBufferView());
+		_CommandList->IASetVertexBuffers(0, 1, &_Entity.Model.VertexBufferView);
+		_CommandList->IASetIndexBuffer(&_Entity.Model.IndexBufferView);
 		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
@@ -407,10 +405,10 @@ void ShaderToolApp::RenderToTexture()
 
 		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 		_CommandList->DrawIndexedInstanced(
-			_Entity.Submesh.IndexCount,
+			_Entity.Model.IndexCount,
 			1,
-			_Entity.Submesh.StartIndexLocation,
-			_Entity.Submesh.BaseVertexLocation,
+			_Entity.Model.StartIndexLocation,
+			_Entity.Model.BaseVertexLocation,
 			0);
 	}
 

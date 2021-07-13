@@ -350,7 +350,6 @@ bool D3DApp::InitDirect3D()
     _4xMsaaQuality = msQualityLevels.NumQualityLevels;
     assert(_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 
-    // TODO: this should be in the external layer not here
     for (int i = 0; i < NUM_FRAMES; ++i)
         _FrameResources[i] = std::make_unique<FrameResource>(_Device.Get(), 1, 2);
 

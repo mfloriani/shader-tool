@@ -114,6 +114,7 @@
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\AssetManager.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
+    <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Rendering\Mesh.h" />
     <ClInclude Include="src\Rendering\Vertex.h" />
     <ClInclude Include="src\ShaderToolApp.h" />
@@ -155,6 +156,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\GeometryGenerator.cpp" />
+    <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\Log.cpp" />

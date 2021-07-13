@@ -40,7 +40,7 @@ public:
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
 	void BuildPSO();
-	void LoadPrimitiveMeshes();
+	void LoadPrimitiveModels();
 	
 	const GameTimer& GetTimer() const { return _Timer; }
 
@@ -61,7 +61,6 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RootSignature{ nullptr };
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
-	std::unordered_map<std::string, std::unique_ptr<Mesh>> _Meshes;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
 	
@@ -71,8 +70,9 @@ private: // Node Graph
 	int                 _RootNodeId;
 	Entity              _Entity;
 
-	std::unique_ptr<RenderTexture> _RenderTarget; // TODO: at the moment only 1 render target supported
-	bool _RenderTargetReady{ false }; // TODO: at the moment only 1 render target supported
+	// TODO: at the moment only 1 render target supported
+	std::unique_ptr<RenderTexture> _RenderTarget; 
+	bool _RenderTargetReady{ false };
 		
 	void Reset();
 	void Save();

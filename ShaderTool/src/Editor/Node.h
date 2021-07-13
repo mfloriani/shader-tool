@@ -136,7 +136,6 @@ struct UiNode
 
         case UiNodeType::RenderTarget:
 
-            // TODO: the input should point to the draw node
             out << " "
                 << n.renderTarget.input;
             break;
