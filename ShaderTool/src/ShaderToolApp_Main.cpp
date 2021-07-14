@@ -419,3 +419,26 @@ void ShaderToolApp::RenderToTexture()
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_GENERIC_READ));
 }
+
+void ShaderToolApp::ClearRenderTexture()
+{
+	_CommandList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTarget->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
+	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
+	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
+	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
+	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
+
+	_CommandList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTarget->GetResource(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_GENERIC_READ));
+}

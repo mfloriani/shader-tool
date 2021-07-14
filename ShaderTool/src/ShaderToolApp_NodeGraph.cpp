@@ -96,7 +96,8 @@ void ShaderToolApp::EvaluateGraph()
 			// it should receive an index with the texture rendered by draw node
 			if (i > 0)
 				_RenderTargetReady = true;
-			//	gRenderTextures[i] = true;
+			else
+				ClearRenderTexture();
 		}
 		break;
 

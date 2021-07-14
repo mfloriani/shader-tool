@@ -88,5 +88,6 @@ private: // Node Graph
 	void Load();
 	void EvaluateGraph();
 	void RenderToTexture();
+	void ClearRenderTexture();
 
 };
