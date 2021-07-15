@@ -62,7 +62,57 @@ bool ShaderToolApp::Init()
 
 void ShaderToolApp::InitNodeGraph()
 {
+	ID3D12ShaderReflection* shaderReflection;
 	
+	auto shaderBlob = _Shaders["quad_ps"];
+
+	auto hr = D3DReflect(
+		shaderBlob->GetBufferPointer(),
+		shaderBlob->GetBufferSize(),
+		IID_ID3D12ShaderReflection,
+		//__uuidof(shaderReflection),
+		//reinterpret_cast<void**>(shaderReflection.Get())
+		reinterpret_cast<void**>(&shaderReflection)
+	);
+
+	D3D12_SHADER_DESC desc;
+	shaderReflection->GetDesc(&desc);
+
+	for (unsigned int i = 0; i < desc.ConstantBuffers; ++i)
+	{
+		ID3D12ShaderReflectionConstantBuffer* buffer = shaderReflection->GetConstantBufferByIndex(i);
+
+		D3D12_SHADER_BUFFER_DESC bufferDesc;
+		buffer->GetDesc(&bufferDesc);
+
+		LOG_TRACE("CBuffer {0}", bufferDesc.Name);
+
+		for (UINT j = 0; j < bufferDesc.Variables; j++)
+		{
+			ID3D12ShaderReflectionVariable* var = buffer->GetVariableByIndex(j);
+			D3D12_SHADER_VARIABLE_DESC varDesc;
+			var->GetDesc(&varDesc);
+
+			auto type = var->GetType();
+			
+			D3D12_SHADER_TYPE_DESC typeDesc;
+			type->GetDesc(&typeDesc);
+
+			LOG_TRACE("  {0} {1}", typeDesc.Name, varDesc.Name);
+		}
+	}
+
+	for (unsigned int i = 0; i < desc.BoundResources; ++i)
+	{
+		D3D12_SHADER_INPUT_BIND_DESC bindDesc = {};
+		shaderReflection->GetResourceBindingDesc(i, &bindDesc);
+
+		LOG_TRACE("{0} {1}", bindDesc.Type, bindDesc.Name);
+
+	}
+
+
+	shaderReflection->Release();
 }
 
 void ShaderToolApp::CreateDescriptorHeaps()
