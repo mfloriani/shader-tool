@@ -12,8 +12,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AssetManager.h" />
     <ClInclude Include="src\Defines.h" />
+    <ClInclude Include="src\Editor\Edge.h">
+      <Filter>Editor</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\Graph.h">
+      <Filter>Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\IdMap.h">
       <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\ImGui\imconfig.h">
@@ -46,9 +53,14 @@
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="src\ShaderToolApp.h" />
+    <ClInclude Include="src\Editor\Node.h">
+      <Filter>Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\GameTimer.h" />
+    <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Rendering\D3DApp.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -58,10 +70,16 @@
     <ClInclude Include="src\Rendering\FrameResource.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Rendering\Mesh.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rendering\RenderTexture.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\UploadBuffer.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rendering\Vertex.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\Window.h">
@@ -70,18 +88,11 @@
     <ClInclude Include="src\Rendering\d3dx12.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Editor\Node.h" />
-    <ClInclude Include="src\Editor\Edge.h" />
-    <ClInclude Include="src\Editor\IdMap.h" />
-    <ClInclude Include="src\Entity.h" />
-    <ClInclude Include="src\AssetManager.h" />
-    <ClInclude Include="src\GeometryGenerator.h" />
-    <ClInclude Include="src\Rendering\Mesh.h" />
-    <ClInclude Include="src\Rendering\Vertex.h" />
-    <ClInclude Include="src\Model.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AssetManager.cpp" />
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
@@ -106,8 +117,8 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
+    <ClCompile Include="src\GeometryGenerator.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Rendering\D3DApp.cpp">
@@ -125,16 +136,15 @@
     <ClCompile Include="src\Rendering\Window.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\ShaderToolApp_Init.cpp" />
-    <ClCompile Include="src\AssetManager.cpp" />
-    <ClCompile Include="src\GeometryGenerator.cpp" />
+    <ClCompile Include="src\ShaderToolApp_Main.cpp" />
+    <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
+    <ClCompile Include="src\pch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\DefaultPS.hlsl" />
     <FxCompile Include="src\Shaders\DefaultVS.hlsl" />
-    <FxCompile Include="src\Shaders\QuadVS.hlsl" />
     <FxCompile Include="src\Shaders\QuadPS.hlsl" />
+    <FxCompile Include="src\Shaders\QuadVS.hlsl" />
   </ItemGroup>
 </Project>
