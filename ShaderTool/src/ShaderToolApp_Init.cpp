@@ -182,22 +182,22 @@ void ShaderToolApp::BuildShadersAndInputLayout()
 	// default
 	{
 		ComPtr<ID3DBlob> vsBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"DefaultVS.cso", &vsBlob));
+		ThrowIfFailed(D3DReadFileToBlob(L"Default_vs.cso", &vsBlob));
 		_Shaders.insert(std::pair("default_vs", vsBlob));
 
 		ComPtr<ID3DBlob> psBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"DefaultPS.cso", &psBlob));
+		ThrowIfFailed(D3DReadFileToBlob(L"Default_ps.cso", &psBlob));
 		_Shaders.insert(std::pair("default_ps", psBlob));
 	}
 
 	// quad
 	{
 		ComPtr<ID3DBlob> vsBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"QuadVS.cso", &vsBlob));
+		ThrowIfFailed(D3DReadFileToBlob(L"Quad_vs.cso", &vsBlob));
 		_Shaders.insert(std::pair("quad_vs", vsBlob));
 
 		ComPtr<ID3DBlob> psBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"QuadPS.cso", &psBlob));
+		ThrowIfFailed(D3DReadFileToBlob(L"Quad_ps.cso", &psBlob));
 		_Shaders.insert(std::pair("quad_ps", psBlob));
 	}
 

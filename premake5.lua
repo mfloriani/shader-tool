@@ -28,6 +28,7 @@ project "ShaderTool"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/src/**.hlsl",
 	}
 
 	includedirs
@@ -73,8 +74,21 @@ project "ShaderTool"
 		}
 		optimize "on"
 		buildoptions "/MD"
-
 	
 	filter 'files:**/ImGui/**.cpp'
 		flags  { 'NoPCH' }
 	
+	filter { "files:**.hlsl" }
+		flags "ExcludeFromBuild"
+		shadermodel "5.0"
+
+	filter { "files:**_vs.hlsl" }
+		removeflags "ExcludeFromBuild"
+		shadertype "Vertex"
+		-- shaderentry "ForVertex"
+
+	 filter { "files:**_ps.hlsl" }
+		removeflags "ExcludeFromBuild"
+		shadertype "Pixel"
+		-- shaderentry "ForPixel"
+		
