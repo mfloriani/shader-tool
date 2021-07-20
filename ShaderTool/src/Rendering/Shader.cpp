@@ -2,6 +2,7 @@
 #include "Shader.h"
 
 using Microsoft::WRL::ComPtr;
+using namespace D3DUtil;
 
 Shader::Shader(const std::string& name, ComPtr<ID3DBlob> buffer) 
 	: _Name(name), _BufferData(buffer)
@@ -21,6 +22,7 @@ D3D12_SHADER_BYTECODE Shader::GetByteCode()
 	};
 }
 
+
 void Shader::Reflect()
 {
 	ID3D12ShaderReflection* shaderReflection;
@@ -30,16 +32,25 @@ void Shader::Reflect()
 		IID_ID3D12ShaderReflection,
 		reinterpret_cast<void**>(&shaderReflection)
 	);
-	shaderReflection->GetDesc(&_ShaderDesc);
-	
+	D3D12_SHADER_DESC shaderDesc;
+	shaderReflection->GetDesc(&shaderDesc);
+	_ShaderDesc = SHADER_DESC(shaderDesc);
+
 	for (unsigned int i = 0; i < _ShaderDesc.ConstantBuffers; ++i)
 	{
 		ID3D12ShaderReflectionConstantBuffer* buffer = shaderReflection->GetConstantBufferByIndex(i);
 
 		D3D12_SHADER_BUFFER_DESC bufferDesc;
 		buffer->GetDesc(&bufferDesc);
-		LOG_TRACE("CBuffer {0}", bufferDesc.Name);
-		_CBuffersDesc.push_back(bufferDesc);
+		//LOG_TRACE("CBUFFER {0}", bufferDesc.Name);
+		_CBuffersDesc.push_back(SHADER_BUFFER_DESC(bufferDesc));
+
+		_CBufferVars.insert(
+			std::make_pair( 
+				bufferDesc.Name, 
+				std::vector<SHADER_VARIABLE_DESC>()));
+
+		_CBufferVars[bufferDesc.Name].reserve(bufferDesc.Variables);
 
 		for (UINT j = 0; j < bufferDesc.Variables; j++)
 		{
@@ -51,12 +62,9 @@ void Shader::Reflect()
 			D3D12_SHADER_TYPE_DESC typeDesc;
 			type->GetDesc(&typeDesc);
 
-			LOG_TRACE("  {0} {1}", typeDesc.Name, varDesc.Name);
+			//LOG_TRACE("  {0} {1}", typeDesc.Name, varDesc.Name);
 
-			_CBufferVars.insert(
-				std::make_pair(
-					bufferDesc.Name, 
-					CBUFFER_VARIABLE(varDesc, typeDesc)));
+			_CBufferVars[bufferDesc.Name].push_back(SHADER_VARIABLE_DESC(varDesc, typeDesc));
 		}
 	}
 
@@ -65,9 +73,26 @@ void Shader::Reflect()
 		D3D12_SHADER_INPUT_BIND_DESC bindDesc = {};
 		shaderReflection->GetResourceBindingDesc(i, &bindDesc);
 
-		LOG_TRACE("INPUT_BIND_DESC {0} {1}", bindDesc.Type, bindDesc.Name);
+		//LOG_TRACE("INPUT_BIND_DESC {0} {1}", bindDesc.Type, bindDesc.Name);
 	}
 
-
 	shaderReflection->Release();
+}
+
+void Shader::PrintDebugInfo()
+{
+	for (auto& cbuffer : _CBuffersDesc)
+	{
+		const auto name = std::string (cbuffer.Name);
+		LOG_TRACE("{0}", name);
+
+		auto it = _CBufferVars.find(cbuffer.Name);
+		if (it != _CBufferVars.end())
+		{
+			for (auto& var : it->second)
+			{
+				LOG_TRACE("  {0}", var.Name);
+			}
+		}
+	}
 }

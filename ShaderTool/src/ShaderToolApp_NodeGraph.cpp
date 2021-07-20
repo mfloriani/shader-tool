@@ -719,6 +719,17 @@ void ShaderToolApp::RenderNodeGraph()
 		}
 	}
 
+	if (ImGui::IsKeyReleased(VK_RETURN))
+	{
+		auto& shaderMgr = ShaderManager::Get();
+
+		for (auto& shader : shaderMgr.GetShaders())
+		{
+			shader->PrintDebugInfo();
+		}
+
+	}
+
 #if 0
 	if (ImGui::IsKeyReleased(VK_RETURN))
 	{

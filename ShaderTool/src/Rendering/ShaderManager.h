@@ -20,6 +20,8 @@ public:
 	Shader* ShaderManager::GetShader(size_t index);
 	Shader* GetShader(const std::string& name);
 
+	const std::vector<std::unique_ptr<Shader>>& GetShaders() const { return _Shaders; }
+
 private:
 	ShaderManager(){}
 
