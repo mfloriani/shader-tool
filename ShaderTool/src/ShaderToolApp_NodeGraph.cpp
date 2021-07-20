@@ -1,9 +1,7 @@
 #include "pch.h"
 #include "ShaderToolApp.h"
 #include "AssetManager.h"
-
-#include "Editor\ImGui\imnodes.h"
-#include "Editor\ImGui\imgui.h"
+#include "Editor/UiNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -142,19 +140,8 @@ void ShaderToolApp::EvaluateGraph()
 	}
 }
 
-
-void ShaderToolApp::RenderNodeGraph()
+void ShaderToolApp::HandleNewNodes()
 {
-	_Timer.Tick();
-
-	// Update timer context
-	current_time_seconds = _Timer.TotalTime();
-
-	// The node editor window
-	ImGui::Begin("color node editor");
-	ImGui::Columns(1);
-	ImNodes::BeginNodeEditor();
-
 	// Handle new nodes
 	{
 		const bool open_popup = (ImGui::IsWindowHovered() || ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) &&
@@ -164,12 +151,12 @@ void ShaderToolApp::RenderNodeGraph()
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
 		if (!ImGui::IsAnyItemHovered() && open_popup)
 		{
-			ImGui::OpenPopup("add node");
+			ImGui::OpenPopup("Add Node");
 		}
 
 		// ADD NEW UI NODE
 
-		if (ImGui::BeginPopup("add node"))
+		if (ImGui::BeginPopup("Add Node"))
 		{
 			const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
@@ -178,433 +165,483 @@ void ShaderToolApp::RenderNodeGraph()
 				const Node value(NodeType::Value, 0.f);
 				const Node op(NodeType::Add);
 
-				UiNode ui_node;
-				ui_node.type = UiNodeType::Add;
-				ui_node.add.lhs = _Graph.CreateNode(value);
-				ui_node.add.rhs = _Graph.CreateNode(value);
-				ui_node.id = _Graph.CreateNode(op);
+				auto lhs = _Graph.CreateNode(value);
+				auto rhs = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(op);
 
-				_Graph.CreateEdge(ui_node.id, ui_node.add.lhs);
-				_Graph.CreateEdge(ui_node.id, ui_node.add.rhs);
+				_Graph.CreateEdge(id, lhs);
+				_Graph.CreateEdge(id, rhs);
 
-				_UINodes.push_back(ui_node);
-				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+				_UINodes.push_back(std::make_unique<AddNode>(UiNodeType::Add, id, lhs, rhs));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
 			}
 
-			if (ImGui::MenuItem("Multiply"))
-			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::Multiply);
+			//if (ImGui::MenuItem("Multiply"))
+			//{
+			//	const Node value(NodeType::Value, 0.f);
+			//	const Node op(NodeType::Multiply);
 
-				UiNode ui_node;
-				ui_node.type = UiNodeType::Multiply;
-				ui_node.multiply.lhs = _Graph.CreateNode(value);
-				ui_node.multiply.rhs = _Graph.CreateNode(value);
-				ui_node.id = _Graph.CreateNode(op);
+			//	UiNode ui_node;
+			//	ui_node.type = UiNodeType::Multiply;
+			//	ui_node.multiply.lhs = _Graph.CreateNode(value);
+			//	ui_node.multiply.rhs = _Graph.CreateNode(value);
+			//	ui_node.id = _Graph.CreateNode(op);
 
-				_Graph.CreateEdge(ui_node.id, ui_node.multiply.lhs);
-				_Graph.CreateEdge(ui_node.id, ui_node.multiply.rhs);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.multiply.lhs);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.multiply.rhs);
 
-				_UINodes.push_back(ui_node);
-				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			}
+			//	_UINodes.push_back(ui_node);
+			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+			//}
 
-			if (ImGui::MenuItem("Draw"))
-			{
-				const Node value(NodeType::Value, 0.f);
-				const Node out(NodeType::Draw);
+			//if (ImGui::MenuItem("Draw"))
+			//{
+			//	const Node value(NodeType::Value, 0.f);
+			//	const Node out(NodeType::Draw);
 
-				UiNode ui_node;
-				ui_node.type = UiNodeType::Draw;
-				ui_node.draw.model = _Graph.CreateNode(value);
-				ui_node.draw.r = _Graph.CreateNode(value);
-				ui_node.draw.g = _Graph.CreateNode(value);
-				ui_node.draw.b = _Graph.CreateNode(value);
-				ui_node.id = _Graph.CreateNode(out);
+			//	UiNode ui_node;
+			//	ui_node.type = UiNodeType::Draw;
+			//	ui_node.draw.vs = _Graph.CreateNode(value);
+			//	ui_node.draw.ps = _Graph.CreateNode(value);
+			//	ui_node.draw.model = _Graph.CreateNode(value);
+			//	ui_node.draw.r = _Graph.CreateNode(value);
+			//	ui_node.draw.g = _Graph.CreateNode(value);
+			//	ui_node.draw.b = _Graph.CreateNode(value);
+			//	ui_node.id = _Graph.CreateNode(out);
 
-				_Graph.CreateEdge(ui_node.id, ui_node.draw.model);
-				_Graph.CreateEdge(ui_node.id, ui_node.draw.r);
-				_Graph.CreateEdge(ui_node.id, ui_node.draw.g);
-				_Graph.CreateEdge(ui_node.id, ui_node.draw.b);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.vs);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.ps);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.model);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.r);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.g);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.b);
 
-				_UINodes.push_back(ui_node);
-				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			}
+			//	_UINodes.push_back(ui_node);
+			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+			//}
 
-			if (ImGui::MenuItem("Sine"))
-			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::Sine);
+			//if (ImGui::MenuItem("Sine"))
+			//{
+			//	const Node value(NodeType::Value, 0.f);
+			//	const Node op(NodeType::Sine);
 
-				UiNode ui_node;
-				ui_node.type = UiNodeType::Sine;
-				ui_node.sine.input = _Graph.CreateNode(value);
-				ui_node.id = _Graph.CreateNode(op);
+			//	UiNode ui_node;
+			//	ui_node.type = UiNodeType::Sine;
+			//	ui_node.sine.input = _Graph.CreateNode(value);
+			//	ui_node.id = _Graph.CreateNode(op);
 
-				_Graph.CreateEdge(ui_node.id, ui_node.sine.input);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.sine.input);
 
-				_UINodes.push_back(ui_node);
-				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			}
+			//	_UINodes.push_back(ui_node);
+			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+			//}
 
-			if (ImGui::MenuItem("Time"))
-			{
-				UiNode ui_node;
-				ui_node.type = UiNodeType::Time;
-				ui_node.id = _Graph.CreateNode(Node(NodeType::Time));
+			//if (ImGui::MenuItem("Time"))
+			//{
+			//	UiNode ui_node;
+			//	ui_node.type = UiNodeType::Time;
+			//	ui_node.id = _Graph.CreateNode(Node(NodeType::Time));
 
-				_UINodes.push_back(ui_node);
-				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			}
+			//	_UINodes.push_back(ui_node);
+			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+			//}
 
-			if (ImGui::MenuItem("Render Target") && _RootNodeId == -1)
-			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::RenderTarget);
+			//if (ImGui::MenuItem("Render Target") && _RootNodeId == -1)
+			//{
+			//	const Node value(NodeType::Value, 0.f);
+			//	const Node op(NodeType::RenderTarget);
 
-				UiNode ui_node;
-				ui_node.type = UiNodeType::RenderTarget;
-				ui_node.renderTarget.input = _Graph.CreateNode(value);
-				ui_node.id = _Graph.CreateNode(op);
+			//	UiNode ui_node;
+			//	ui_node.type = UiNodeType::RenderTarget;
+			//	ui_node.renderTarget.input = _Graph.CreateNode(value);
+			//	ui_node.id = _Graph.CreateNode(op);
 
-				_Graph.CreateEdge(ui_node.id, ui_node.renderTarget.input);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.renderTarget.input);
 
-				_UINodes.push_back(ui_node);
-				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+			//	_UINodes.push_back(ui_node);
+			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
 
-				_RootNodeId = ui_node.id;
-			}
+			//	_RootNodeId = ui_node.id;
+			//}
 
-			if (ImGui::MenuItem("Primitive"))
-			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::Primitive);
+			//if (ImGui::MenuItem("Primitive"))
+			//{
+			//	const Node value(NodeType::Value, 0.f);
+			//	const Node op(NodeType::Primitive);
 
-				UiNode ui_node;
-				ui_node.type = UiNodeType::Primitive;
-				ui_node.primitive.input = _Graph.CreateNode(value);
-				ui_node.id = _Graph.CreateNode(op);
+			//	UiNode ui_node;
+			//	ui_node.type = UiNodeType::Primitive;
+			//	ui_node.primitive.input = _Graph.CreateNode(value);
+			//	ui_node.id = _Graph.CreateNode(op);
 
-				_Graph.CreateEdge(ui_node.id, ui_node.primitive.input);
+			//	_Graph.CreateEdge(ui_node.id, ui_node.primitive.input);
 
-				_UINodes.push_back(ui_node);
-				ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			}
+			//	_UINodes.push_back(ui_node);
+			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+			//}
 
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleVar();
 	}
+}
+
+void ShaderToolApp::RenderNodeGraph()
+{
+	_Timer.Tick();
+
+	// Update timer context
+	current_time_seconds = _Timer.TotalTime();
+
+	// The node editor window
+	ImGui::Begin("Shader Editor");
+	ImGui::Columns(1);
+	ImNodes::BeginNodeEditor();
+
+	HandleNewNodes();
 
 	// RENDER UI NODES
 
-	for (const UiNode& node : _UINodes)
+	for (const auto& node : _UINodes)
 	{
-		switch (node.type)
-		{
-		case UiNodeType::Add:
-		{
-			const float node_width = 100.f;
-			ImNodes::BeginNode(node.id);
+		node->Render(_Graph);
 
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("ADD");
-			ImNodes::EndNodeTitleBar();
-			{
-				ImNodes::BeginInputAttribute(node.add.lhs);
-				const float label_width = ImGui::CalcTextSize("left").x;
-				ImGui::TextUnformatted("left");
-				if (_Graph.GetNumEdgesFromNode(node.add.lhs) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.add.lhs).value, 0.01f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//	switch (node.type)
+	//	{
+	//	case UiNodeType::Add:
+	//	{
+	//		const float node_width = 100.f;
+	//		ImNodes::BeginNode(node.id);
 
-			{
-				ImNodes::BeginInputAttribute(node.add.rhs);
-				const float label_width = ImGui::CalcTextSize("right").x;
-				ImGui::TextUnformatted("right");
-				if (_Graph.GetNumEdgesFromNode(node.add.rhs) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.add.rhs).value, 0.01f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		ImNodes::BeginNodeTitleBar();
+	//		ImGui::TextUnformatted("ADD");
+	//		ImNodes::EndNodeTitleBar();
+	//		{
+	//			ImNodes::BeginInputAttribute(node.add.lhs);
+	//			const float label_width = ImGui::CalcTextSize("left").x;
+	//			ImGui::TextUnformatted("left");
+	//			if (_Graph.GetNumEdgesFromNode(node.add.lhs) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.add.lhs).value, 0.01f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			ImGui::Spacing();
+	//		{
+	//			ImNodes::BeginInputAttribute(node.add.rhs);
+	//			const float label_width = ImGui::CalcTextSize("right").x;
+	//			ImGui::TextUnformatted("right");
+	//			if (_Graph.GetNumEdgesFromNode(node.add.rhs) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.add.rhs).value, 0.01f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			{
-				ImNodes::BeginOutputAttribute(node.id);
-				const float label_width = ImGui::CalcTextSize("result").x;
-				ImGui::Indent(node_width - label_width);
-				ImGui::TextUnformatted("result");
-				ImNodes::EndOutputAttribute();
-			}
+	//		ImGui::Spacing();
 
-			ImNodes::EndNode();
-		}
-		break;
-		case UiNodeType::Multiply:
-		{
-			const float node_width = 100.0f;
-			ImNodes::BeginNode(node.id);
+	//		{
+	//			ImNodes::BeginOutputAttribute(node.id);
+	//			const float label_width = ImGui::CalcTextSize("result").x;
+	//			ImGui::Indent(node_width - label_width);
+	//			ImGui::TextUnformatted("result");
+	//			ImNodes::EndOutputAttribute();
+	//		}
 
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("MULTIPLY");
-			ImNodes::EndNodeTitleBar();
+	//		ImNodes::EndNode();
+	//	}
+	//	break;
+	//	case UiNodeType::Multiply:
+	//	{
+	//		const float node_width = 100.0f;
+	//		ImNodes::BeginNode(node.id);
 
-			{
-				ImNodes::BeginInputAttribute(node.multiply.lhs);
-				const float label_width = ImGui::CalcTextSize("left").x;
-				ImGui::TextUnformatted("left");
-				if (_Graph.GetNumEdgesFromNode(node.multiply.lhs) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.multiply.lhs).value, 0.01f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		ImNodes::BeginNodeTitleBar();
+	//		ImGui::TextUnformatted("MULTIPLY");
+	//		ImNodes::EndNodeTitleBar();
 
-			{
-				ImNodes::BeginInputAttribute(node.multiply.rhs);
-				const float label_width = ImGui::CalcTextSize("right").x;
-				ImGui::TextUnformatted("right");
-				if (_Graph.GetNumEdgesFromNode(node.multiply.rhs) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat(
-						"##hidelabel", &_Graph.GetNode(node.multiply.rhs).value, 0.01f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		{
+	//			ImNodes::BeginInputAttribute(node.multiply.lhs);
+	//			const float label_width = ImGui::CalcTextSize("left").x;
+	//			ImGui::TextUnformatted("left");
+	//			if (_Graph.GetNumEdgesFromNode(node.multiply.lhs) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat(
+	//					"##hidelabel", &_Graph.GetNode(node.multiply.lhs).value, 0.01f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			ImGui::Spacing();
+	//		{
+	//			ImNodes::BeginInputAttribute(node.multiply.rhs);
+	//			const float label_width = ImGui::CalcTextSize("right").x;
+	//			ImGui::TextUnformatted("right");
+	//			if (_Graph.GetNumEdgesFromNode(node.multiply.rhs) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat(
+	//					"##hidelabel", &_Graph.GetNode(node.multiply.rhs).value, 0.01f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			{
-				ImNodes::BeginOutputAttribute(node.id);
-				const float label_width = ImGui::CalcTextSize("result").x;
-				ImGui::Indent(node_width - label_width);
-				ImGui::TextUnformatted("result");
-				ImNodes::EndOutputAttribute();
-			}
+	//		ImGui::Spacing();
 
-			ImNodes::EndNode();
-		}
-		break;
-		case UiNodeType::Draw:
-		{
-			const float node_width = 100.0f;
-			ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
-			ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(45, 126, 194, 255));
-			ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(81, 148, 204, 255));
-			ImNodes::BeginNode(node.id);
+	//		{
+	//			ImNodes::BeginOutputAttribute(node.id);
+	//			const float label_width = ImGui::CalcTextSize("result").x;
+	//			ImGui::Indent(node_width - label_width);
+	//			ImGui::TextUnformatted("result");
+	//			ImNodes::EndOutputAttribute();
+	//		}
 
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("DRAW");
-			ImNodes::EndNodeTitleBar();
+	//		ImNodes::EndNode();
+	//	}
+	//	break;
+	//	case UiNodeType::Draw:
+	//	{
+	//		const float node_width = 100.0f;
+	//		ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
+	//		ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(45, 126, 194, 255));
+	//		ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(81, 148, 204, 255));
+	//		ImNodes::BeginNode(node.id);
 
-			ImGui::Dummy(ImVec2(node_width, 0.f));
-			
-			{
-				ImNodes::BeginInputAttribute(node.draw.model);
-				const float label_width = ImGui::CalcTextSize("model").x;
-				ImGui::TextUnformatted("model");
-				if (_Graph.GetNumEdgesFromNode(node.draw.model) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		ImNodes::BeginNodeTitleBar();
+	//		ImGui::TextUnformatted("DRAW");
+	//		ImNodes::EndNodeTitleBar();
 
-			ImGui::Spacing();
+	//		ImGui::Dummy(ImVec2(node_width, 0.f));
+	//		
+	//		{
+	//			ImNodes::BeginInputAttribute(node.draw.vs);
+	//			const float label_width = ImGui::CalcTextSize("vs").x;
+	//			ImGui::TextUnformatted("vs");
+	//			if (_Graph.GetNumEdgesFromNode(node.draw.vs) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			{
-				ImNodes::BeginInputAttribute(node.draw.r);
-				const float label_width = ImGui::CalcTextSize("r").x;
-				ImGui::TextUnformatted("r");
-				if (_Graph.GetNumEdgesFromNode(node.draw.r) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		ImGui::Spacing();
 
-			ImGui::Spacing();
+	//		{
+	//			ImNodes::BeginInputAttribute(node.draw.ps);
+	//			const float label_width = ImGui::CalcTextSize("ps").x;
+	//			ImGui::TextUnformatted("ps");
+	//			if (_Graph.GetNumEdgesFromNode(node.draw.ps) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			{
-				ImNodes::BeginInputAttribute(node.draw.g);
-				const float label_width = ImGui::CalcTextSize("g").x;
-				ImGui::TextUnformatted("g");
-				if (_Graph.GetNumEdgesFromNode(node.draw.g) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.g).value, 0.01f, 0.f, 1.f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		ImGui::Spacing();
 
-			ImGui::Spacing();
+	//		{
+	//			ImNodes::BeginInputAttribute(node.draw.model);
+	//			const float label_width = ImGui::CalcTextSize("model").x;
+	//			ImGui::TextUnformatted("model");
+	//			if (_Graph.GetNumEdgesFromNode(node.draw.model) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			{
-				ImNodes::BeginInputAttribute(node.draw.b);
-				const float label_width = ImGui::CalcTextSize("b").x;
-				ImGui::TextUnformatted("b");
-				if (_Graph.GetNumEdgesFromNode(node.draw.b) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.b).value, 0.01f, 0.f, 1.0f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		ImGui::Spacing();
 
-			ImGui::Spacing();
+	//		{
+	//			ImNodes::BeginInputAttribute(node.draw.r);
+	//			const float label_width = ImGui::CalcTextSize("r").x;
+	//			ImGui::TextUnformatted("r");
+	//			if (_Graph.GetNumEdgesFromNode(node.draw.r) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			{
-				ImNodes::BeginOutputAttribute(node.id);
-				const float label_width = ImGui::CalcTextSize("output").x;
-				ImGui::Indent(node_width - label_width);
-				ImGui::TextUnformatted("output");
-				ImNodes::EndInputAttribute();
-			}
+	//		ImGui::Spacing();
 
-			ImNodes::EndNode();
-			ImNodes::PopColorStyle();
-			ImNodes::PopColorStyle();
-			ImNodes::PopColorStyle();
-		}
-		break;
-		case UiNodeType::Sine:
-		{
-			const float node_width = 100.0f;
-			ImNodes::BeginNode(node.id);
+	//		{
+	//			ImNodes::BeginInputAttribute(node.draw.g);
+	//			const float label_width = ImGui::CalcTextSize("g").x;
+	//			ImGui::TextUnformatted("g");
+	//			if (_Graph.GetNumEdgesFromNode(node.draw.g) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.g).value, 0.01f, 0.f, 1.f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("SINE");
-			ImNodes::EndNodeTitleBar();
+	//		ImGui::Spacing();
 
-			{
-				ImNodes::BeginInputAttribute(node.sine.input);
-				const float label_width = ImGui::CalcTextSize("number").x;
-				ImGui::TextUnformatted("number");
-				if (_Graph.GetNumEdgesFromNode(node.sine.input) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.sine.input).value, 0.01f, 0.f, 1.0f);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
-			}
+	//		{
+	//			ImNodes::BeginInputAttribute(node.draw.b);
+	//			const float label_width = ImGui::CalcTextSize("b").x;
+	//			ImGui::TextUnformatted("b");
+	//			if (_Graph.GetNumEdgesFromNode(node.draw.b) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.b).value, 0.01f, 0.f, 1.0f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			ImGui::Spacing();
+	//		ImGui::Spacing();
 
-			{
-				ImNodes::BeginOutputAttribute(node.id);
-				const float label_width = ImGui::CalcTextSize("output").x;
-				ImGui::Indent(node_width - label_width);
-				ImGui::TextUnformatted("output");
-				ImNodes::EndInputAttribute();
-			}
+	//		{
+	//			ImNodes::BeginOutputAttribute(node.id);
+	//			const float label_width = ImGui::CalcTextSize("output").x;
+	//			ImGui::Indent(node_width - label_width);
+	//			ImGui::TextUnformatted("output");
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			ImNodes::EndNode();
-		}
-		break;
-		case UiNodeType::Time:
-		{
-			ImNodes::BeginNode(node.id);
+	//		ImNodes::EndNode();
+	//		ImNodes::PopColorStyle();
+	//		ImNodes::PopColorStyle();
+	//		ImNodes::PopColorStyle();
+	//	}
+	//	break;
+	//	case UiNodeType::Sine:
+	//	{
+	//		const float node_width = 100.0f;
+	//		ImNodes::BeginNode(node.id);
 
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("TIME");
-			ImNodes::EndNodeTitleBar();
+	//		ImNodes::BeginNodeTitleBar();
+	//		ImGui::TextUnformatted("SINE");
+	//		ImNodes::EndNodeTitleBar();
 
-			ImNodes::BeginOutputAttribute(node.id);
-			ImGui::Text("output");
-			ImNodes::EndOutputAttribute();
+	//		{
+	//			ImNodes::BeginInputAttribute(node.sine.input);
+	//			const float label_width = ImGui::CalcTextSize("number").x;
+	//			ImGui::TextUnformatted("number");
+	//			if (_Graph.GetNumEdgesFromNode(node.sine.input) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.sine.input).value, 0.01f, 0.f, 1.0f);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			ImNodes::EndNode();
-		}
-		break;
+	//		ImGui::Spacing();
 
-		case UiNodeType::RenderTarget:
-		{
-			const float node_width = 100.0f;
-			ImNodes::BeginNode(node.id);
+	//		{
+	//			ImNodes::BeginOutputAttribute(node.id);
+	//			const float label_width = ImGui::CalcTextSize("output").x;
+	//			ImGui::Indent(node_width - label_width);
+	//			ImGui::TextUnformatted("output");
+	//			ImNodes::EndInputAttribute();
+	//		}
 
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("RENDER TARGET");
-			ImNodes::EndNodeTitleBar();
+	//		ImNodes::EndNode();
+	//	}
+	//	break;
+	//	case UiNodeType::Time:
+	//	{
+	//		ImNodes::BeginNode(node.id);
 
-			{
-				ImNodes::BeginInputAttribute(node.renderTarget.input);
-				const float label_width = ImGui::CalcTextSize("input").x;
-				ImGui::TextUnformatted("input");
-				if (_Graph.GetNumEdgesFromNode(node.renderTarget.input) == 0ull)
-				{
-					ImGui::SameLine();
-					ImGui::PushItemWidth(node_width - label_width);
-					ImGui::PopItemWidth();
-				}
-				ImNodes::EndInputAttribute();
+	//		ImNodes::BeginNodeTitleBar();
+	//		ImGui::TextUnformatted("TIME");
+	//		ImNodes::EndNodeTitleBar();
 
-				static int w = 256;
-				static int h = 256;
-				//if(_RenderTargetReady)
-					ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
-			}
+	//		ImNodes::BeginOutputAttribute(node.id);
+	//		ImGui::Text("output");
+	//		ImNodes::EndOutputAttribute();
 
-			ImNodes::EndNode();
-		}
-		break;
+	//		ImNodes::EndNode();
+	//	}
+	//	break;
 
-		case UiNodeType::Primitive:
-		{
-			const float node_width = 100.0f;
-			ImNodes::BeginNode(node.id);
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("PRIMITIVE");
-			ImNodes::EndNodeTitleBar();
+	//	case UiNodeType::RenderTarget:
+	//	{
+	//		const float node_width = 100.0f;
+	//		ImNodes::BeginNode(node.id);
 
-			ImGui::PushItemWidth(node_width);
-			//const char* items[] = { "Cube", "Sphere", "Plane" };
-			auto &inputNode = _Graph.GetNode(node.primitive.input);
-			int value = static_cast<int>(inputNode.value); // TODO: this seems weird
-			ImGui::Combo("##hidelabel", &value, _Primitives.data(), (int)_Primitives.size());
-			ImGui::PopItemWidth();
-			inputNode.value = static_cast<float>(value);   // TODO: this seems weird
-			
-			ImNodes::BeginOutputAttribute(node.id);
-			const float label_width = ImGui::CalcTextSize("output").x;
-			ImGui::Indent(node_width - label_width);
-			ImGui::Text("output");
-			ImNodes::EndOutputAttribute();
+	//		ImNodes::BeginNodeTitleBar();
+	//		ImGui::TextUnformatted("RENDER TARGET");
+	//		ImNodes::EndNodeTitleBar();
 
-			ImNodes::EndNode();
-		}
-		break; 
+	//		{
+	//			ImNodes::BeginInputAttribute(node.renderTarget.input);
+	//			const float label_width = ImGui::CalcTextSize("input").x;
+	//			ImGui::TextUnformatted("input");
+	//			if (_Graph.GetNumEdgesFromNode(node.renderTarget.input) == 0ull)
+	//			{
+	//				ImGui::SameLine();
+	//				ImGui::PushItemWidth(node_width - label_width);
+	//				ImGui::PopItemWidth();
+	//			}
+	//			ImNodes::EndInputAttribute();
 
-		}
+	//			static int w = 256;
+	//			static int h = 256;
+	//			//if(_RenderTargetReady)
+	//				ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
+	//		}
+
+	//		ImNodes::EndNode();
+	//	}
+	//	break;
+
+	//	case UiNodeType::Primitive:
+	//	{
+	//		const float node_width = 100.0f;
+	//		ImNodes::BeginNode(node.id);
+	//		ImNodes::BeginNodeTitleBar();
+	//		ImGui::TextUnformatted("PRIMITIVE");
+	//		ImNodes::EndNodeTitleBar();
+
+	//		ImGui::PushItemWidth(node_width);
+	//		//const char* items[] = { "Cube", "Sphere", "Plane" };
+	//		auto &inputNode = _Graph.GetNode(node.primitive.input);
+	//		int value = static_cast<int>(inputNode.value); // TODO: this seems weird
+	//		ImGui::Combo("##hidelabel", &value, _Primitives.data(), (int)_Primitives.size());
+	//		ImGui::PopItemWidth();
+	//		inputNode.value = static_cast<float>(value);   // TODO: this seems weird
+	//		
+	//		ImNodes::BeginOutputAttribute(node.id);
+	//		const float label_width = ImGui::CalcTextSize("output").x;
+	//		ImGui::Indent(node_width - label_width);
+	//		ImGui::Text("output");
+	//		ImNodes::EndOutputAttribute();
+
+	//		ImNodes::EndNode();
+	//	}
+	//	break; 
+
+	//	}
 	}
 
 	for (const auto& edge : _Graph.GetEdges())
@@ -617,8 +654,6 @@ void ShaderToolApp::RenderNodeGraph()
 
 		ImNodes::Link(edge.id, edge.from, edge.to);
 	}
-
-
 
 	ImNodes::MiniMap(0.1f, ImNodesMiniMapLocation_BottomRight, mini_map_node_hovering_callback, nullptr);
 	ImNodes::EndNodeEditor();
@@ -680,41 +715,56 @@ void ShaderToolApp::RenderNodeGraph()
 			for (const int node_id : selected_nodes)
 			{
 				_Graph.EraseNode(node_id);
-				auto iter = std::find_if(
-					_UINodes.begin(), _UINodes.end(), [node_id](const UiNode& node) -> bool {
-					return node.id == node_id;
-				});
-				// Erase any additional internal nodes
-				switch (iter->type)
+				
+				for (auto it = _UINodes.begin(); it != _UINodes.end(); ++it)
 				{
-				case UiNodeType::Add:
-					_Graph.EraseNode(iter->add.lhs);
-					_Graph.EraseNode(iter->add.rhs);
-					break;
-				case UiNodeType::Multiply:
-					_Graph.EraseNode(iter->multiply.lhs);
-					_Graph.EraseNode(iter->multiply.rhs);
-					break;
-				case UiNodeType::Draw:
-					_Graph.EraseNode(iter->draw.model);
-					_Graph.EraseNode(iter->draw.r);
-					_Graph.EraseNode(iter->draw.g);
-					_Graph.EraseNode(iter->draw.b);
-					break;
-				case UiNodeType::Sine:
-					_Graph.EraseNode(iter->sine.input);
-					break;
-				case UiNodeType::RenderTarget:
-					_Graph.EraseNode(iter->renderTarget.input);
-					_RootNodeId = -1;
-					break;
-				case UiNodeType::Primitive:
-					_Graph.EraseNode(iter->primitive.input);
-					break;
-				default:
-					break;
+					auto node = (*it).get();
+					if (node->Id == node_id)
+					{
+						node->Delete(_Graph);
+						_UINodes.erase(it);
+						break;
+					}
 				}
-				_UINodes.erase(iter);
+				
+				//auto iter = std::find_if(
+				//	_UINodes.begin(), 
+				//	_UINodes.end(), 
+				//	[node_id](const UiNode* node) -> bool {
+				//		return node->Id == node_id;
+				//	}
+				//);
+				// Erase any additional internal nodes
+				//switch (iter->get().Type)
+				//{
+				//case UiNodeType::Add:
+				//	_Graph.EraseNode(iter->add.lhs);
+				//	_Graph.EraseNode(iter->add.rhs);
+				//	break;
+				//case UiNodeType::Multiply:
+				//	_Graph.EraseNode(iter->multiply.lhs);
+				//	_Graph.EraseNode(iter->multiply.rhs);
+				//	break;
+				//case UiNodeType::Draw:
+				//	_Graph.EraseNode(iter->draw.model);
+				//	_Graph.EraseNode(iter->draw.r);
+				//	_Graph.EraseNode(iter->draw.g);
+				//	_Graph.EraseNode(iter->draw.b);
+				//	break;
+				//case UiNodeType::Sine:
+				//	_Graph.EraseNode(iter->sine.input);
+				//	break;
+				//case UiNodeType::RenderTarget:
+				//	_Graph.EraseNode(iter->renderTarget.input);
+				//	_RootNodeId = -1;
+				//	break;
+				//case UiNodeType::Primitive:
+				//	_Graph.EraseNode(iter->primitive.input);
+				//	break;
+				//default:
+				//	break;
+				//}
+				
 			}
 		}
 	}
@@ -798,7 +848,7 @@ void ShaderToolApp::Save()
 	fout << _UINodes.size() << "\n";
 
 	for (auto& uin : _UINodes)
-		fout << "uin " << uin << "\n";
+		fout << "uin " << *uin.get() << "\n";
 
 	fout.close();
 }
@@ -828,14 +878,27 @@ void ShaderToolApp::Load()
 	fin >> comment >> _RootNodeId >> numUiNodes;
 
 	std::string uinLabel;
+	int type, id;
 
 	for (int i = 0; i < numUiNodes; ++i)
 	{
-		fin >> uinLabel;
+		fin >> uinLabel >> type >> id;
 
-		UiNode uiNode;
-		fin >> uiNode;
-		_UINodes.push_back(uiNode);
+		auto nodeType = static_cast<UiNodeType>(type);
+
+		switch (nodeType)
+		{
+		case UiNodeType::Add: 
+		{
+			auto node = std::make_unique<AddNode>(nodeType, id);
+			fin >> *node.get();
+
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		default:
+			break;
+		}
 	}
 
 	fin.close();

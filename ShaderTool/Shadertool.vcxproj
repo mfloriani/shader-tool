@@ -112,6 +112,7 @@
     <ClInclude Include="src\Editor\ImGui\imstb_textedit.h" />
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h" />
     <ClInclude Include="src\Editor\Node.h" />
+    <ClInclude Include="src\Editor\UiNode.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
@@ -176,19 +177,23 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\Shaders\Default_ps.hlsl">
+    <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="src\Shaders\default_ps.hlsl">
       <ShaderType>Pixel</ShaderType>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="src\Shaders\Default_vs.hlsl">
+    <FxCompile Include="src\Shaders\default_vs.hlsl">
       <ShaderType>Vertex</ShaderType>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="src\Shaders\Quad_ps.hlsl">
+    <FxCompile Include="src\Shaders\quad_ps.hlsl">
       <ShaderType>Pixel</ShaderType>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="src\Shaders\Quad_vs.hlsl">
+    <FxCompile Include="src\Shaders\quad_vs.hlsl">
       <ShaderType>Vertex</ShaderType>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>

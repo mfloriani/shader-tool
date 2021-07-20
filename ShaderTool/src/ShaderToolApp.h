@@ -6,12 +6,15 @@
 
 #include "GameTimer.h"
 #include "Entity.h"
+
 #include "Rendering\D3DApp.h"
 #include "Rendering\RenderTexture.h"
 #include "Rendering\Vertex.h"
 #include "Rendering\Mesh.h"
 #include "Rendering\ShaderManager.h"
+
 #include "Editor\Node.h"
+#include "Editor\UiNode.h"
 #include "Editor\Graph.h"
 
 struct Primitive
@@ -70,15 +73,14 @@ private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
 	
-private: // Node Graph
-	Graph<Node>         _Graph;
-	std::vector<UiNode> _UINodes;
-	int                 _RootNodeId;
-	Entity              _Entity;
-	std::vector<const char*> _Primitives;
-	// TODO: at the moment only 1 render target supported
-	std::unique_ptr<RenderTexture> _RenderTarget; 
+private: // Node Graph	
 	bool _RenderTargetReady{ false };
+	std::unique_ptr<RenderTexture> _RenderTarget;  // TODO: at the moment only 1 render target supported
+	std::vector<const char*> _Primitives;
+	std::vector<std::unique_ptr<UiNode>> _UINodes;
+	Graph<Node> _Graph;
+	int _RootNodeId;
+	Entity _Entity;
 	
 	void InitNodeGraph();
 	void Reset();
@@ -87,5 +89,6 @@ private: // Node Graph
 	void EvaluateGraph();
 	void RenderToTexture();
 	void ClearRenderTexture();
+	void HandleNewNodes();
 
 };

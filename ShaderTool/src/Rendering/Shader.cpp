@@ -81,17 +81,18 @@ void Shader::Reflect()
 
 void Shader::PrintDebugInfo()
 {
+	LOG_TRACE("[{0}]", _Name);
 	for (auto& cbuffer : _CBuffersDesc)
 	{
 		const auto name = std::string (cbuffer.Name);
-		LOG_TRACE("{0}", name);
+		LOG_TRACE(" {0}", name);
 
 		auto it = _CBufferVars.find(cbuffer.Name);
 		if (it != _CBufferVars.end())
 		{
 			for (auto& var : it->second)
 			{
-				LOG_TRACE("  {0}", var.Name);
+				LOG_TRACE("  {0} {1}", var.Type.Name, var.Name);
 			}
 		}
 	}

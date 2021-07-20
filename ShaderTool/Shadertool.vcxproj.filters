@@ -95,6 +95,7 @@
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\Rendering\Shader.h" />
     <ClInclude Include="src\Rendering\ShaderManager.h" />
+    <ClInclude Include="src\Editor\UiNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -149,17 +150,18 @@
     <ClCompile Include="src\Rendering\ShaderManager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\Shaders\Default_ps.hlsl">
+    <FxCompile Include="src\Shaders\default_ps.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="src\Shaders\Default_vs.hlsl">
+    <FxCompile Include="src\Shaders\default_vs.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="src\Shaders\Quad_ps.hlsl">
+    <FxCompile Include="src\Shaders\quad_ps.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="src\Shaders\Quad_vs.hlsl">
+    <FxCompile Include="src\Shaders\quad_vs.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="src\Shaders\backbuffer_vs.hlsl" />
   </ItemGroup>
 </Project>

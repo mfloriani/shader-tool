@@ -131,10 +131,11 @@ void ShaderToolApp::BuildRootSignature()
 void ShaderToolApp::BuildShadersAndInputLayout()
 {
 	auto& shaderMgr = ShaderManager::Get();
-	shaderMgr.AddShader("Default_vs");
-	shaderMgr.AddShader("Default_ps");
-	shaderMgr.AddShader("Quad_vs");
-	shaderMgr.AddShader("Quad_ps");
+	shaderMgr.AddShader("backbuffer_vs");
+	shaderMgr.AddShader("default_vs");
+	shaderMgr.AddShader("default_ps");
+	shaderMgr.AddShader("quad_vs");
+	shaderMgr.AddShader("quad_ps");
 
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -154,8 +155,8 @@ void ShaderToolApp::BuildPSO()
 
 		defaultPSO.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
 		defaultPSO.pRootSignature = _RootSignature.Get();
-		defaultPSO.VS = shaderMgr.GetShader("Default_vs")->GetByteCode();
-		defaultPSO.PS = shaderMgr.GetShader("Default_ps")->GetByteCode();
+		defaultPSO.VS = shaderMgr.GetShader("default_vs")->GetByteCode();
+		defaultPSO.PS = shaderMgr.GetShader("default_ps")->GetByteCode();
 		defaultPSO.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		defaultPSO.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		//defaultPSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -177,8 +178,7 @@ void ShaderToolApp::BuildPSO()
 
 		psoDesc.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
 		psoDesc.pRootSignature = _RootSignature.Get();
-		psoDesc.VS = shaderMgr.GetShader("Quad_vs")->GetByteCode();
-		psoDesc.PS = shaderMgr.GetShader("Quad_ps")->GetByteCode();
+		psoDesc.VS = shaderMgr.GetShader("backbuffer_vs")->GetByteCode();
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
