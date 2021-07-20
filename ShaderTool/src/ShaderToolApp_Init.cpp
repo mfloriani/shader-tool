@@ -62,57 +62,8 @@ bool ShaderToolApp::Init()
 
 void ShaderToolApp::InitNodeGraph()
 {
-	ID3D12ShaderReflection* shaderReflection;
 	
-	auto shaderBlob = _Shaders["quad_ps"];
-
-	auto hr = D3DReflect(
-		shaderBlob->GetBufferPointer(),
-		shaderBlob->GetBufferSize(),
-		IID_ID3D12ShaderReflection,
-		//__uuidof(shaderReflection),
-		//reinterpret_cast<void**>(shaderReflection.Get())
-		reinterpret_cast<void**>(&shaderReflection)
-	);
-
-	D3D12_SHADER_DESC desc;
-	shaderReflection->GetDesc(&desc);
-
-	for (unsigned int i = 0; i < desc.ConstantBuffers; ++i)
-	{
-		ID3D12ShaderReflectionConstantBuffer* buffer = shaderReflection->GetConstantBufferByIndex(i);
-
-		D3D12_SHADER_BUFFER_DESC bufferDesc;
-		buffer->GetDesc(&bufferDesc);
-
-		LOG_TRACE("CBuffer {0}", bufferDesc.Name);
-
-		for (UINT j = 0; j < bufferDesc.Variables; j++)
-		{
-			ID3D12ShaderReflectionVariable* var = buffer->GetVariableByIndex(j);
-			D3D12_SHADER_VARIABLE_DESC varDesc;
-			var->GetDesc(&varDesc);
-
-			auto type = var->GetType();
-			
-			D3D12_SHADER_TYPE_DESC typeDesc;
-			type->GetDesc(&typeDesc);
-
-			LOG_TRACE("  {0} {1}", typeDesc.Name, varDesc.Name);
-		}
-	}
-
-	for (unsigned int i = 0; i < desc.BoundResources; ++i)
-	{
-		D3D12_SHADER_INPUT_BIND_DESC bindDesc = {};
-		shaderReflection->GetResourceBindingDesc(i, &bindDesc);
-
-		LOG_TRACE("{0} {1}", bindDesc.Type, bindDesc.Name);
-
-	}
-
-
-	shaderReflection->Release();
+	
 }
 
 void ShaderToolApp::CreateDescriptorHeaps()
@@ -179,27 +130,11 @@ void ShaderToolApp::BuildRootSignature()
 
 void ShaderToolApp::BuildShadersAndInputLayout()
 {
-	// default
-	{
-		ComPtr<ID3DBlob> vsBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"Default_vs.cso", &vsBlob));
-		_Shaders.insert(std::pair("default_vs", vsBlob));
-
-		ComPtr<ID3DBlob> psBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"Default_ps.cso", &psBlob));
-		_Shaders.insert(std::pair("default_ps", psBlob));
-	}
-
-	// quad
-	{
-		ComPtr<ID3DBlob> vsBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"Quad_vs.cso", &vsBlob));
-		_Shaders.insert(std::pair("quad_vs", vsBlob));
-
-		ComPtr<ID3DBlob> psBlob;
-		ThrowIfFailed(D3DReadFileToBlob(L"Quad_ps.cso", &psBlob));
-		_Shaders.insert(std::pair("quad_ps", psBlob));
-	}
+	auto& shaderMgr = ShaderManager::Get();
+	shaderMgr.AddShader("Default_vs");
+	shaderMgr.AddShader("Default_ps");
+	shaderMgr.AddShader("Quad_vs");
+	shaderMgr.AddShader("Quad_ps");
 
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -211,22 +146,16 @@ void ShaderToolApp::BuildShadersAndInputLayout()
 
 void ShaderToolApp::BuildPSO()
 {
+	auto& shaderMgr = ShaderManager::Get();
+
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC defaultPSO;
 		ZeroMemory(&defaultPSO, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 
 		defaultPSO.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
 		defaultPSO.pRootSignature = _RootSignature.Get();
-		defaultPSO.VS =
-		{
-			reinterpret_cast<BYTE*>(_Shaders["default_vs"]->GetBufferPointer()),
-			_Shaders["default_vs"]->GetBufferSize()
-		};
-		defaultPSO.PS =
-		{
-			reinterpret_cast<BYTE*>(_Shaders["default_ps"]->GetBufferPointer()),
-			_Shaders["default_ps"]->GetBufferSize()
-		};
+		defaultPSO.VS = shaderMgr.GetShader("Default_vs")->GetByteCode();
+		defaultPSO.PS = shaderMgr.GetShader("Default_ps")->GetByteCode();
 		defaultPSO.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		defaultPSO.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		//defaultPSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -248,16 +177,8 @@ void ShaderToolApp::BuildPSO()
 
 		psoDesc.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
 		psoDesc.pRootSignature = _RootSignature.Get();
-		psoDesc.VS =
-		{
-			reinterpret_cast<BYTE*>(_Shaders["quad_vs"]->GetBufferPointer()),
-			_Shaders["quad_vs"]->GetBufferSize()
-		};
-		psoDesc.PS =
-		{
-			reinterpret_cast<BYTE*>(_Shaders["quad_ps"]->GetBufferPointer()),
-			_Shaders["quad_ps"]->GetBufferSize()
-		};
+		psoDesc.VS = shaderMgr.GetShader("Quad_vs")->GetByteCode();
+		psoDesc.PS = shaderMgr.GetShader("Quad_ps")->GetByteCode();
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -271,8 +192,6 @@ void ShaderToolApp::BuildPSO()
 
 		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&_PSOs["back_buffer"])));
 	}
-
-
 }
 
 void ShaderToolApp::LoadPrimitiveModels()

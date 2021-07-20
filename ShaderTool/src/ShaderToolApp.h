@@ -10,6 +10,7 @@
 #include "Rendering\RenderTexture.h"
 #include "Rendering\Vertex.h"
 #include "Rendering\Mesh.h"
+#include "Rendering\ShaderManager.h"
 #include "Editor\Node.h"
 #include "Editor\Graph.h"
 
@@ -67,7 +68,6 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RootSignature{ nullptr };
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
-	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
 	
 private: // Node Graph
@@ -75,9 +75,7 @@ private: // Node Graph
 	std::vector<UiNode> _UINodes;
 	int                 _RootNodeId;
 	Entity              _Entity;
-
 	std::vector<const char*> _Primitives;
-
 	// TODO: at the moment only 1 render target supported
 	std::unique_ptr<RenderTexture> _RenderTarget; 
 	bool _RenderTargetReady{ false };
