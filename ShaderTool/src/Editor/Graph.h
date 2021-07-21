@@ -139,7 +139,7 @@ template<typename NodeT>
 const NodeT& Graph<NodeT>::GetNode(const int id) const
 {
     const auto iter = _Nodes.find(id);
-    assert(iter != _Nodes.end());
+    assert(iter != _Nodes.end() && "Node not found");
     return *iter;
 }
 

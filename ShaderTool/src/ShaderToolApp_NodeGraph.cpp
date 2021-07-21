@@ -17,12 +17,12 @@ static float current_time_seconds = 0.f;
 
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
-	ImGui::SetTooltip("This is node %d", nodeId);
+	ImGui::SetTooltip("node id %d", nodeId);
 }
 
 void ShaderToolApp::EvaluateGraph()
 {
-	if (_RootNodeId == -1)
+	if (_RootNodeId == INVALID_ID)
 		return;
 
 	std::stack<int> postorder;
@@ -142,6 +142,7 @@ void ShaderToolApp::EvaluateGraph()
 		break;
 		
 		default:
+			LOG_WARN("NodeType {0} not handled", node.type);
 			break;
 		}
 	}
@@ -245,7 +246,7 @@ void ShaderToolApp::HandleNewNodes()
 				ImNodes::SetNodeScreenSpacePos(id, click_pos);
 			}
 
-			if (ImGui::MenuItem("Render Target") && _RootNodeId == -1)
+			if (ImGui::MenuItem("Render Target") && _RootNodeId == INVALID_ID)
 			{
 				const Node value(NodeType::Value, 0.f);
 				const Node op(NodeType::RenderTarget);
@@ -272,6 +273,34 @@ void ShaderToolApp::HandleNewNodes()
 				_Graph.CreateEdge(id, model);
 
 				_UINodes.push_back(std::make_unique<PrimitiveNode>(UiNodeType::Primitive, id, _Primitives, model));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+			}
+
+			if (ImGui::MenuItem("Vertex Shader"))
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::VertexShader);
+
+				auto shader = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(op);
+
+				_Graph.CreateEdge(id, shader);
+
+				_UINodes.push_back(std::make_unique<ShaderNode>(UiNodeType::VertexShader, id, shader));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+			}
+
+			if (ImGui::MenuItem("Pixel Shader"))
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::PixelShader);
+
+				auto shader = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(op);
+
+				_Graph.CreateEdge(id, shader);
+
+				_UINodes.push_back(std::make_unique<ShaderNode>(UiNodeType::PixelShader, id, shader));
 				ImNodes::SetNodeScreenSpacePos(id, click_pos);
 			}
 
@@ -559,6 +588,14 @@ void ShaderToolApp::Load()
 			_UINodes.push_back(std::move(node));
 		}
 		break;
+		case UiNodeType::VertexShader:
+		case UiNodeType::PixelShader:
+		{
+			auto node = std::make_unique<ShaderNode>(nodeType, id);
+			fin >> *node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;		
 		default:
 			break;
 		}
@@ -571,5 +608,5 @@ void ShaderToolApp::Reset()
 {
 	_Graph.Reset();
 	_UINodes.clear();
-	_RootNodeId = -1;
+	_RootNodeId = INVALID_ID;
 }

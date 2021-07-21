@@ -19,7 +19,9 @@ enum class UiNodeType
     Sine,
     Time,
     RenderTarget,
-    Primitive
+    Primitive,
+    VertexShader,
+    PixelShader
 };
 
 struct UiNode
@@ -684,3 +686,74 @@ struct TimeNode : UiNode
         return n.Deserialize(in);
     }
 };
+
+struct ShaderNode : UiNode
+{
+    explicit ShaderNode(UiNodeType type, UiNodeId id)
+        : UiNode(type, id), Shader(INVALID_ID)
+    {
+    }
+
+    explicit ShaderNode(UiNodeType type, UiNodeId id, NodeId shader)
+        : UiNode(type, id), Shader(shader)
+    {
+    }
+
+    NodeId Shader;
+
+    virtual void Delete(Graph<Node>& graph) override
+    {
+        graph.EraseNode(Shader);
+    }
+
+    virtual void Render(Graph<Node>& graph) override
+    {
+        ImNodes::BeginNode(Id);
+
+        ImNodes::BeginNodeTitleBar();
+        switch (Type)
+        {
+        case UiNodeType::VertexShader:
+            ImGui::TextUnformatted("VERTEX SHADER");
+            break;
+        case UiNodeType::PixelShader:
+            ImGui::TextUnformatted("PIXEL SHADER");
+            break;
+        default:
+            ImGui::TextUnformatted("UNKNOWN SHADER");
+            break;
+        }        
+        ImNodes::EndNodeTitleBar();
+
+        ImNodes::BeginOutputAttribute(Id);
+        ImGui::Text("output");
+        ImNodes::EndOutputAttribute();
+
+        ImNodes::EndNode();
+    }
+
+    virtual std::ostream& Serialize(std::ostream& out) const
+    {
+        UiNode::Serialize(out);
+        out << " " << Shader;
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in)
+    {
+        in >> Shader;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const ShaderNode& n)
+    {
+        return n.Serialize(out);
+    }
+
+    friend std::istream& operator>>(std::istream& in, ShaderNode& n)
+    {
+        return n.Deserialize(in);
+    }
+};
+
+
