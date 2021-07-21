@@ -8,8 +8,11 @@
 
 using UiNodeId = int;
 
+const static int INVALID_ID = -1;
+
 enum class UiNodeType
 {
+    None,
     Add,
     Multiply,
     Draw,
@@ -21,8 +24,8 @@ enum class UiNodeType
 
 struct UiNode
 {
-    UiNode() {}
-    UiNode(UiNodeType type, UiNodeId id) : Type(type), Id(id) {}
+    UiNode() : Type(UiNodeType::None), Id(INVALID_ID) {}
+    explicit UiNode(UiNodeType type, UiNodeId id) : Type(type), Id(id) {}
     
     UiNodeType Type;
     UiNodeId Id;
@@ -57,12 +60,12 @@ struct UiNode
 
 struct AddNode : UiNode
 {
-    AddNode(UiNodeType type, UiNodeId id)
-        : UiNode(type, id), Left(-1), Right(-1)
+    explicit AddNode(UiNodeType type, UiNodeId id)
+        : UiNode(type, id), Left(INVALID_ID), Right(INVALID_ID)
     {
     }
 
-    AddNode(UiNodeType type, UiNodeId id, NodeId lhs, NodeId rhs)
+    explicit AddNode(UiNodeType type, UiNodeId id, NodeId lhs, NodeId rhs)
         : UiNode(type, id), Left(lhs), Right(rhs)
     {
     }
@@ -126,14 +129,8 @@ struct AddNode : UiNode
 
     virtual std::ostream& Serialize(std::ostream& out) const
     {
-        UiNode base = static_cast<const UiNode&>(*this);
-        base.Serialize(out);
-
-        out << " "
-            << Left
-            << " "
-            << Right;
-
+        UiNode::Serialize(out);
+        out << " " << Left << " " << Right;
         return out;
     }
 
@@ -154,158 +151,536 @@ struct AddNode : UiNode
     }
 };
 
-//union
-//{
-//    struct
-//    {
-//        int lhs, rhs;
-//    } add;
+struct MultiplyNode : UiNode
+{
+    explicit MultiplyNode(UiNodeType type, UiNodeId id)
+        : UiNode(type, id), Left(INVALID_ID), Right(INVALID_ID)
+    {
+    }
 
-//    struct
-//    {
-//        int lhs, rhs;
-//    } multiply;
+    explicit MultiplyNode(UiNodeType type, UiNodeId id, NodeId lhs, NodeId rhs)
+        : UiNode(type, id), Left(lhs), Right(rhs)
+    {
+    }
 
-//    struct
-//    {
-//        int r, g, b, model, vs, ps;
-//    } draw;
+    NodeId Left, Right;
 
-//    struct
-//    {
-//        int input;
-//    } sine;
+    virtual void Delete(Graph<Node>& graph) override
+    {
+        graph.EraseNode(Left);
+        graph.EraseNode(Right);
+    }
 
-//    struct
-//    {
-//        int input;
-//    } renderTarget;
+    virtual void Render(Graph<Node>& graph) override
+    {
+        const float node_width = 100.0f;
+    	ImNodes::BeginNode(Id);
 
-//    struct
-//    {
-//        int input;
-//    } primitive;
-//};
+    	ImNodes::BeginNodeTitleBar();
+    	ImGui::TextUnformatted("MULTIPLY");
+    	ImNodes::EndNodeTitleBar();
 
-//friend std::ostream& operator<<(std::ostream& out, const UiNode& n)
-//{
-//    out << static_cast<int>(n.type)
-//        << " "
-//        << n.id;
+    	{
+    		ImNodes::BeginInputAttribute(Left);
+    		const float label_width = ImGui::CalcTextSize("left").x;
+    		ImGui::TextUnformatted("left");
+    		if (graph.GetNumEdgesFromNode(Left) == 0ull)
+    		{
+    			ImGui::SameLine();
+    			ImGui::PushItemWidth(node_width - label_width);
+    			ImGui::DragFloat(
+    				"##hidelabel", &graph.GetNode(Left).value, 0.01f);
+    			ImGui::PopItemWidth();
+    		}
+    		ImNodes::EndInputAttribute();
+    	}
 
-//    switch (n.type)
-//    {
-//    case UiNodeType::Add:
-//    {
-//        out << " "
-//            << n.add.lhs
-//            << " "
-//            << n.add.rhs;
-//        break;
-//    }
-//    case UiNodeType::Multiply:
-//    {
-//        out << " "
-//            << n.multiply.lhs
-//            << " "
-//            << n.multiply.rhs;
-//        break;
-//    }
-//    case UiNodeType::Draw:
-//    {
-//        out << " "
-//            << n.draw.model
-//            << " "
-//            << n.draw.r
-//            << " "
-//            << n.draw.g
-//            << " "
-//            << n.draw.b;
-//        break;
-//    }
-//    case UiNodeType::Sine:
-//    {
-//        out << " "
-//            << n.sine.input;
-//        break;
-//    }
+    	{
+    		ImNodes::BeginInputAttribute(Right);
+    		const float label_width = ImGui::CalcTextSize("right").x;
+    		ImGui::TextUnformatted("right");
+    		if (graph.GetNumEdgesFromNode(Right) == 0ull)
+    		{
+    			ImGui::SameLine();
+    			ImGui::PushItemWidth(node_width - label_width);
+    			ImGui::DragFloat(
+    				"##hidelabel", &graph.GetNode(Right).value, 0.01f);
+    			ImGui::PopItemWidth();
+    		}
+    		ImNodes::EndInputAttribute();
+    	}
 
-//    case UiNodeType::Time:
-//        break;
+    	ImGui::Spacing();
 
-//    case UiNodeType::RenderTarget:
+    	{
+    		ImNodes::BeginOutputAttribute(Id);
+    		const float label_width = ImGui::CalcTextSize("result").x;
+    		ImGui::Indent(node_width - label_width);
+    		ImGui::TextUnformatted("result");
+    		ImNodes::EndOutputAttribute();
+    	}
 
-//        out << " "
-//            << n.renderTarget.input;
-//        break;
+    	ImNodes::EndNode();
+    }
 
-//    case UiNodeType::Primitive:
+    virtual std::ostream& Serialize(std::ostream& out) const
+    {
+        UiNode::Serialize(out);
+        out << " " << Left << " " << Right;
+        return out;
+    }
 
-//        out << " "
-//            << n.primitive.input;
-//        break;
+    virtual std::istream& Deserialize(std::istream& in)
+    {
+        in >> Left >> Right;
+        return in;
+    }
 
-//    default:
-//        LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(n.type));
-//        break;
-//    }
+    friend std::ostream& operator<<(std::ostream& out, const MultiplyNode& n)
+    {
+        return n.Serialize(out);
+    }
 
-//    return out;
-//}
+    friend std::istream& operator>>(std::istream& in, MultiplyNode& n)
+    {
+        return n.Deserialize(in);
+    }
+};
 
-//friend std::istream& operator>>(std::istream& in, UiNode& uiNode)
-//{
-//    int uinType;
-//    in >> uinType >> uiNode.id;
+struct DrawNode : UiNode
+{
+    explicit DrawNode(UiNodeType type, UiNodeId id)
+        : UiNode(type, id), R(INVALID_ID), G(INVALID_ID), B(INVALID_ID), Model(INVALID_ID), VS(INVALID_ID), PS(INVALID_ID)
+    {
+    }
 
-//    uiNode.type = static_cast<UiNodeType>(uinType);
+    explicit DrawNode(UiNodeType type, UiNodeId id, NodeId r, NodeId g, NodeId b, NodeId model, NodeId vs, NodeId ps)
+        : UiNode(type, id), R(r), G(g), B(b), Model(model), VS(vs), PS(ps)
+    {
+    }
 
-//    switch (uiNode.type)
-//    {
-//    case UiNodeType::Add:
-//    {
-//        in >> uiNode.add.lhs >> uiNode.add.rhs;
-//        //LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.add.lhs, uiNode.add.rhs);
-//        break;
-//    }
-//    case UiNodeType::Multiply:
-//    {
-//        in >> uiNode.multiply.lhs >> uiNode.multiply.rhs;
-//        //LOG_TRACE("{0} {1} {2} {3}", uiNode.type, uiNode.id, uiNode.multiply.lhs, uiNode.multiply.rhs);
-//        break;
-//    }
-//    case UiNodeType::Draw:
-//    {
-//        in >> uiNode.draw.model >> uiNode.draw.r >> uiNode.draw.g >> uiNode.draw.b;
-//        //LOG_TRACE("{0} {1} {2} {3} {4}", uiNode.type, uiNode.id, uiNode.output.r, uiNode.output.g, uiNode.output.b);
-//        break;
-//    }
-//    case UiNodeType::Sine:
-//    {
-//        in >> uiNode.sine.input;
-//        //LOG_TRACE("{0} {1} {2}", uiNode.type, uiNode.id, uiNode.sine.input);
-//        break;
-//    }
-//    case UiNodeType::Time:
-//        //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
-//        break;
+    NodeId R, G, B, Model, VS, PS;
 
-//    case UiNodeType::RenderTarget:
-//        //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
+    virtual void Delete(Graph<Node>& graph) override
+    {
+        graph.EraseNode(R);
+        graph.EraseNode(G);
+        graph.EraseNode(B);
+        graph.EraseNode(Model);
+        graph.EraseNode(VS);
+        graph.EraseNode(PS);
+    }
 
-//        in >> uiNode.renderTarget.input;
-//        break;
+    virtual void Render(Graph<Node>& graph) override
+    {
+        const float node_width = 100.0f;
+        ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
+        ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(45, 126, 194, 255));
+        ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(81, 148, 204, 255));
+        ImNodes::BeginNode(Id);
 
-//    case UiNodeType::Primitive:
-//        //LOG_TRACE("{0} {1}", uiNode.type, uiNode.id);
+        ImNodes::BeginNodeTitleBar();
+        ImGui::TextUnformatted("DRAW");
+        ImNodes::EndNodeTitleBar();
 
-//        in >> uiNode.primitive.input;
-//        break;
+        ImGui::Dummy(ImVec2(node_width, 0.f));
+        		
+        {
+        	ImNodes::BeginInputAttribute(VS);
+        	const float label_width = ImGui::CalcTextSize("vs").x;
+        	ImGui::TextUnformatted("vs");
+        	if (graph.GetNumEdgesFromNode(VS) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+        }
 
-//    default:
-//        LOG_ERROR("Invalid UiNode::UiNodeType {0}", static_cast<int>(uiNode.type));
-//        break;
-//    }
-//    return in;
-//}
-//};
+        ImGui::Spacing();
+
+        {
+        	ImNodes::BeginInputAttribute(PS);
+        	const float label_width = ImGui::CalcTextSize("ps").x;
+        	ImGui::TextUnformatted("ps");
+        	if (graph.GetNumEdgesFromNode(PS) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImGui::Spacing();
+
+        {
+        	ImNodes::BeginInputAttribute(Model);
+        	const float label_width = ImGui::CalcTextSize("model").x;
+        	ImGui::TextUnformatted("model");
+        	if (graph.GetNumEdgesFromNode(Model) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImGui::Spacing();
+
+        {
+        	ImNodes::BeginInputAttribute(R);
+        	const float label_width = ImGui::CalcTextSize("r").x;
+        	ImGui::TextUnformatted("r");
+        	if (graph.GetNumEdgesFromNode(R) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::DragFloat("##hidelabel", &graph.GetNode(R).value, 0.01f, 0.f, 1.0f);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImGui::Spacing();
+
+        {
+        	ImNodes::BeginInputAttribute(G);
+        	const float label_width = ImGui::CalcTextSize("g").x;
+        	ImGui::TextUnformatted("g");
+        	if (graph.GetNumEdgesFromNode(G) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::DragFloat("##hidelabel", &graph.GetNode(G).value, 0.01f, 0.f, 1.f);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImGui::Spacing();
+
+        {
+        	ImNodes::BeginInputAttribute(B);
+        	const float label_width = ImGui::CalcTextSize("b").x;
+        	ImGui::TextUnformatted("b");
+        	if (graph.GetNumEdgesFromNode(B) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::DragFloat("##hidelabel", &graph.GetNode(B).value, 0.01f, 0.f, 1.0f);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImGui::Spacing();
+
+        {
+        	ImNodes::BeginOutputAttribute(Id);
+        	const float label_width = ImGui::CalcTextSize("output").x;
+        	ImGui::Indent(node_width - label_width);
+        	ImGui::TextUnformatted("output");
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImNodes::EndNode();
+        ImNodes::PopColorStyle();
+        ImNodes::PopColorStyle();
+        ImNodes::PopColorStyle();
+    }
+
+    virtual std::ostream& Serialize(std::ostream& out) const
+    {
+        UiNode::Serialize(out);
+        out << " " << R << " " << G << " " << B << " " << Model << " " << VS << " " << PS;
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in)
+    {
+        in >> R >> G >> B >> Model >> VS >> PS;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const DrawNode& n)
+    {
+        return n.Serialize(out);
+    }
+
+    friend std::istream& operator>>(std::istream& in, DrawNode& n)
+    {
+        return n.Deserialize(in);
+    }
+};
+
+struct SineNode : UiNode
+{
+    explicit SineNode(UiNodeType type, UiNodeId id)
+        : UiNode(type, id), Input(INVALID_ID)
+    {
+    }
+
+    explicit SineNode(UiNodeType type, UiNodeId id, NodeId input)
+        : UiNode(type, id), Input(input)
+    {
+    }
+
+    NodeId Input;
+
+    virtual void Delete(Graph<Node>& graph) override
+    {
+        graph.EraseNode(Input);
+    }
+
+    virtual void Render(Graph<Node>& graph) override
+    {
+        const float node_width = 100.0f;
+        ImNodes::BeginNode(Id);
+
+        ImNodes::BeginNodeTitleBar();
+        ImGui::TextUnformatted("SINE");
+        ImNodes::EndNodeTitleBar();
+
+        {
+        	ImNodes::BeginInputAttribute(Input);
+        	const float label_width = ImGui::CalcTextSize("number").x;
+        	ImGui::TextUnformatted("number");
+        	if (graph.GetNumEdgesFromNode(Input) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::DragFloat("##hidelabel", &graph.GetNode(Input).value, 0.01f, 0.f, 1.0f);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImGui::Spacing();
+
+        {
+        	ImNodes::BeginOutputAttribute(Id);
+        	const float label_width = ImGui::CalcTextSize("output").x;
+        	ImGui::Indent(node_width - label_width);
+        	ImGui::TextUnformatted("output");
+        	ImNodes::EndInputAttribute();
+        }
+
+        ImNodes::EndNode();
+    }
+
+    virtual std::ostream& Serialize(std::ostream& out) const
+    {
+        UiNode::Serialize(out);
+        out << " " << Input;
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in)
+    {
+        in >> Input;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const SineNode& n)
+    {
+        return n.Serialize(out);
+    }
+
+    friend std::istream& operator>>(std::istream& in, SineNode& n)
+    {
+        return n.Deserialize(in);
+    }
+};
+
+struct PrimitiveNode : UiNode
+{
+    explicit PrimitiveNode(UiNodeType type, UiNodeId id, std::vector<const char*>& primitives)
+        : UiNode(type, id), Primitives(primitives), Model(INVALID_ID)
+    {
+    }
+
+    explicit PrimitiveNode(UiNodeType type, UiNodeId id, std::vector<const char*>& primitives, NodeId model)
+        : UiNode(type, id), Primitives(primitives), Model(model)
+    {
+    }
+
+    std::vector<const char*>& Primitives;
+    NodeId Model;
+
+    virtual void Delete(Graph<Node>& graph) override
+    {
+        graph.EraseNode(Model);
+    }
+
+    virtual void Render(Graph<Node>& graph) override
+    {
+        const float node_width = 100.0f;
+        ImNodes::BeginNode(Id);
+        ImNodes::BeginNodeTitleBar();
+        ImGui::TextUnformatted("PRIMITIVE");
+        ImNodes::EndNodeTitleBar();
+
+        ImGui::PushItemWidth(node_width);
+        auto &modelNode = graph.GetNode(Model);
+        int value = static_cast<int>(modelNode.value);
+        ImGui::Combo("##hidelabel", &value, Primitives.data(), (int)Primitives.size());
+        ImGui::PopItemWidth();
+        modelNode.value = static_cast<float>(value);
+        
+        ImNodes::BeginOutputAttribute(Id);
+        const float label_width = ImGui::CalcTextSize("output").x;
+        ImGui::Indent(node_width - label_width);
+        ImGui::Text("output");
+        ImNodes::EndOutputAttribute();
+
+        ImNodes::EndNode();
+    }
+
+    virtual std::ostream& Serialize(std::ostream& out) const
+    {
+        UiNode::Serialize(out);
+        out << " " << Model;
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in)
+    {
+        in >> Model;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const PrimitiveNode& n)
+    {
+        return n.Serialize(out);
+    }
+
+    friend std::istream& operator>>(std::istream& in, PrimitiveNode& n)
+    {
+        return n.Deserialize(in);
+    }
+};
+
+struct RenderTargetNode : UiNode
+{
+    explicit RenderTargetNode(UiNodeType type, UiNodeId id, RenderTexture* renderTexture)
+        : UiNode(type, id), RenderTex(renderTexture), Input(INVALID_ID)
+    {
+    }
+
+    explicit RenderTargetNode(UiNodeType type, UiNodeId id, RenderTexture* renderTexture, NodeId input)
+        : UiNode(type, id), RenderTex(renderTexture), Input(input)
+    {
+    }
+
+    RenderTexture* RenderTex;
+    NodeId Input;
+
+    virtual void Delete(Graph<Node>& graph) override
+    {
+        graph.EraseNode(Input);
+    }
+
+    virtual void Render(Graph<Node>& graph) override
+    {
+        const float node_width = 100.0f;
+        ImNodes::BeginNode(Id);
+
+        ImNodes::BeginNodeTitleBar();
+        ImGui::TextUnformatted("RENDER TARGET");
+        ImNodes::EndNodeTitleBar();
+
+        {
+        	ImNodes::BeginInputAttribute(Input);
+        	const float label_width = ImGui::CalcTextSize("input").x;
+        	ImGui::TextUnformatted("input");
+        	if (graph.GetNumEdgesFromNode(Input) == 0ull)
+        	{
+        		ImGui::SameLine();
+        		ImGui::PushItemWidth(node_width - label_width);
+        		ImGui::PopItemWidth();
+        	}
+        	ImNodes::EndInputAttribute();
+
+        	static int w = 256;
+        	static int h = 256;
+        	//if(_RenderTargetReady)
+        		ImGui::Image((ImTextureID)RenderTex->SRV().ptr, ImVec2((float)w, (float)h));
+        }
+
+        ImNodes::EndNode();
+    }
+
+    virtual std::ostream& Serialize(std::ostream& out) const
+    {
+        UiNode::Serialize(out);
+        out << " " << Input;
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in)
+    {
+        in >> Input;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const RenderTargetNode& n)
+    {
+        return n.Serialize(out);
+    }
+
+    friend std::istream& operator>>(std::istream& in, RenderTargetNode& n)
+    {
+        return n.Deserialize(in);
+    }
+};
+
+struct TimeNode : UiNode
+{
+    explicit TimeNode(UiNodeType type, UiNodeId id)
+        : UiNode(type, id)
+    {
+    }
+
+    virtual void Delete(Graph<Node>& graph) override
+    {
+    }
+
+    virtual void Render(Graph<Node>& graph) override
+    {
+        ImNodes::BeginNode(Id);
+
+        ImNodes::BeginNodeTitleBar();
+        ImGui::TextUnformatted("TIME");
+        ImNodes::EndNodeTitleBar();
+
+        ImNodes::BeginOutputAttribute(Id);
+        ImGui::Text("output");
+        ImNodes::EndOutputAttribute();
+
+        ImNodes::EndNode();
+    }
+
+    virtual std::ostream& Serialize(std::ostream& out) const
+    {
+        UiNode::Serialize(out);
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in)
+    {
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const TimeNode& n)
+    {
+        return n.Serialize(out);
+    }
+
+    friend std::istream& operator>>(std::istream& in, TimeNode& n)
+    {
+        return n.Deserialize(in);
+    }
+};

@@ -104,7 +104,7 @@ void ShaderToolApp::EvaluateGraph()
 		{
 			// The final output node isn't evaluated in the loop -- instead we just pop
 			// the three values which should be in the stack.
-			assert(valueStack.size() == 4ull && "Draw node expects 4 inputs");
+			assert(valueStack.size() == 6ull && "Draw node expects 6 inputs");
 			
 			const float b = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
@@ -115,6 +115,13 @@ void ShaderToolApp::EvaluateGraph()
 
 			const int model = static_cast<int>(valueStack.top());
 			valueStack.pop();
+
+			const int vs = static_cast<int>(valueStack.top());
+			valueStack.pop();
+
+			const int ps = static_cast<int>(valueStack.top());
+			valueStack.pop();
+
 
 			_Entity.Color = { r, g, b };
 			// TODO: at the moment only works with primitives, but later there will be loaded models
@@ -176,109 +183,97 @@ void ShaderToolApp::HandleNewNodes()
 				ImNodes::SetNodeScreenSpacePos(id, click_pos);
 			}
 
-			//if (ImGui::MenuItem("Multiply"))
-			//{
-			//	const Node value(NodeType::Value, 0.f);
-			//	const Node op(NodeType::Multiply);
+			if (ImGui::MenuItem("Multiply"))
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::Multiply);
 
-			//	UiNode ui_node;
-			//	ui_node.type = UiNodeType::Multiply;
-			//	ui_node.multiply.lhs = _Graph.CreateNode(value);
-			//	ui_node.multiply.rhs = _Graph.CreateNode(value);
-			//	ui_node.id = _Graph.CreateNode(op);
+				auto lhs = _Graph.CreateNode(value);
+				auto rhs = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(op);
 
-			//	_Graph.CreateEdge(ui_node.id, ui_node.multiply.lhs);
-			//	_Graph.CreateEdge(ui_node.id, ui_node.multiply.rhs);
+				_Graph.CreateEdge(id, lhs);
+				_Graph.CreateEdge(id, rhs);
 
-			//	_UINodes.push_back(ui_node);
-			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			//}
+				_UINodes.push_back(std::make_unique<MultiplyNode>(UiNodeType::Multiply, id, lhs, rhs));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+			}
 
-			//if (ImGui::MenuItem("Draw"))
-			//{
-			//	const Node value(NodeType::Value, 0.f);
-			//	const Node out(NodeType::Draw);
+			if (ImGui::MenuItem("Draw"))
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node out(NodeType::Draw);
 
-			//	UiNode ui_node;
-			//	ui_node.type = UiNodeType::Draw;
-			//	ui_node.draw.vs = _Graph.CreateNode(value);
-			//	ui_node.draw.ps = _Graph.CreateNode(value);
-			//	ui_node.draw.model = _Graph.CreateNode(value);
-			//	ui_node.draw.r = _Graph.CreateNode(value);
-			//	ui_node.draw.g = _Graph.CreateNode(value);
-			//	ui_node.draw.b = _Graph.CreateNode(value);
-			//	ui_node.id = _Graph.CreateNode(out);
+				auto vs = _Graph.CreateNode(value);
+				auto ps = _Graph.CreateNode(value);
+				auto model = _Graph.CreateNode(value);
+				auto r = _Graph.CreateNode(value);
+				auto g = _Graph.CreateNode(value);
+				auto b = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(out);
 
-			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.vs);
-			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.ps);
-			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.model);
-			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.r);
-			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.g);
-			//	_Graph.CreateEdge(ui_node.id, ui_node.draw.b);
+				_Graph.CreateEdge(id, vs);
+				_Graph.CreateEdge(id, ps);
+				_Graph.CreateEdge(id, model);
+				_Graph.CreateEdge(id, r);
+				_Graph.CreateEdge(id, g);
+				_Graph.CreateEdge(id, b);
 
-			//	_UINodes.push_back(ui_node);
-			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			//}
+				_UINodes.push_back(std::make_unique<DrawNode>(UiNodeType::Draw, id, r, g, b, model, vs, ps));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+			}
 
-			//if (ImGui::MenuItem("Sine"))
-			//{
-			//	const Node value(NodeType::Value, 0.f);
-			//	const Node op(NodeType::Sine);
+			if (ImGui::MenuItem("Sine"))
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::Sine);
 
-			//	UiNode ui_node;
-			//	ui_node.type = UiNodeType::Sine;
-			//	ui_node.sine.input = _Graph.CreateNode(value);
-			//	ui_node.id = _Graph.CreateNode(op);
+				auto input = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(op);
 
-			//	_Graph.CreateEdge(ui_node.id, ui_node.sine.input);
+				_Graph.CreateEdge(id, input);
 
-			//	_UINodes.push_back(ui_node);
-			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			//}
+				_UINodes.push_back(std::make_unique<SineNode>(UiNodeType::Sine, id, input));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+			}
 
-			//if (ImGui::MenuItem("Time"))
-			//{
-			//	UiNode ui_node;
-			//	ui_node.type = UiNodeType::Time;
-			//	ui_node.id = _Graph.CreateNode(Node(NodeType::Time));
+			if (ImGui::MenuItem("Time"))
+			{
+				auto id = _Graph.CreateNode(Node(NodeType::Time));
 
-			//	_UINodes.push_back(ui_node);
-			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			//}
+				_UINodes.push_back(std::make_unique<TimeNode>(UiNodeType::Time, id));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+			}
 
-			//if (ImGui::MenuItem("Render Target") && _RootNodeId == -1)
-			//{
-			//	const Node value(NodeType::Value, 0.f);
-			//	const Node op(NodeType::RenderTarget);
+			if (ImGui::MenuItem("Render Target") && _RootNodeId == -1)
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::RenderTarget);
 
-			//	UiNode ui_node;
-			//	ui_node.type = UiNodeType::RenderTarget;
-			//	ui_node.renderTarget.input = _Graph.CreateNode(value);
-			//	ui_node.id = _Graph.CreateNode(op);
+				auto input = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(op);
 
-			//	_Graph.CreateEdge(ui_node.id, ui_node.renderTarget.input);
+				_Graph.CreateEdge(id, input);
 
-			//	_UINodes.push_back(ui_node);
-			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
+				_UINodes.push_back(std::make_unique<RenderTargetNode>(UiNodeType::RenderTarget, id, _RenderTarget.get(), input));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
 
-			//	_RootNodeId = ui_node.id;
-			//}
+				_RootNodeId = id;
+			}
 
-			//if (ImGui::MenuItem("Primitive"))
-			//{
-			//	const Node value(NodeType::Value, 0.f);
-			//	const Node op(NodeType::Primitive);
+			if (ImGui::MenuItem("Primitive"))
+			{
+				const Node value(NodeType::Value, 0.f);
+				const Node op(NodeType::Primitive);
 
-			//	UiNode ui_node;
-			//	ui_node.type = UiNodeType::Primitive;
-			//	ui_node.primitive.input = _Graph.CreateNode(value);
-			//	ui_node.id = _Graph.CreateNode(op);
+				auto model = _Graph.CreateNode(value);
+				auto id = _Graph.CreateNode(op);
 
-			//	_Graph.CreateEdge(ui_node.id, ui_node.primitive.input);
+				_Graph.CreateEdge(id, model);
 
-			//	_UINodes.push_back(ui_node);
-			//	ImNodes::SetNodeScreenSpacePos(ui_node.id, click_pos);
-			//}
+				_UINodes.push_back(std::make_unique<PrimitiveNode>(UiNodeType::Primitive, id, _Primitives, model));
+				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+			}
 
 			ImGui::EndPopup();
 		}
@@ -301,348 +296,8 @@ void ShaderToolApp::RenderNodeGraph()
 	HandleNewNodes();
 
 	// RENDER UI NODES
-
 	for (const auto& node : _UINodes)
-	{
 		node->Render(_Graph);
-
-	//	switch (node.type)
-	//	{
-	//	case UiNodeType::Add:
-	//	{
-	//		const float node_width = 100.f;
-	//		ImNodes::BeginNode(node.id);
-
-	//		ImNodes::BeginNodeTitleBar();
-	//		ImGui::TextUnformatted("ADD");
-	//		ImNodes::EndNodeTitleBar();
-	//		{
-	//			ImNodes::BeginInputAttribute(node.add.lhs);
-	//			const float label_width = ImGui::CalcTextSize("left").x;
-	//			ImGui::TextUnformatted("left");
-	//			if (_Graph.GetNumEdgesFromNode(node.add.lhs) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.add.lhs).value, 0.01f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.add.rhs);
-	//			const float label_width = ImGui::CalcTextSize("right").x;
-	//			ImGui::TextUnformatted("right");
-	//			if (_Graph.GetNumEdgesFromNode(node.add.rhs) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.add.rhs).value, 0.01f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginOutputAttribute(node.id);
-	//			const float label_width = ImGui::CalcTextSize("result").x;
-	//			ImGui::Indent(node_width - label_width);
-	//			ImGui::TextUnformatted("result");
-	//			ImNodes::EndOutputAttribute();
-	//		}
-
-	//		ImNodes::EndNode();
-	//	}
-	//	break;
-	//	case UiNodeType::Multiply:
-	//	{
-	//		const float node_width = 100.0f;
-	//		ImNodes::BeginNode(node.id);
-
-	//		ImNodes::BeginNodeTitleBar();
-	//		ImGui::TextUnformatted("MULTIPLY");
-	//		ImNodes::EndNodeTitleBar();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.multiply.lhs);
-	//			const float label_width = ImGui::CalcTextSize("left").x;
-	//			ImGui::TextUnformatted("left");
-	//			if (_Graph.GetNumEdgesFromNode(node.multiply.lhs) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat(
-	//					"##hidelabel", &_Graph.GetNode(node.multiply.lhs).value, 0.01f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.multiply.rhs);
-	//			const float label_width = ImGui::CalcTextSize("right").x;
-	//			ImGui::TextUnformatted("right");
-	//			if (_Graph.GetNumEdgesFromNode(node.multiply.rhs) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat(
-	//					"##hidelabel", &_Graph.GetNode(node.multiply.rhs).value, 0.01f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginOutputAttribute(node.id);
-	//			const float label_width = ImGui::CalcTextSize("result").x;
-	//			ImGui::Indent(node_width - label_width);
-	//			ImGui::TextUnformatted("result");
-	//			ImNodes::EndOutputAttribute();
-	//		}
-
-	//		ImNodes::EndNode();
-	//	}
-	//	break;
-	//	case UiNodeType::Draw:
-	//	{
-	//		const float node_width = 100.0f;
-	//		ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
-	//		ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(45, 126, 194, 255));
-	//		ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(81, 148, 204, 255));
-	//		ImNodes::BeginNode(node.id);
-
-	//		ImNodes::BeginNodeTitleBar();
-	//		ImGui::TextUnformatted("DRAW");
-	//		ImNodes::EndNodeTitleBar();
-
-	//		ImGui::Dummy(ImVec2(node_width, 0.f));
-	//		
-	//		{
-	//			ImNodes::BeginInputAttribute(node.draw.vs);
-	//			const float label_width = ImGui::CalcTextSize("vs").x;
-	//			ImGui::TextUnformatted("vs");
-	//			if (_Graph.GetNumEdgesFromNode(node.draw.vs) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.draw.ps);
-	//			const float label_width = ImGui::CalcTextSize("ps").x;
-	//			ImGui::TextUnformatted("ps");
-	//			if (_Graph.GetNumEdgesFromNode(node.draw.ps) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.draw.model);
-	//			const float label_width = ImGui::CalcTextSize("model").x;
-	//			ImGui::TextUnformatted("model");
-	//			if (_Graph.GetNumEdgesFromNode(node.draw.model) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				//ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.draw.r);
-	//			const float label_width = ImGui::CalcTextSize("r").x;
-	//			ImGui::TextUnformatted("r");
-	//			if (_Graph.GetNumEdgesFromNode(node.draw.r) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.r).value, 0.01f, 0.f, 1.0f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.draw.g);
-	//			const float label_width = ImGui::CalcTextSize("g").x;
-	//			ImGui::TextUnformatted("g");
-	//			if (_Graph.GetNumEdgesFromNode(node.draw.g) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.g).value, 0.01f, 0.f, 1.f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.draw.b);
-	//			const float label_width = ImGui::CalcTextSize("b").x;
-	//			ImGui::TextUnformatted("b");
-	//			if (_Graph.GetNumEdgesFromNode(node.draw.b) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.draw.b).value, 0.01f, 0.f, 1.0f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginOutputAttribute(node.id);
-	//			const float label_width = ImGui::CalcTextSize("output").x;
-	//			ImGui::Indent(node_width - label_width);
-	//			ImGui::TextUnformatted("output");
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImNodes::EndNode();
-	//		ImNodes::PopColorStyle();
-	//		ImNodes::PopColorStyle();
-	//		ImNodes::PopColorStyle();
-	//	}
-	//	break;
-	//	case UiNodeType::Sine:
-	//	{
-	//		const float node_width = 100.0f;
-	//		ImNodes::BeginNode(node.id);
-
-	//		ImNodes::BeginNodeTitleBar();
-	//		ImGui::TextUnformatted("SINE");
-	//		ImNodes::EndNodeTitleBar();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.sine.input);
-	//			const float label_width = ImGui::CalcTextSize("number").x;
-	//			ImGui::TextUnformatted("number");
-	//			if (_Graph.GetNumEdgesFromNode(node.sine.input) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::DragFloat("##hidelabel", &_Graph.GetNode(node.sine.input).value, 0.01f, 0.f, 1.0f);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImGui::Spacing();
-
-	//		{
-	//			ImNodes::BeginOutputAttribute(node.id);
-	//			const float label_width = ImGui::CalcTextSize("output").x;
-	//			ImGui::Indent(node_width - label_width);
-	//			ImGui::TextUnformatted("output");
-	//			ImNodes::EndInputAttribute();
-	//		}
-
-	//		ImNodes::EndNode();
-	//	}
-	//	break;
-	//	case UiNodeType::Time:
-	//	{
-	//		ImNodes::BeginNode(node.id);
-
-	//		ImNodes::BeginNodeTitleBar();
-	//		ImGui::TextUnformatted("TIME");
-	//		ImNodes::EndNodeTitleBar();
-
-	//		ImNodes::BeginOutputAttribute(node.id);
-	//		ImGui::Text("output");
-	//		ImNodes::EndOutputAttribute();
-
-	//		ImNodes::EndNode();
-	//	}
-	//	break;
-
-	//	case UiNodeType::RenderTarget:
-	//	{
-	//		const float node_width = 100.0f;
-	//		ImNodes::BeginNode(node.id);
-
-	//		ImNodes::BeginNodeTitleBar();
-	//		ImGui::TextUnformatted("RENDER TARGET");
-	//		ImNodes::EndNodeTitleBar();
-
-	//		{
-	//			ImNodes::BeginInputAttribute(node.renderTarget.input);
-	//			const float label_width = ImGui::CalcTextSize("input").x;
-	//			ImGui::TextUnformatted("input");
-	//			if (_Graph.GetNumEdgesFromNode(node.renderTarget.input) == 0ull)
-	//			{
-	//				ImGui::SameLine();
-	//				ImGui::PushItemWidth(node_width - label_width);
-	//				ImGui::PopItemWidth();
-	//			}
-	//			ImNodes::EndInputAttribute();
-
-	//			static int w = 256;
-	//			static int h = 256;
-	//			//if(_RenderTargetReady)
-	//				ImGui::Image((ImTextureID)_RenderTarget->SRV().ptr, ImVec2((float)w, (float)h));
-	//		}
-
-	//		ImNodes::EndNode();
-	//	}
-	//	break;
-
-	//	case UiNodeType::Primitive:
-	//	{
-	//		const float node_width = 100.0f;
-	//		ImNodes::BeginNode(node.id);
-	//		ImNodes::BeginNodeTitleBar();
-	//		ImGui::TextUnformatted("PRIMITIVE");
-	//		ImNodes::EndNodeTitleBar();
-
-	//		ImGui::PushItemWidth(node_width);
-	//		//const char* items[] = { "Cube", "Sphere", "Plane" };
-	//		auto &inputNode = _Graph.GetNode(node.primitive.input);
-	//		int value = static_cast<int>(inputNode.value); // TODO: this seems weird
-	//		ImGui::Combo("##hidelabel", &value, _Primitives.data(), (int)_Primitives.size());
-	//		ImGui::PopItemWidth();
-	//		inputNode.value = static_cast<float>(value);   // TODO: this seems weird
-	//		
-	//		ImNodes::BeginOutputAttribute(node.id);
-	//		const float label_width = ImGui::CalcTextSize("output").x;
-	//		ImGui::Indent(node_width - label_width);
-	//		ImGui::Text("output");
-	//		ImNodes::EndOutputAttribute();
-
-	//		ImNodes::EndNode();
-	//	}
-	//	break; 
-
-	//	}
-	}
 
 	for (const auto& edge : _Graph.GetEdges())
 	{
@@ -721,50 +376,15 @@ void ShaderToolApp::RenderNodeGraph()
 					auto node = (*it).get();
 					if (node->Id == node_id)
 					{
+						// TODO: find a better way of reseting the root node id
+						if(node->Type == UiNodeType::RenderTarget)
+							_RootNodeId = INVALID_ID;
+
 						node->Delete(_Graph);
 						_UINodes.erase(it);
 						break;
 					}
 				}
-				
-				//auto iter = std::find_if(
-				//	_UINodes.begin(), 
-				//	_UINodes.end(), 
-				//	[node_id](const UiNode* node) -> bool {
-				//		return node->Id == node_id;
-				//	}
-				//);
-				// Erase any additional internal nodes
-				//switch (iter->get().Type)
-				//{
-				//case UiNodeType::Add:
-				//	_Graph.EraseNode(iter->add.lhs);
-				//	_Graph.EraseNode(iter->add.rhs);
-				//	break;
-				//case UiNodeType::Multiply:
-				//	_Graph.EraseNode(iter->multiply.lhs);
-				//	_Graph.EraseNode(iter->multiply.rhs);
-				//	break;
-				//case UiNodeType::Draw:
-				//	_Graph.EraseNode(iter->draw.model);
-				//	_Graph.EraseNode(iter->draw.r);
-				//	_Graph.EraseNode(iter->draw.g);
-				//	_Graph.EraseNode(iter->draw.b);
-				//	break;
-				//case UiNodeType::Sine:
-				//	_Graph.EraseNode(iter->sine.input);
-				//	break;
-				//case UiNodeType::RenderTarget:
-				//	_Graph.EraseNode(iter->renderTarget.input);
-				//	_RootNodeId = -1;
-				//	break;
-				//case UiNodeType::Primitive:
-				//	_Graph.EraseNode(iter->primitive.input);
-				//	break;
-				//default:
-				//	break;
-				//}
-				
 			}
 		}
 	}
@@ -883,16 +503,59 @@ void ShaderToolApp::Load()
 	for (int i = 0; i < numUiNodes; ++i)
 	{
 		fin >> uinLabel >> type >> id;
-
 		auto nodeType = static_cast<UiNodeType>(type);
-
+		
+		// TODO: it should be implemented using the pattern described in the links below... for now I'll use a switch
+		// https://isocpp.org/wiki/faq/serialization#serialize-inherit-no-ptrs
+		// https://stackoverflow.com/questions/3268801/how-do-you-de-serialize-a-derived-class-from-serialized-data
 		switch (nodeType)
 		{
 		case UiNodeType::Add: 
 		{
 			auto node = std::make_unique<AddNode>(nodeType, id);
 			fin >> *node.get();
-
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Multiply:
+		{
+			auto node = std::make_unique<MultiplyNode>(nodeType, id);
+			fin >> *node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Draw:
+		{
+			auto node = std::make_unique<DrawNode>(nodeType, id);
+			fin >> *node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Sine:
+		{
+			auto node = std::make_unique<SineNode>(nodeType, id);
+			fin >> *node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Primitive:
+		{
+			auto node = std::make_unique<PrimitiveNode>(nodeType, id, _Primitives);
+			fin >> *node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::RenderTarget:
+		{
+			auto node = std::make_unique<RenderTargetNode>(nodeType, id, _RenderTarget.get());
+			fin >> *node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Time:
+		{
+			auto node = std::make_unique<TimeNode>(nodeType, id);
+			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
