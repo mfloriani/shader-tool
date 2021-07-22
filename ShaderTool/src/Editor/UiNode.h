@@ -743,53 +743,32 @@ struct ShaderNode : UiNode
 
         if (ImGui::Button("..."))
         {
-            //FileDialog.Open();
-            //ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", ".");
-            //ImGui::OpenPopup("Open File");
             nfdresult_t result = NFD_OpenDialog("hlsl", NULL, &outPath);
 
-            if (result == NFD_OKAY) {
-                LOG_TRACE("Selected file {0}", outPath);
+            if (result == NFD_OKAY) 
+            {
+                auto path = std::string(outPath);
                 free(outPath);
+                //LOG_TRACE("Selected file [{0} | {1} | {2}]", path, D3DUtil::ExtractFilename(path, true), D3DUtil::ExtractFilename(path));
+                if (ShaderManager::Get().LoadRawShader(path, "main", "vs_5_0"))
+                {
+                    // Loaded and Compiled successfully
+                }
+                else
+                {
+                    // Failed
+                }
             }
-            else if (result == NFD_CANCEL) {
+            else if (result == NFD_CANCEL) 
+            {
                 LOG_TRACE("User pressed cancel.");
             }
-            else {
-                LOG_TRACE("Error: %s\n", NFD_GetError());
+            else 
+            {
+                LOG_ERROR("Error: %s\n", NFD_GetError());
             }
-
-
         }
-            
-        //if (file_dialog.showFileDialog("Open File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".rar,.zip,.7z"))
-        //{
-        //    std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
-        //    std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
-        //}
-
-        // display
-        //if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
-        //{
-        //    // action if OK
-        //    if (ImGuiFileDialog::Instance()->IsOk())
-        //    {
-        //        std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-        //        std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-        //        // action
-        //    }
-
-        //    // close
-        //    ImGuiFileDialog::Instance()->Close();
-        //}
         
-        //FileDialog.Display();
-        //if (FileDialog.HasSelected())
-        //{
-        //    LOG_TRACE("Selected filename {0}", FileDialog.GetSelected().string());
-        //    FileDialog.ClearSelected();
-        //}
-
         ImNodes::BeginOutputAttribute(Id);
         ImGui::Text("output");
         ImNodes::EndOutputAttribute();

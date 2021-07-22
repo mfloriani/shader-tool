@@ -16,7 +16,8 @@ public:
 		return instance;
 	}
 
-	void AddShader(const std::string& name);
+	bool LoadBinaryShader(const std::string& name);
+	bool LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target);
 	Shader* ShaderManager::GetShader(size_t index);
 	Shader* GetShader(const std::string& name);
 

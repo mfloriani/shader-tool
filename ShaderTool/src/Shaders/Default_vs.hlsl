@@ -37,8 +37,8 @@ VSOutput main( VSInput vIn )
     //vOut.PosH = mul(vOut.PosH, Proj);
     vOut.PosH = mul(vOut.PosH, RTProj);
     
-    vOut.Norm = mul(float4(vIn.Norm, 1.0), World);
-    vOut.Tang = mul(float4(vIn.Tang, 1.0), World);
+    vOut.Norm = mul(float4(vIn.Norm, 1.0), World).xyz;
+    vOut.Tang = mul(float4(vIn.Tang, 1.0), World).xyz;
     vOut.TexC = vIn.TexC;
     vOut.Color = Color;
     

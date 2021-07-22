@@ -131,11 +131,11 @@ void ShaderToolApp::BuildRootSignature()
 void ShaderToolApp::BuildShadersAndInputLayout()
 {
 	auto& shaderMgr = ShaderManager::Get();
-	shaderMgr.AddShader("backbuffer_vs");
-	shaderMgr.AddShader("default_vs");
-	shaderMgr.AddShader("default_ps");
-	shaderMgr.AddShader("quad_vs");
-	shaderMgr.AddShader("quad_ps");
+	shaderMgr.LoadBinaryShader("backbuffer_vs");
+	shaderMgr.LoadBinaryShader("default_vs");
+	shaderMgr.LoadBinaryShader("default_ps");
+	shaderMgr.LoadBinaryShader("quad_vs");
+	shaderMgr.LoadBinaryShader("quad_ps");
 
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -149,6 +149,7 @@ void ShaderToolApp::BuildPSO()
 {
 	auto& shaderMgr = ShaderManager::Get();
 
+	// default one used for render target
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC defaultPSO;
 		ZeroMemory(&defaultPSO, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -171,7 +172,7 @@ void ShaderToolApp::BuildPSO()
 		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["render_target"])));
 	}
 
-	// render target Quad
+	// backbuffer
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
 		ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));

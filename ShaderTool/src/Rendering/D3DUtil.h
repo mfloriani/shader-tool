@@ -12,6 +12,14 @@
 
 namespace D3DUtil
 {
+	bool CompileShader(
+		const std::string& filename, 
+		const std::string& entryPoint, 
+		const std::string& target,
+		Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
+
+	std::string ExtractFilename(const std::string& path, bool includeExtension = false);
+
     class DxException
     {
     public:

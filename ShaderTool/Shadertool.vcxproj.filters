@@ -236,4 +236,7 @@
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Shaders\template_vs.hlsl" />
+  </ItemGroup>
 </Project>

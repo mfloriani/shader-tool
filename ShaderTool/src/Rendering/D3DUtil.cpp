@@ -6,6 +6,62 @@
 using namespace D3DUtil;
 using Microsoft::WRL::ComPtr;
 
+bool D3DUtil::CompileShader(
+    const std::string& filename, 
+    const std::string& entryPoint, 
+    const std::string& target,
+    ComPtr<ID3DBlob>& bytecode)
+{
+    UINT compileFlags = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
+#if defined(DEBUG) || defined(_DEBUG)  
+    compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    //ComPtr<ID3DBlob> byteCode = nullptr;
+    ComPtr<ID3DBlob> errors;
+    auto hr = D3DCompileFromFile(
+        AnsiToWString(filename).c_str(),
+        nullptr, 
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        entryPoint.c_str(), 
+        target.c_str(), 
+        compileFlags, 
+        0, 
+        &bytecode, 
+        &errors);
+
+    if (errors)
+    {
+        auto message = std::string((char*)errors->GetBufferPointer());
+        if(hr == S_OK)
+            LOG_WARN("Shader compiled with warnings [{0}]", message);
+        else
+        {
+            LOG_ERROR("Failed to compile shader [{0}]", message);
+            return false;
+        }
+    }
+    else
+    {
+        LOG_INFO("Shader compiled successfully");
+    }
+
+    return true;
+}
+
+std::string D3DUtil::ExtractFilename(const std::string& path, bool includeExtension)
+{
+    std::string filenameWithExtension = path.substr(path.find_last_of("/\\") + 1);
+    if (!includeExtension)
+    {
+        std::string::size_type const p(filenameWithExtension.find_last_of('.'));
+        std::string filenameWithoutExtension = filenameWithExtension.substr(0, p);
+        return filenameWithoutExtension;
+    }
+
+    return filenameWithExtension;
+}
+
 UINT D3DUtil::CalcConstantBufferByteSize(UINT byteSize)
 {
     // Constant buffers must be a multiple of the minimum hardware

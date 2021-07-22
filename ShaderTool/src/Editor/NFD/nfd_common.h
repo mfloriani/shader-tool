@@ -10,7 +10,7 @@
 #ifndef _NFD_COMMON_H
 #define _NFD_COMMON_H
 
-#include "Editor/NFD/include/nfd.h"
+#include "Editor/NFD/nfd.h"
 
 #include <stdint.h>
 
