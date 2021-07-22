@@ -104,6 +104,9 @@
     <ClInclude Include="src\Editor\ImGui\imconfig.h" />
     <ClInclude Include="src\Editor\ImGui\imfilebrowser.h" />
     <ClInclude Include="src\Editor\ImGui\imgui.h" />
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\dirent\dirent.h" />
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
     <ClInclude Include="src\Editor\ImGui\imgui_impl_dx12.h" />
     <ClInclude Include="src\Editor\ImGui\imgui_impl_win32.h" />
     <ClInclude Include="src\Editor\ImGui\imgui_internal.h" />
@@ -138,6 +141,7 @@
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="src\Editor\ImGui\imgui_demo.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

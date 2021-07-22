@@ -97,6 +97,9 @@
     <ClInclude Include="src\Rendering\ShaderManager.h" />
     <ClInclude Include="src\Editor\UiNode.h" />
     <ClInclude Include="src\Editor\ImGui\imfilebrowser.h" />
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\dirent\dirent.h" />
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -149,6 +152,7 @@
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\Rendering\Shader.cpp" />
     <ClCompile Include="src\Rendering\ShaderManager.cpp" />
+    <ClCompile Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\default_ps.hlsl">

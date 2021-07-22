@@ -5,6 +5,8 @@
 
 #include "Editor\ImGui\imnodes.h"
 #include "Editor\ImGui\imgui.h"
+//#include "Editor\ImGui\imfilebrowser.h"
+#include "Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h"
 
 using UiNodeId = int;
 
@@ -702,12 +704,12 @@ struct ShaderNode : UiNode
     }
 
     NodeId Shader;
-    ImGui::FileBrowser FileDialog{ ImGuiFileBrowserFlags_CloseOnEsc };
+    //ImGui::FileBrowser FileDialog{ ImGuiFileBrowserFlags_CloseOnEsc };
 
     void Init()
     {
-        FileDialog.SetTitle("Select shader file");
-        FileDialog.SetTypeFilters({ ".hlsl" });
+        //FileDialog.SetTitle("Select shader file");
+        //FileDialog.SetTypeFilters({ ".hlsl" });
     }
 
     virtual void Delete(Graph<Node>& graph) override
@@ -735,15 +737,29 @@ struct ShaderNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         if (ImGui::Button("..."))
-            FileDialog.Open();
+            //FileDialog.Open();
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", ".");
             
-        FileDialog.Display();
-
-        if (FileDialog.HasSelected())
+        // display
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {
-            LOG_TRACE("Selected filename {0}", FileDialog.GetSelected().string());
-            FileDialog.ClearSelected();
+            // action if OK
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+                // action
+            }
+
+            // close
+            ImGuiFileDialog::Instance()->Close();
         }
+        //FileDialog.Display();
+        //if (FileDialog.HasSelected())
+        //{
+        //    LOG_TRACE("Selected filename {0}", FileDialog.GetSelected().string());
+        //    FileDialog.ClearSelected();
+        //}
 
         ImNodes::BeginOutputAttribute(Id);
         ImGui::Text("output");
