@@ -117,10 +117,10 @@
     <ClInclude Include="src\Editor\ImGui\imstb_rectpack.h" />
     <ClInclude Include="src\Editor\ImGui\imstb_textedit.h" />
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h" />
-    <ClInclude Include="src\Editor\NFD\common.h" />
-    <ClInclude Include="src\Editor\NFD\include\nfd.h" />
-    <ClInclude Include="src\Editor\NFD\nfd_common.h" />
-    <ClInclude Include="src\Editor\NFD\simple_exec.h" />
+    <ClInclude Include="src\Editor\nfd\common.h" />
+    <ClInclude Include="src\Editor\nfd\nfd.h" />
+    <ClInclude Include="src\Editor\nfd\nfd_common.h" />
+    <ClInclude Include="src\Editor\nfd\simple_exec.h" />
     <ClInclude Include="src\Editor\Node.h" />
     <ClInclude Include="src\Editor\UiNode.h" />
     <ClInclude Include="src\Entity.h" />
@@ -174,10 +174,10 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\Editor\NFD\nfd_common.c">
+    <ClCompile Include="src\Editor\nfd\nfd_common.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\Editor\NFD\nfd_win.cpp">
+    <ClCompile Include="src\Editor\nfd\nfd_win.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\GameTimer.cpp" />

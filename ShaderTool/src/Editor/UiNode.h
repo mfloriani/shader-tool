@@ -8,7 +8,7 @@
 //#include "Editor\ImGui\imfilebrowser.h"
 //#include "Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h"
 //#include "Editor/ImGui/ImGuiFileBrowser/ImGuiFileBrowser.h"
-#include "Editor/NFD/include/nfd.h"
+#include "Editor/nfd/nfd.h"
 
 using UiNodeId = int;
 
@@ -746,7 +746,7 @@ struct ShaderNode : UiNode
             //FileDialog.Open();
             //ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", ".");
             //ImGui::OpenPopup("Open File");
-            nfdresult_t result = NFD_OpenDialog(NULL, NULL, &outPath);
+            nfdresult_t result = NFD_OpenDialog("hlsl", NULL, &outPath);
 
             if (result == NFD_OKAY) {
                 LOG_TRACE("Selected file {0}", outPath);
