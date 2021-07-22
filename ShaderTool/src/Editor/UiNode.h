@@ -7,7 +7,8 @@
 #include "Editor\ImGui\imgui.h"
 //#include "Editor\ImGui\imfilebrowser.h"
 //#include "Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h"
-#include "Editor/ImGui/ImGuiFileBrowser/ImGuiFileBrowser.h"
+//#include "Editor/ImGui/ImGuiFileBrowser/ImGuiFileBrowser.h"
+#include "Editor/NFD/include/nfd.h"
 
 using UiNodeId = int;
 
@@ -706,7 +707,9 @@ struct ShaderNode : UiNode
 
     NodeId Shader;
     //ImGui::FileBrowser FileDialog{ ImGuiFileBrowserFlags_CloseOnEsc };
-    imgui_addons::ImGuiFileBrowser file_dialog;
+    //imgui_addons::ImGuiFileBrowser file_dialog;
+
+    nfdchar_t* outPath = NULL;
 
     void Init()
     {
@@ -739,15 +742,31 @@ struct ShaderNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         if (ImGui::Button("..."))
+        {
             //FileDialog.Open();
             //ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", ".");
-            ImGui::OpenPopup("Open File");
-            
-        if (file_dialog.showFileDialog("Open File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".rar,.zip,.7z"))
-        {
-            std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
-            std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
+            //ImGui::OpenPopup("Open File");
+            nfdresult_t result = NFD_OpenDialog(NULL, NULL, &outPath);
+
+            if (result == NFD_OKAY) {
+                LOG_TRACE("Selected file {0}", outPath);
+                free(outPath);
+            }
+            else if (result == NFD_CANCEL) {
+                LOG_TRACE("User pressed cancel.");
+            }
+            else {
+                LOG_TRACE("Error: %s\n", NFD_GetError());
+            }
+
+
         }
+            
+        //if (file_dialog.showFileDialog("Open File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".rar,.zip,.7z"))
+        //{
+        //    std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
+        //    std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
+        //}
 
         // display
         //if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))

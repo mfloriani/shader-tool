@@ -29,6 +29,7 @@ project "ShaderTool"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.hlsl",
+		"%{prj.name}/src/**.c",
 	}
 
 	includedirs
@@ -78,6 +79,12 @@ project "ShaderTool"
 	filter 'files:**/ImGui/**.cpp'
 		flags  { 'NoPCH' }
 	
+	filter 'files:**/NFD/**.c'
+		flags  { 'NoPCH' }
+
+	filter 'files:**/NFD/**.cpp'
+		flags  { 'NoPCH' }
+
 	filter { "files:**.hlsl" }
 		flags "ExcludeFromBuild"
 		shadermodel "5.0"

@@ -7,6 +7,24 @@
     <Filter Include="Editor\ImGui">
       <UniqueIdentifier>{B6482D3E-A2AB-BCE2-4B31-F59837738865}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Editor\ImGui\ImGuiFileBrowser">
+      <UniqueIdentifier>{048B789F-70A3-5FC9-3950-EF62A527F462}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\ImGui\ImGuiFileBrowser\Dirent">
+      <UniqueIdentifier>{19BD51C0-05A4-13B8-AEF4-79D59ABA8C1E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\ImGui\ImGuiFileDialog">
+      <UniqueIdentifier>{70186856-5CD3-5702-058B-D04CF124A292}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\ImGui\ImGuiFileDialog\dirent">
+      <UniqueIdentifier>{258D0BAD-9146-7657-1AA6-9031865E2CC7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\NFD">
+      <UniqueIdentifier>{739B9DA0-5F53-DFED-C85A-B849B4317ADE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\NFD\include">
+      <UniqueIdentifier>{E6857C94-D269-3DEA-3BCA-373D27CD276C}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Rendering">
       <UniqueIdentifier>{E3AE1F7C-4F19-D4F2-9857-85980401B247}</UniqueIdentifier>
     </Filter>
@@ -26,7 +44,25 @@
     <ClInclude Include="src\Editor\IdMap.h">
       <Filter>Editor</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\Dirent\dirent.h">
+      <Filter>Editor\ImGui\ImGuiFileBrowser\Dirent</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.h">
+      <Filter>Editor\ImGui\ImGuiFileBrowser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h">
+      <Filter>Editor\ImGui\ImGuiFileDialog</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialogConfig.h">
+      <Filter>Editor\ImGui\ImGuiFileDialog</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\dirent\dirent.h">
+      <Filter>Editor\ImGui\ImGuiFileDialog\dirent</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\ImGui\imconfig.h">
+      <Filter>Editor\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\ImGui\imfilebrowser.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\ImGui\imgui.h">
@@ -56,7 +92,22 @@
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\NFD\common.h">
+      <Filter>Editor\NFD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\NFD\include\nfd.h">
+      <Filter>Editor\NFD\include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\NFD\nfd_common.h">
+      <Filter>Editor\NFD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\NFD\simple_exec.h">
+      <Filter>Editor\NFD</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\Node.h">
+      <Filter>Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode.h">
       <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="src\Entity.h" />
@@ -79,6 +130,12 @@
     <ClInclude Include="src\Rendering\RenderTexture.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Rendering\Shader.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rendering\ShaderManager.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rendering\UploadBuffer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -93,17 +150,15 @@
     </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Rendering\Shader.h" />
-    <ClInclude Include="src\Rendering\ShaderManager.h" />
-    <ClInclude Include="src\Editor\UiNode.h" />
-    <ClInclude Include="src\Editor\ImGui\imfilebrowser.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\dirent\dirent.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
+    <ClCompile Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.cpp">
+      <Filter>Editor\ImGui\ImGuiFileBrowser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.cpp">
+      <Filter>Editor\ImGui\ImGuiFileDialog</Filter>
+    </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
@@ -128,6 +183,12 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="src\Editor\NFD\nfd_common.c">
+      <Filter>Editor\NFD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Editor\NFD\nfd_win.cpp">
+      <Filter>Editor\NFD</Filter>
+    </ClCompile>
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\GeometryGenerator.cpp" />
     <ClCompile Include="src\Log.cpp" />
@@ -144,6 +205,12 @@
     <ClCompile Include="src\Rendering\RenderTexture.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Rendering\Shader.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\ShaderManager.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Rendering\Window.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
@@ -151,12 +218,11 @@
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\Rendering\Shader.cpp" />
-    <ClCompile Include="src\Rendering\ShaderManager.cpp" />
-    <ClCompile Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.cpp" />
-    <ClCompile Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
     <FxCompile Include="src\Shaders\default_ps.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
@@ -169,6 +235,5 @@
     <FxCompile Include="src\Shaders\quad_vs.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="src\Shaders\backbuffer_vs.hlsl" />
   </ItemGroup>
 </Project>
