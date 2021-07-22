@@ -24,7 +24,7 @@ void ShaderToolApp::OnKeyDown(WPARAM key)
 	case VK_ESCAPE:
 	{
 		LOG_TRACE("ESC pressed");
-		PostQuitMessage(0);
+		//PostQuitMessage(0);
 		break;
 	}
 	default:

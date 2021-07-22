@@ -692,14 +692,23 @@ struct ShaderNode : UiNode
     explicit ShaderNode(UiNodeType type, UiNodeId id)
         : UiNode(type, id), Shader(INVALID_ID)
     {
+        Init();
     }
 
     explicit ShaderNode(UiNodeType type, UiNodeId id, NodeId shader)
         : UiNode(type, id), Shader(shader)
     {
+        Init();
     }
 
     NodeId Shader;
+    ImGui::FileBrowser FileDialog{ ImGuiFileBrowserFlags_CloseOnEsc };
+
+    void Init()
+    {
+        FileDialog.SetTitle("Select shader file");
+        FileDialog.SetTypeFilters({ ".hlsl" });
+    }
 
     virtual void Delete(Graph<Node>& graph) override
     {
@@ -722,8 +731,19 @@ struct ShaderNode : UiNode
         default:
             ImGui::TextUnformatted("UNKNOWN SHADER");
             break;
-        }        
+        }
         ImNodes::EndNodeTitleBar();
+
+        if (ImGui::Button("..."))
+            FileDialog.Open();
+            
+        FileDialog.Display();
+
+        if (FileDialog.HasSelected())
+        {
+            LOG_TRACE("Selected filename {0}", FileDialog.GetSelected().string());
+            FileDialog.ClearSelected();
+        }
 
         ImNodes::BeginOutputAttribute(Id);
         ImGui::Text("output");
