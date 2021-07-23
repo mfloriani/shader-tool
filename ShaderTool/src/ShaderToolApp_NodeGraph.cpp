@@ -1,7 +1,15 @@
 #include "pch.h"
 #include "ShaderToolApp.h"
 #include "AssetManager.h"
-#include "Editor/UiNode.h"
+
+#include "Editor\UiNode\AddNode.h"
+#include "Editor\UiNode\MultiplyNode.h"
+#include "Editor\UiNode\DrawNode.h"
+#include "Editor\UiNode\PrimitiveNode.h"
+#include "Editor\UiNode\RenderTargetNode.h"
+#include "Editor\UiNode\ShaderNode.h"
+#include "Editor\UiNode\SineNode.h"
+#include "Editor\UiNode\TimeNode.h"
 
 #include <iomanip>
 #include <algorithm>

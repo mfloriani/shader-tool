@@ -35,13 +35,13 @@
   <ItemGroup>
     <ClInclude Include="src\AssetManager.h" />
     <ClInclude Include="src\Defines.h" />
-    <ClInclude Include="src\Editor\Edge.h">
+    <ClInclude Include="src\Editor\Graph\Edge.h">
       <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\Graph.h">
+    <ClInclude Include="src\Editor\Graph\Graph.h">
       <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\IdMap.h">
+    <ClInclude Include="src\Editor\Graph\IdMap.h">
       <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\Dirent\dirent.h">
@@ -92,22 +92,22 @@
     <ClInclude Include="src\Editor\ImGui\imstb_truetype.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\nfd\common.h">
+    <ClInclude Include="src\Editor\NFD\common.h">
       <Filter>Editor\NFD</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\nfd\nfd.h">
+    <ClInclude Include="src\Editor\NFD\nfd.h">
       <Filter>Editor\NFD\include</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\nfd\nfd_common.h">
+    <ClInclude Include="src\Editor\NFD\nfd_common.h">
       <Filter>Editor\NFD</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\nfd\simple_exec.h">
+    <ClInclude Include="src\Editor\NFD\simple_exec.h">
       <Filter>Editor\NFD</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\Node.h">
+    <ClInclude Include="src\Editor\Graph\Node.h">
       <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\UiNode.h">
+    <ClInclude Include="src\Editor\UiNode\UiNode.h">
       <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="src\Entity.h" />
@@ -150,6 +150,14 @@
     </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\Editor\UiNode\AddNode.h" />
+    <ClInclude Include="src\Editor\UiNode\MultiplyNode.h" />
+    <ClInclude Include="src\Editor\UiNode\DrawNode.h" />
+    <ClInclude Include="src\Editor\UiNode\SineNode.h" />
+    <ClInclude Include="src\Editor\UiNode\PrimitiveNode.h" />
+    <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h" />
+    <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
+    <ClInclude Include="src\Editor\UiNode\ShaderNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -183,10 +191,10 @@
     <ClCompile Include="src\Editor\ImGui\imnodes.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="src\Editor\nfd\nfd_common.c">
+    <ClCompile Include="src\Editor\NFD\nfd_common.c">
       <Filter>Editor\NFD</Filter>
     </ClCompile>
-    <ClCompile Include="src\Editor\nfd\nfd_win.cpp">
+    <ClCompile Include="src\Editor\NFD\nfd_win.cpp">
       <Filter>Editor\NFD</Filter>
     </ClCompile>
     <ClCompile Include="src\GameTimer.cpp" />

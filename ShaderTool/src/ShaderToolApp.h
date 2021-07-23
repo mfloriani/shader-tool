@@ -13,9 +13,9 @@
 #include "Rendering\Mesh.h"
 #include "Rendering\ShaderManager.h"
 
-#include "Editor\Node.h"
-#include "Editor\UiNode.h"
-#include "Editor\Graph.h"
+#include "Editor\Graph\Node.h"
+#include "Editor\UiNode\UiNode.h"
+#include "Editor\Graph\Graph.h"
 
 struct Primitive
 {

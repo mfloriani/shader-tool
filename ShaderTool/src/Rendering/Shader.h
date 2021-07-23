@@ -17,7 +17,7 @@ private:
 	void Reflect();
 
 private:
-	Microsoft::WRL::ComPtr<ID3DBlob> _BufferData;
+	Microsoft::WRL::ComPtr<ID3DBlob> _ByteCode;
 	std::string _Name;
 	D3DUtil::SHADER_DESC _ShaderDesc;
 	std::vector<D3DUtil::SHADER_BUFFER_DESC> _CBuffersDesc;
