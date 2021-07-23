@@ -32,10 +32,10 @@ struct PrimitiveNode : UiNode
 
         ImGui::PushItemWidth(node_width);
         auto& modelNode = graph.GetNode(Model);
-        int value = static_cast<int>(modelNode.value);
+        int value = static_cast<int>(modelNode.Value);
         ImGui::Combo("##hidelabel", &value, Primitives.data(), (int)Primitives.size());
         ImGui::PopItemWidth();
-        modelNode.value = static_cast<float>(value);
+        modelNode.Value = static_cast<float>(value);
 
         ImNodes::BeginOutputAttribute(Id);
         const float label_width = ImGui::CalcTextSize("output").x;

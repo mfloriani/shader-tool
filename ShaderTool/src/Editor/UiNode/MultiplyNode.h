@@ -40,7 +40,7 @@ struct MultiplyNode : UiNode
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
                 ImGui::DragFloat(
-                    "##hidelabel", &graph.GetNode(Left).value, 0.01f);
+                    "##hidelabel", &graph.GetNode(Left).Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -55,7 +55,7 @@ struct MultiplyNode : UiNode
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
                 ImGui::DragFloat(
-                    "##hidelabel", &graph.GetNode(Right).value, 0.01f);
+                    "##hidelabel", &graph.GetNode(Right).Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();

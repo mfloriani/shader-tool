@@ -101,11 +101,6 @@
     <ClInclude Include="src\Editor\Graph\Edge.h" />
     <ClInclude Include="src\Editor\Graph\Graph.h" />
     <ClInclude Include="src\Editor\Graph\IdMap.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\Dirent\dirent.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\dirent\dirent.h" />
     <ClInclude Include="src\Editor\ImGui\imconfig.h" />
     <ClInclude Include="src\Editor\ImGui\imfilebrowser.h" />
     <ClInclude Include="src\Editor\ImGui\imgui.h" />
@@ -135,6 +130,7 @@
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\MagicEnum.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Rendering\D3DApp.h" />
     <ClInclude Include="src\Rendering\D3DUtil.h" />
@@ -152,12 +148,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
-    <ClCompile Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

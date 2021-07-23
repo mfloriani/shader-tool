@@ -44,21 +44,6 @@
     <ClInclude Include="src\Editor\Graph\IdMap.h">
       <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\Dirent\dirent.h">
-      <Filter>Editor\ImGui\ImGuiFileBrowser\Dirent</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.h">
-      <Filter>Editor\ImGui\ImGuiFileBrowser</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.h">
-      <Filter>Editor\ImGui\ImGuiFileDialog</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialogConfig.h">
-      <Filter>Editor\ImGui\ImGuiFileDialog</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Editor\ImGui\ImGuiFileDialog\dirent\dirent.h">
-      <Filter>Editor\ImGui\ImGuiFileDialog\dirent</Filter>
-    </ClInclude>
     <ClInclude Include="src\Editor\ImGui\imconfig.h">
       <Filter>Editor\ImGui</Filter>
     </ClInclude>
@@ -158,15 +143,10 @@
     <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h" />
     <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
     <ClInclude Include="src\Editor\UiNode\ShaderNode.h" />
+    <ClInclude Include="src\MagicEnum.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
-    <ClCompile Include="src\Editor\ImGui\ImGuiFileBrowser\ImGuiFileBrowser.cpp">
-      <Filter>Editor\ImGui\ImGuiFileBrowser</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Editor\ImGui\ImGuiFileDialog\ImGuiFileDialog.cpp">
-      <Filter>Editor\ImGui\ImGuiFileDialog</Filter>
-    </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>

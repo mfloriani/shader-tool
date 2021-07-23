@@ -38,7 +38,7 @@ struct SineNode : UiNode
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(Input).value, 0.01f, 0.f, 1.0f);
+                ImGui::DragFloat("##hidelabel", &graph.GetNode(Input).Value, 0.01f, 0.f, 1.0f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();

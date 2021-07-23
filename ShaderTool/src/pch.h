@@ -11,5 +11,5 @@
 #include <Rendering\d3dx12.h>
 #include <dxgi1_6.h>
 
-
 #include "Log.h"
+#include "MagicEnum.h"

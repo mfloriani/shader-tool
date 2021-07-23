@@ -93,7 +93,7 @@ struct DrawNode : UiNode
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(R).value, 0.01f, 0.f, 1.0f);
+                ImGui::DragFloat("##hidelabel", &graph.GetNode(R).Value, 0.01f, 0.f, 1.0f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -109,7 +109,7 @@ struct DrawNode : UiNode
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(G).value, 0.01f, 0.f, 1.f);
+                ImGui::DragFloat("##hidelabel", &graph.GetNode(G).Value, 0.01f, 0.f, 1.f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -125,7 +125,7 @@ struct DrawNode : UiNode
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(B).value, 0.01f, 0.f, 1.0f);
+                ImGui::DragFloat("##hidelabel", &graph.GetNode(B).Value, 0.01f, 0.f, 1.0f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();

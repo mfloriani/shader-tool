@@ -94,7 +94,7 @@ public:
             in >> nLabel >> nId >> nType >> nValue;
             //LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
             NodeT node(static_cast<NodeType>(nType));
-            node.value = nValue;
+            node.Value = nValue;
             g.InsertNode(nId, node);
         }
 

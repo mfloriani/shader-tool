@@ -36,6 +36,8 @@ void ShaderToolApp::EvaluateGraph()
 	std::stack<int> postorder;
 	dfs_traverse(_Graph, _RootNodeId, [&postorder](const int nodeId) -> void { postorder.push(nodeId); });
 
+	LOG_TRACE("#######");
+
 	std::stack<float> valueStack;
 	while (!postorder.empty())
 	{
@@ -43,7 +45,9 @@ void ShaderToolApp::EvaluateGraph()
 		postorder.pop();
 		const Node node = _Graph.GetNode(id);
 
-		switch (node.type)
+		LOG_TRACE("{0}", node.TypeName);
+
+		switch (node.Type)
 		{
 		case NodeType::Value:
 		{
@@ -52,7 +56,7 @@ void ShaderToolApp::EvaluateGraph()
 			// the value comes from the node's UI.
 			if (_Graph.GetNumEdgesFromNode(id) == 0ull)
 			{
-				valueStack.push(node.value);
+				valueStack.push(node.Value);
 			}
 		}
 		break;
@@ -123,12 +127,14 @@ void ShaderToolApp::EvaluateGraph()
 
 			const int model = static_cast<int>(valueStack.top());
 			valueStack.pop();
+			
+			const int ps = static_cast<int>(valueStack.top());
+			valueStack.pop();
 
 			const int vs = static_cast<int>(valueStack.top());
 			valueStack.pop();
 
-			const int ps = static_cast<int>(valueStack.top());
-			valueStack.pop();
+			LOG_TRACE("VS: {0}", vs);
 
 
 			_Entity.Color = { r, g, b };
@@ -148,9 +154,15 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.pop();
 		}
 		break;
+
+		case NodeType::VertexShader:
+		{
+			valueStack.push(node.Value);
+		}
+		break;
 		
 		default:
-			LOG_WARN("NodeType {0} not handled", node.type);
+			LOG_WARN("NodeType {0} not handled", node.Type);
 			break;
 		}
 	}
@@ -341,7 +353,7 @@ void ShaderToolApp::RenderNodeGraph()
 		// If edge doesn't start at value, then it's an internal edge, i.e.
 		// an edge which links a node's operation to its input. We don't
 		// want to render node internals with visible links.
-		if (_Graph.GetNode(edge.from).type != NodeType::Value)
+		if (_Graph.GetNode(edge.from).Type != NodeType::Value)
 			continue;
 
 		ImNodes::Link(edge.id, edge.from, edge.to);
@@ -356,8 +368,8 @@ void ShaderToolApp::RenderNodeGraph()
 		int start_attr, end_attr;
 		if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
 		{
-			const NodeType start_type = _Graph.GetNode(start_attr).type;
-			const NodeType end_type = _Graph.GetNode(end_attr).type;
+			const NodeType start_type = _Graph.GetNode(start_attr).Type;
+			const NodeType end_type = _Graph.GetNode(end_attr).Type;
 
 			const bool valid_link = start_type != end_type;
 			if (valid_link)

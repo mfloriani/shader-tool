@@ -17,15 +17,11 @@ struct ShaderNode : UiNode
     }
 
     NodeId Shader;
-    //ImGui::FileBrowser FileDialog{ ImGuiFileBrowserFlags_CloseOnEsc };
-    //imgui_addons::ImGuiFileBrowser file_dialog;
-
-    nfdchar_t* outPath = NULL;
+    std::string Path;
 
     void Init()
     {
-        //FileDialog.SetTitle("Select shader file");
-        //FileDialog.SetTypeFilters({ ".hlsl" });
+        
     }
 
     virtual void Delete(Graph<Node>& graph) override
@@ -54,21 +50,25 @@ struct ShaderNode : UiNode
 
         if (ImGui::Button("..."))
         {
+            nfdchar_t* outPath = nullptr;
             nfdresult_t result = NFD_OpenDialog("hlsl", NULL, &outPath);
 
             if (result == NFD_OKAY)
             {
-                auto path = std::string(outPath);
+                auto shaderPath = std::string(outPath);
                 free(outPath);
                 //LOG_TRACE("Selected file [{0} | {1} | {2}]", path, D3DUtil::ExtractFilename(path, true), D3DUtil::ExtractFilename(path));
-                int shaderIndex = ShaderManager::Get().LoadRawShader(path, "main", "vs_5_0");
+                int shaderIndex = ShaderManager::Get().LoadRawShader(shaderPath, "main", "vs_5_0");
                 if (shaderIndex < 0)
                 {
                     // Failed
+                    LOG_WARN("### Failed to load the selected shader! The previous shader was kept.");
                 }
                 else
                 {
                     // Loaded and Compiled successfully
+                    Path = shaderPath;
+                    Shader = shaderIndex;
                 }
             }
             else if (result == NFD_CANCEL)
