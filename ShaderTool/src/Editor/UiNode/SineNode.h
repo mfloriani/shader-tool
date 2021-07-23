@@ -4,24 +4,34 @@
 
 struct SineNode : UiNode
 {
-    explicit SineNode(UiNodeType type, UiNodeId id)
-        : UiNode(type, id), Input(INVALID_ID)
-    {
-    }
-
-    explicit SineNode(UiNodeType type, UiNodeId id, NodeId input)
-        : UiNode(type, id), Input(input)
+    explicit SineNode(Graph<Node>* graph)
+        : UiNode(graph, UiNodeType::Sine), Input(INVALID_ID)
     {
     }
 
     NodeId Input;
 
-    virtual void Delete(Graph<Node>& graph) override
+    virtual void OnCreate() override
     {
-        graph.EraseNode(Input);
+        const Node value(NodeType::Value, 0.f);
+        const Node op(NodeType::Sine);
+
+        Input = ParentGraph->CreateNode(value);
+        Id = ParentGraph->CreateNode(op);
+
+        ParentGraph->CreateEdge(Id, Input);
     }
 
-    virtual void Render(Graph<Node>& graph) override
+    virtual void OnUpdate() override
+    {
+    }
+
+    virtual void OnDelete() override
+    {
+        ParentGraph->EraseNode(Input);
+    }
+
+    virtual void OnRender() override
     {
         const float node_width = 100.0f;
         ImNodes::BeginNode(Id);
@@ -34,11 +44,11 @@ struct SineNode : UiNode
             ImNodes::BeginInputAttribute(Input);
             const float label_width = ImGui::CalcTextSize("number").x;
             ImGui::TextUnformatted("number");
-            if (graph.GetNumEdgesFromNode(Input) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(Input) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(Input).Value, 0.01f, 0.f, 1.0f);
+                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(Input).Value, 0.01f, 0.f, 1.0f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -66,7 +76,8 @@ struct SineNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        in >> Input;
+        Type = UiNodeType::Sine;
+        in >> Id >> Input;
         return in;
     }
 

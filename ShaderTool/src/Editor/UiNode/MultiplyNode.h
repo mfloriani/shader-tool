@@ -4,25 +4,37 @@
 
 struct MultiplyNode : UiNode
 {
-    explicit MultiplyNode(UiNodeType type, UiNodeId id)
-        : UiNode(type, id), Left(INVALID_ID), Right(INVALID_ID)
-    {
-    }
-
-    explicit MultiplyNode(UiNodeType type, UiNodeId id, NodeId lhs, NodeId rhs)
-        : UiNode(type, id), Left(lhs), Right(rhs)
+    explicit MultiplyNode(Graph<Node>* graph)
+        : UiNode(graph, UiNodeType::Multiply), Left(INVALID_ID), Right(INVALID_ID)
     {
     }
 
     NodeId Left, Right;
 
-    virtual void Delete(Graph<Node>& graph) override
+    virtual void OnCreate() override
     {
-        graph.EraseNode(Left);
-        graph.EraseNode(Right);
+        const Node value(NodeType::Value, 0.f);
+        const Node op(NodeType::Multiply);
+
+        Left = ParentGraph->CreateNode(value);
+        Right = ParentGraph->CreateNode(value);
+        Id = ParentGraph->CreateNode(op);
+
+        ParentGraph->CreateEdge(Id, Left);
+        ParentGraph->CreateEdge(Id, Right);
     }
 
-    virtual void Render(Graph<Node>& graph) override
+    virtual void OnUpdate() override
+    {
+    }
+
+    virtual void OnDelete() override
+    {
+        ParentGraph->EraseNode(Left);
+        ParentGraph->EraseNode(Right);
+    }
+
+    virtual void OnRender() override
     {
         const float node_width = 100.0f;
         ImNodes::BeginNode(Id);
@@ -35,12 +47,12 @@ struct MultiplyNode : UiNode
             ImNodes::BeginInputAttribute(Left);
             const float label_width = ImGui::CalcTextSize("left").x;
             ImGui::TextUnformatted("left");
-            if (graph.GetNumEdgesFromNode(Left) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(Left) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
                 ImGui::DragFloat(
-                    "##hidelabel", &graph.GetNode(Left).Value, 0.01f);
+                    "##hidelabel", &ParentGraph->GetNode(Left).Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -50,12 +62,12 @@ struct MultiplyNode : UiNode
             ImNodes::BeginInputAttribute(Right);
             const float label_width = ImGui::CalcTextSize("right").x;
             ImGui::TextUnformatted("right");
-            if (graph.GetNumEdgesFromNode(Right) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(Right) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
                 ImGui::DragFloat(
-                    "##hidelabel", &graph.GetNode(Right).Value, 0.01f);
+                    "##hidelabel", &ParentGraph->GetNode(Right).Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -83,7 +95,8 @@ struct MultiplyNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        in >> Left >> Right;
+        Type = UiNodeType::Multiply;
+        in >> Id >> Left >> Right;
         return in;
     }
 

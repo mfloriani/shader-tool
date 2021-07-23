@@ -27,14 +27,16 @@ enum class UiNodeType
 
 struct UiNode
 {
-    UiNode() : Type(UiNodeType::None), Id(INVALID_ID) {}
-    explicit UiNode(UiNodeType type, UiNodeId id) : Type(type), Id(id) {}
+    explicit UiNode(Graph<Node>* graph, UiNodeType type) : ParentGraph(graph), Type(type), Id(INVALID_ID) {}
     
+    Graph<Node>* ParentGraph;
     UiNodeType Type;
     UiNodeId Id;
 
-    virtual void Render(Graph<Node>& graph) {}
-    virtual void Delete(Graph<Node>& graph) {}
+    virtual void OnCreate() = 0;
+    virtual void OnDelete() = 0;
+    virtual void OnUpdate() = 0;
+    virtual void OnRender() = 0;
 
     virtual std::ostream& Serialize(std::ostream& out) const
     {

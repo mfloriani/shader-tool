@@ -7,7 +7,8 @@
 #include "Editor\UiNode\DrawNode.h"
 #include "Editor\UiNode\PrimitiveNode.h"
 #include "Editor\UiNode\RenderTargetNode.h"
-#include "Editor\UiNode\ShaderNode.h"
+#include "Editor\UiNode\VertexShaderNode.h"
+#include "Editor\UiNode\PixelShaderNode.h"
 #include "Editor\UiNode\SineNode.h"
 #include "Editor\UiNode\TimeNode.h"
 
@@ -190,138 +191,75 @@ void ShaderToolApp::HandleNewNodes()
 
 			if (ImGui::MenuItem("Add"))
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::Add);
-
-				auto lhs = _Graph.CreateNode(value);
-				auto rhs = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(op);
-
-				_Graph.CreateEdge(id, lhs);
-				_Graph.CreateEdge(id, rhs);
-
-				_UINodes.push_back(std::make_unique<AddNode>(UiNodeType::Add, id, lhs, rhs));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<AddNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Multiply"))
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::Multiply);
-
-				auto lhs = _Graph.CreateNode(value);
-				auto rhs = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(op);
-
-				_Graph.CreateEdge(id, lhs);
-				_Graph.CreateEdge(id, rhs);
-
-				_UINodes.push_back(std::make_unique<MultiplyNode>(UiNodeType::Multiply, id, lhs, rhs));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<MultiplyNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Draw"))
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node out(NodeType::Draw);
-
-				auto vs = _Graph.CreateNode(value);
-				auto ps = _Graph.CreateNode(value);
-				auto model = _Graph.CreateNode(value);
-				auto r = _Graph.CreateNode(value);
-				auto g = _Graph.CreateNode(value);
-				auto b = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(out);
-
-				_Graph.CreateEdge(id, vs);
-				_Graph.CreateEdge(id, ps);
-				_Graph.CreateEdge(id, model);
-				_Graph.CreateEdge(id, r);
-				_Graph.CreateEdge(id, g);
-				_Graph.CreateEdge(id, b);
-
-				_UINodes.push_back(std::make_unique<DrawNode>(UiNodeType::Draw, id, r, g, b, model, vs, ps));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<DrawNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Sine"))
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::Sine);
-
-				auto input = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(op);
-
-				_Graph.CreateEdge(id, input);
-
-				_UINodes.push_back(std::make_unique<SineNode>(UiNodeType::Sine, id, input));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<SineNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Time"))
 			{
-				auto id = _Graph.CreateNode(Node(NodeType::Time));
-
-				_UINodes.push_back(std::make_unique<TimeNode>(UiNodeType::Time, id));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<TimeNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Render Target") && _RootNodeId == INVALID_ID)
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::RenderTarget);
-
-				auto input = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(op);
-
-				_Graph.CreateEdge(id, input);
-
-				_UINodes.push_back(std::make_unique<RenderTargetNode>(UiNodeType::RenderTarget, id, _RenderTarget.get(), input));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
-
-				_RootNodeId = id;
+				auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
+				node->OnCreate();
+				_RootNodeId = node->Id;
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Primitive"))
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::Primitive);
-
-				auto model = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(op);
-
-				_Graph.CreateEdge(id, model);
-
-				_UINodes.push_back(std::make_unique<PrimitiveNode>(UiNodeType::Primitive, id, _Primitives, model));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Vertex Shader"))
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::VertexShader);
-
-				auto shader = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(op);
-
-				_Graph.CreateEdge(id, shader);
-
-				_UINodes.push_back(std::make_unique<ShaderNode>(UiNodeType::VertexShader, id, shader));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<VertexShaderNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			if (ImGui::MenuItem("Pixel Shader"))
 			{
-				const Node value(NodeType::Value, 0.f);
-				const Node op(NodeType::PixelShader);
-
-				auto shader = _Graph.CreateNode(value);
-				auto id = _Graph.CreateNode(op);
-
-				_Graph.CreateEdge(id, shader);
-
-				_UINodes.push_back(std::make_unique<ShaderNode>(UiNodeType::PixelShader, id, shader));
-				ImNodes::SetNodeScreenSpacePos(id, click_pos);
+				auto node = std::make_unique<PixelShaderNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodes.push_back(std::move(node));
 			}
 
 			ImGui::EndPopup();
@@ -346,7 +284,7 @@ void ShaderToolApp::RenderNodeGraph()
 
 	// RENDER UI NODES
 	for (const auto& node : _UINodes)
-		node->Render(_Graph);
+		node->OnRender();
 
 	for (const auto& edge : _Graph.GetEdges())
 	{
@@ -418,8 +356,6 @@ void ShaderToolApp::RenderNodeGraph()
 			ImNodes::GetSelectedNodes(selected_nodes.data());
 			for (const int node_id : selected_nodes)
 			{
-				_Graph.EraseNode(node_id);
-				
 				for (auto it = _UINodes.begin(); it != _UINodes.end(); ++it)
 				{
 					auto node = (*it).get();
@@ -429,7 +365,7 @@ void ShaderToolApp::RenderNodeGraph()
 						if(node->Type == UiNodeType::RenderTarget)
 							_RootNodeId = INVALID_ID;
 
-						node->Delete(_Graph);
+						node->OnDelete();
 						_UINodes.erase(it);
 						break;
 					}
@@ -547,11 +483,11 @@ void ShaderToolApp::Load()
 	fin >> comment >> _RootNodeId >> numUiNodes;
 
 	std::string uinLabel;
-	int type, id;
+	int type;
 
 	for (int i = 0; i < numUiNodes; ++i)
 	{
-		fin >> uinLabel >> type >> id;
+		fin >> uinLabel >> type;
 		auto nodeType = static_cast<UiNodeType>(type);
 		
 		// TODO: it should be implemented using the pattern described in the links below... for now I'll use a switch
@@ -561,61 +497,67 @@ void ShaderToolApp::Load()
 		{
 		case UiNodeType::Add: 
 		{
-			auto node = std::make_unique<AddNode>(nodeType, id);
+			auto node = std::make_unique<AddNode>(&_Graph);
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		case UiNodeType::Multiply:
 		{
-			auto node = std::make_unique<MultiplyNode>(nodeType, id);
+			auto node = std::make_unique<MultiplyNode>(&_Graph);
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		case UiNodeType::Draw:
 		{
-			auto node = std::make_unique<DrawNode>(nodeType, id);
+			auto node = std::make_unique<DrawNode>(&_Graph);
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		case UiNodeType::Sine:
 		{
-			auto node = std::make_unique<SineNode>(nodeType, id);
+			auto node = std::make_unique<SineNode>(&_Graph);
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		case UiNodeType::Primitive:
 		{
-			auto node = std::make_unique<PrimitiveNode>(nodeType, id, _Primitives);
+			auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		case UiNodeType::RenderTarget:
 		{
-			auto node = std::make_unique<RenderTargetNode>(nodeType, id, _RenderTarget.get());
+			auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		case UiNodeType::Time:
 		{
-			auto node = std::make_unique<TimeNode>(nodeType, id);
+			auto node = std::make_unique<TimeNode>(&_Graph);
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		case UiNodeType::VertexShader:
-		case UiNodeType::PixelShader:
 		{
-			auto node = std::make_unique<ShaderNode>(nodeType, id);
+			auto node = std::make_unique<VertexShaderNode>(&_Graph);
 			fin >> *node.get();
 			_UINodes.push_back(std::move(node));
 		}
-		break;		
+		break;
+		case UiNodeType::PixelShader:
+		{
+			auto node = std::make_unique<PixelShaderNode>(&_Graph);
+			fin >> *node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
 		default:
 			break;
 		}

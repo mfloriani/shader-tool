@@ -4,29 +4,49 @@
 
 struct DrawNode : UiNode
 {
-    explicit DrawNode(UiNodeType type, UiNodeId id)
-        : UiNode(type, id), R(INVALID_ID), G(INVALID_ID), B(INVALID_ID), Model(INVALID_ID), VS(INVALID_ID), PS(INVALID_ID)
-    {
-    }
-
-    explicit DrawNode(UiNodeType type, UiNodeId id, NodeId r, NodeId g, NodeId b, NodeId model, NodeId vs, NodeId ps)
-        : UiNode(type, id), R(r), G(g), B(b), Model(model), VS(vs), PS(ps)
+    explicit DrawNode(Graph<Node>* graph)
+        : UiNode(graph, UiNodeType::Draw), R(INVALID_ID), G(INVALID_ID), B(INVALID_ID), Model(INVALID_ID), VS(INVALID_ID), PS(INVALID_ID)
     {
     }
 
     NodeId R, G, B, Model, VS, PS;
 
-    virtual void Delete(Graph<Node>& graph) override
+    virtual void OnCreate() override
     {
-        graph.EraseNode(R);
-        graph.EraseNode(G);
-        graph.EraseNode(B);
-        graph.EraseNode(Model);
-        graph.EraseNode(VS);
-        graph.EraseNode(PS);
+        const Node value(NodeType::Value, 0.f);
+        const Node out(NodeType::Draw);
+
+        VS = ParentGraph->CreateNode(value);
+        PS = ParentGraph->CreateNode(value);
+        Model = ParentGraph->CreateNode(value);
+        R = ParentGraph->CreateNode(value);
+        G = ParentGraph->CreateNode(value);
+        B = ParentGraph->CreateNode(value);
+        Id = ParentGraph->CreateNode(out);
+
+        ParentGraph->CreateEdge(Id, VS);
+        ParentGraph->CreateEdge(Id, PS);
+        ParentGraph->CreateEdge(Id, Model);
+        ParentGraph->CreateEdge(Id, R);
+        ParentGraph->CreateEdge(Id, G);
+        ParentGraph->CreateEdge(Id, B);
     }
 
-    virtual void Render(Graph<Node>& graph) override
+    virtual void OnUpdate() override
+    {
+    }
+
+    virtual void OnDelete() override
+    {
+        ParentGraph->EraseNode(R);
+        ParentGraph->EraseNode(G);
+        ParentGraph->EraseNode(B);
+        ParentGraph->EraseNode(Model);
+        ParentGraph->EraseNode(VS);
+        ParentGraph->EraseNode(PS);
+    }
+
+    virtual void OnRender() override
     {
         const float node_width = 100.0f;
         ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
@@ -44,7 +64,7 @@ struct DrawNode : UiNode
             ImNodes::BeginInputAttribute(VS);
             const float label_width = ImGui::CalcTextSize("vs").x;
             ImGui::TextUnformatted("vs");
-            if (graph.GetNumEdgesFromNode(VS) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(VS) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
@@ -59,7 +79,7 @@ struct DrawNode : UiNode
             ImNodes::BeginInputAttribute(PS);
             const float label_width = ImGui::CalcTextSize("ps").x;
             ImGui::TextUnformatted("ps");
-            if (graph.GetNumEdgesFromNode(PS) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(PS) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
@@ -74,7 +94,7 @@ struct DrawNode : UiNode
             ImNodes::BeginInputAttribute(Model);
             const float label_width = ImGui::CalcTextSize("model").x;
             ImGui::TextUnformatted("model");
-            if (graph.GetNumEdgesFromNode(Model) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(Model) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
@@ -89,11 +109,11 @@ struct DrawNode : UiNode
             ImNodes::BeginInputAttribute(R);
             const float label_width = ImGui::CalcTextSize("r").x;
             ImGui::TextUnformatted("r");
-            if (graph.GetNumEdgesFromNode(R) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(R) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(R).Value, 0.01f, 0.f, 1.0f);
+                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(R).Value, 0.01f, 0.f, 1.0f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -105,11 +125,11 @@ struct DrawNode : UiNode
             ImNodes::BeginInputAttribute(G);
             const float label_width = ImGui::CalcTextSize("g").x;
             ImGui::TextUnformatted("g");
-            if (graph.GetNumEdgesFromNode(G) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(G) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(G).Value, 0.01f, 0.f, 1.f);
+                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(G).Value, 0.01f, 0.f, 1.f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -121,11 +141,11 @@ struct DrawNode : UiNode
             ImNodes::BeginInputAttribute(B);
             const float label_width = ImGui::CalcTextSize("b").x;
             ImGui::TextUnformatted("b");
-            if (graph.GetNumEdgesFromNode(B) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(B) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &graph.GetNode(B).Value, 0.01f, 0.f, 1.0f);
+                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(B).Value, 0.01f, 0.f, 1.0f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -156,7 +176,8 @@ struct DrawNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        in >> R >> G >> B >> Model >> VS >> PS;
+        Type = UiNodeType::Draw;
+        in >> Id >> R >> G >> B >> Model >> VS >> PS;
         return in;
     }
 

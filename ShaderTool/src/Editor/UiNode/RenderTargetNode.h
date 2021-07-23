@@ -4,25 +4,35 @@
 
 struct RenderTargetNode : UiNode
 {
-    explicit RenderTargetNode(UiNodeType type, UiNodeId id, RenderTexture* renderTexture)
-        : UiNode(type, id), RenderTex(renderTexture), Input(INVALID_ID)
+    explicit RenderTargetNode(Graph<Node>* graph, RenderTexture* renderTexture)
+        : UiNode(graph, UiNodeType::RenderTarget), RenderTex(renderTexture), Input(INVALID_ID)
     {
     }
-
-    explicit RenderTargetNode(UiNodeType type, UiNodeId id, RenderTexture* renderTexture, NodeId input)
-        : UiNode(type, id), RenderTex(renderTexture), Input(input)
-    {
-    }
-
+    
     RenderTexture* RenderTex;
     NodeId Input;
 
-    virtual void Delete(Graph<Node>& graph) override
+    virtual void OnCreate() override
     {
-        graph.EraseNode(Input);
+        const Node value(NodeType::Value, 0.f);
+        const Node op(NodeType::RenderTarget);
+
+        Input = ParentGraph->CreateNode(value);
+        Id = ParentGraph->CreateNode(op);
+
+        ParentGraph->CreateEdge(Id, Input);
     }
 
-    virtual void Render(Graph<Node>& graph) override
+    virtual void OnUpdate() override
+    {
+    }
+
+    virtual void OnDelete() override
+    {
+        ParentGraph->EraseNode(Input);
+    }
+
+    virtual void OnRender() override
     {
         const float node_width = 100.0f;
         ImNodes::BeginNode(Id);
@@ -35,7 +45,7 @@ struct RenderTargetNode : UiNode
             ImNodes::BeginInputAttribute(Input);
             const float label_width = ImGui::CalcTextSize("input").x;
             ImGui::TextUnformatted("input");
-            if (graph.GetNumEdgesFromNode(Input) == 0ull)
+            if (ParentGraph->GetNumEdgesFromNode(Input) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
@@ -61,7 +71,8 @@ struct RenderTargetNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        in >> Input;
+        Type = UiNodeType::RenderTarget;
+        in >> Id >> Input;
         return in;
     }
 

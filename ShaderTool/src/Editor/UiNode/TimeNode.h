@@ -4,16 +4,25 @@
 
 struct TimeNode : UiNode
 {
-    explicit TimeNode(UiNodeType type, UiNodeId id)
-        : UiNode(type, id)
+    explicit TimeNode(Graph<Node>* graph)
+        : UiNode(graph, UiNodeType::Time)
     {
     }
 
-    virtual void Delete(Graph<Node>& graph) override
+    virtual void OnCreate() override
+    {
+        Id = ParentGraph->CreateNode(Node(NodeType::Time));
+    }
+
+    virtual void OnDelete() override
     {
     }
 
-    virtual void Render(Graph<Node>& graph) override
+    virtual void OnUpdate() override
+    {
+    }
+
+    virtual void OnRender() override
     {
         ImNodes::BeginNode(Id);
 
@@ -36,6 +45,8 @@ struct TimeNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
+        Type = UiNodeType::Time;
+        in >> Id;
         return in;
     }
 

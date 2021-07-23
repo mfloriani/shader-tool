@@ -2,50 +2,42 @@
 
 #include "UiNode.h"
 
-struct ShaderNode : UiNode
+struct PixelShaderNode : UiNode
 {
-    explicit ShaderNode(UiNodeType type, UiNodeId id)
-        : UiNode(type, id), Shader(INVALID_ID)
+    explicit PixelShaderNode(Graph<Node>* graph)
+        : UiNode(graph, UiNodeType::PixelShader), Shader(INVALID_ID)
     {
-        Init();
-    }
-
-    explicit ShaderNode(UiNodeType type, UiNodeId id, NodeId shader)
-        : UiNode(type, id), Shader(shader)
-    {
-        Init();
     }
 
     NodeId Shader;
     std::string Path;
 
-    void Init()
+    virtual void OnCreate() override
     {
-        
+        const Node value(NodeType::Value, 0.f);
+        const Node op(NodeType::PixelShader);
+
+        Shader = ParentGraph->CreateNode(value);
+        Id = ParentGraph->CreateNode(op);
+
+        ParentGraph->CreateEdge(Id, Shader);
     }
 
-    virtual void Delete(Graph<Node>& graph) override
+    virtual void OnUpdate() override
     {
-        graph.EraseNode(Shader);
     }
 
-    virtual void Render(Graph<Node>& graph) override
+    virtual void OnDelete() override
+    {
+        ParentGraph->EraseNode(Shader);
+    }
+
+    virtual void OnRender() override
     {
         ImNodes::BeginNode(Id);
 
         ImNodes::BeginNodeTitleBar();
-        switch (Type)
-        {
-        case UiNodeType::VertexShader:
-            ImGui::TextUnformatted("VERTEX SHADER");
-            break;
-        case UiNodeType::PixelShader:
-            ImGui::TextUnformatted("PIXEL SHADER");
-            break;
-        default:
-            ImGui::TextUnformatted("UNKNOWN SHADER");
-            break;
-        }
+        ImGui::TextUnformatted("PIXEL SHADER");
         ImNodes::EndNodeTitleBar();
 
         if (ImGui::Button("..."))
@@ -58,7 +50,7 @@ struct ShaderNode : UiNode
                 auto shaderPath = std::string(outPath);
                 free(outPath);
                 //LOG_TRACE("Selected file [{0} | {1} | {2}]", path, D3DUtil::ExtractFilename(path, true), D3DUtil::ExtractFilename(path));
-                int shaderIndex = ShaderManager::Get().LoadRawShader(shaderPath, "main", "vs_5_0");
+                int shaderIndex = ShaderManager::Get().LoadRawShader(shaderPath, "main", "ps_5_0");
                 if (shaderIndex < 0)
                 {
                     // Failed
@@ -97,16 +89,17 @@ struct ShaderNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        in >> Shader;
+        Type = UiNodeType::PixelShader;
+        in >> Id >> Shader;
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const ShaderNode& n)
+    friend std::ostream& operator<<(std::ostream& out, const PixelShaderNode& n)
     {
         return n.Serialize(out);
     }
 
-    friend std::istream& operator>>(std::istream& in, ShaderNode& n)
+    friend std::istream& operator>>(std::istream& in, PixelShaderNode& n)
     {
         return n.Deserialize(in);
     }
