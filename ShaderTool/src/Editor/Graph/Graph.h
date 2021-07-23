@@ -40,6 +40,7 @@ public:
     // Capacity
     
     size_t GetNumEdgesFromNode(int node_id) const;
+    size_t GetEdgesCount() const { return _Edges.size(); }
 
     // Modifiers
 

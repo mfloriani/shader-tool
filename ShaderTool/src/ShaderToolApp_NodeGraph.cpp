@@ -29,6 +29,63 @@ void mini_map_node_hovering_callback(int nodeId, void* userData)
 	ImGui::SetTooltip("node id %d", nodeId);
 }
 
+void DebugInfo(ShaderToolApp* app)
+{
+	static bool open = true;
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+	ImGui::Begin("Debug", &open, window_flags);
+	ImGui::Text("UiNodes: %i", app->GetUiNodes().size());
+	ImGui::Text("Nodes:   %i", app->GetGraph().GetNodesCount());
+	ImGui::Text("Edges:   %i", app->GetGraph().GetEdgesCount());
+	ImGui::End();
+
+	if (ImGui::IsKeyReleased(VK_RETURN))
+	{
+		auto& shaderMgr = ShaderManager::Get();
+
+		for (auto& shader : shaderMgr.GetShaders())
+		{
+			shader->PrintDebugInfo();
+		}
+	}
+
+#if 0
+	if (ImGui::IsKeyReleased(VK_RETURN))
+	{
+		LOG_TRACE("###########################");
+		auto& ids = _Graph.GetNodes();
+		LOG_TRACE("Node ids:");
+		for (auto id : ids)
+			LOG_TRACE("  {0}", id);
+
+		auto edges = _Graph.GetEdges();
+		LOG_TRACE("Edge ids:");
+		for (auto it = edges.begin(); it != edges.end(); ++it)
+			LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
+
+		{
+			auto edgesFromNodeIds = _Graph.GetEdgesFromNodeIds();
+			auto edgesFromNode = _Graph.GetEdgesFromNode();
+			LOG_TRACE("EdgesFromNode:");
+			int i = 0;
+			for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
+				LOG_TRACE("  {0} {1}", edgesFromNodeIds[i], *it);
+		}
+
+		{
+			auto neighborIds = _Graph.GetAllNeighborIds();
+			auto neighbors = _Graph.GetAllNeighbors();
+			LOG_TRACE("Neighbors:");
+			int i = 0;
+			for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+				for (auto neighborId : *it)
+					LOG_TRACE("  {0} {1}", neighborIds[i], neighborId);
+		}
+
+	}
+#endif
+}
+
 void ShaderToolApp::EvaluateGraph()
 {
 	if (_RootNodeId == INVALID_ID)
@@ -268,6 +325,77 @@ void ShaderToolApp::HandleNewNodes()
 	}
 }
 
+void ShaderToolApp::HandleNewLinks()
+{
+	// Handle new links
+	// These are driven by Imnodes, so we place the code after EndNodeEditor().
+	int start_attr, end_attr;
+	if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
+	{
+		const NodeType start_type = _Graph.GetNode(start_attr).Type;
+		const NodeType end_type = _Graph.GetNode(end_attr).Type;
+
+		const bool valid_link = start_type != end_type;
+		if (valid_link)
+		{
+			// Ensure the edge is always directed from the value to
+			// whatever produces the value
+			if (start_type != NodeType::Value)
+			{
+				std::swap(start_attr, end_attr);
+			}
+			_Graph.CreateEdge(start_attr, end_attr);
+		}
+	}
+}
+
+void ShaderToolApp::HandleDeletedLinks()
+{
+	int link_id;
+	if (ImNodes::IsLinkDestroyed(&link_id))
+		_Graph.EraseEdge(link_id);
+	
+	const int num_selected = ImNodes::NumSelectedLinks();
+	if (num_selected > 0 && ImGui::IsKeyReleased(VK_DELETE))
+	{
+		static std::vector<int> selected_links;
+		selected_links.resize(static_cast<size_t>(num_selected));
+		ImNodes::GetSelectedLinks(selected_links.data());
+		for (const int edge_id : selected_links)
+		{
+			_Graph.EraseEdge(edge_id);
+		}
+	}
+}
+
+void ShaderToolApp::HandleDeletedNodes()
+{
+	const int num_selected = ImNodes::NumSelectedNodes();
+	if (num_selected > 0 && ImGui::IsKeyReleased(VK_DELETE))
+	{
+		static std::vector<int> selected_nodes;
+		selected_nodes.resize(static_cast<size_t>(num_selected));
+		ImNodes::GetSelectedNodes(selected_nodes.data());
+		for (const int node_id : selected_nodes)
+		{
+			for (auto it = _UINodes.begin(); it != _UINodes.end(); ++it)
+			{
+				auto node = (*it).get();
+				if (node->Id == node_id)
+				{
+					// TODO: find a better way of reseting the root node id
+					if (node->Type == UiNodeType::RenderTarget)
+						_RootNodeId = INVALID_ID;
+
+					node->OnDelete();
+					_UINodes.erase(it);
+					break;
+				}
+			}
+		}
+	}
+}
+
 void ShaderToolApp::RenderNodeGraph()
 {
 	_Timer.Tick();
@@ -300,126 +428,11 @@ void ShaderToolApp::RenderNodeGraph()
 	ImNodes::MiniMap(0.1f, ImNodesMiniMapLocation_BottomRight, mini_map_node_hovering_callback, nullptr);
 	ImNodes::EndNodeEditor();
 
-	// Handle new links
-	// These are driven by Imnodes, so we place the code after EndNodeEditor().
-	{
-		int start_attr, end_attr;
-		if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
-		{
-			const NodeType start_type = _Graph.GetNode(start_attr).Type;
-			const NodeType end_type = _Graph.GetNode(end_attr).Type;
-
-			const bool valid_link = start_type != end_type;
-			if (valid_link)
-			{
-				// Ensure the edge is always directed from the value to
-				// whatever produces the value
-				if (start_type != NodeType::Value)
-				{
-					std::swap(start_attr, end_attr);
-				}
-				_Graph.CreateEdge(start_attr, end_attr);
-			}
-		}
-	}
-
-	// Handle deleted links
-	{
-		int link_id;
-		if (ImNodes::IsLinkDestroyed(&link_id))
-		{
-			_Graph.EraseEdge(link_id);
-		}
-	}
-
-	{
-		const int num_selected = ImNodes::NumSelectedLinks();
-		if (num_selected > 0 && ImGui::IsKeyReleased(VK_DELETE))
-		{
-			static std::vector<int> selected_links;
-			selected_links.resize(static_cast<size_t>(num_selected));
-			ImNodes::GetSelectedLinks(selected_links.data());
-			for (const int edge_id : selected_links)
-			{
-				_Graph.EraseEdge(edge_id);
-			}
-		}
-	}
-
-	// Handle deleted nodes
-	{
-		const int num_selected = ImNodes::NumSelectedNodes();
-		if (num_selected > 0 && ImGui::IsKeyReleased(VK_DELETE))
-		{
-			static std::vector<int> selected_nodes;
-			selected_nodes.resize(static_cast<size_t>(num_selected));
-			ImNodes::GetSelectedNodes(selected_nodes.data());
-			for (const int node_id : selected_nodes)
-			{
-				for (auto it = _UINodes.begin(); it != _UINodes.end(); ++it)
-				{
-					auto node = (*it).get();
-					if (node->Id == node_id)
-					{
-						// TODO: find a better way of reseting the root node id
-						if(node->Type == UiNodeType::RenderTarget)
-							_RootNodeId = INVALID_ID;
-
-						node->OnDelete();
-						_UINodes.erase(it);
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	if (ImGui::IsKeyReleased(VK_RETURN))
-	{
-		auto& shaderMgr = ShaderManager::Get();
-
-		for (auto& shader : shaderMgr.GetShaders())
-		{
-			shader->PrintDebugInfo();
-		}
-
-	}
-
-#if 0
-	if (ImGui::IsKeyReleased(VK_RETURN))
-	{
-		LOG_TRACE("###########################");
-		auto& ids = _Graph.GetNodes();
-		LOG_TRACE("Node ids:");
-		for (auto id : ids)
-			LOG_TRACE("  {0}", id);
-
-		auto edges = _Graph.GetEdges();
-		LOG_TRACE("Edge ids:");
-		for (auto it = edges.begin(); it != edges.end(); ++it)
-			LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
-
-		{
-			auto edgesFromNodeIds = _Graph.GetEdgesFromNodeIds();
-			auto edgesFromNode = _Graph.GetEdgesFromNode();
-			LOG_TRACE("EdgesFromNode:");
-			int i = 0;
-			for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
-				LOG_TRACE("  {0} {1}", edgesFromNodeIds[i], *it);
-		}
-
-		{
-			auto neighborIds = _Graph.GetAllNeighborIds();
-			auto neighbors = _Graph.GetAllNeighbors();
-			LOG_TRACE("Neighbors:");
-			int i = 0;
-			for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
-				for (auto neighborId : *it)
-					LOG_TRACE("  {0} {1}", neighborIds[i], neighborId);
-		}
-
-	}
-#endif
+	HandleNewLinks();
+	HandleDeletedLinks();
+	HandleDeletedNodes();
+	
+	DebugInfo(this);
 
 	if (ImGui::IsKeyReleased(VK_S))
 	{

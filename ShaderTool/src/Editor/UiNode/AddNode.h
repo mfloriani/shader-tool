@@ -28,7 +28,6 @@ struct AddNode : UiNode
     {
         ParentGraph->EraseNode(Left);
         ParentGraph->EraseNode(Right);
-        ParentGraph->EraseNode(Id);
     }
 
     virtual void OnUpdate() override

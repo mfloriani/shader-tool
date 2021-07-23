@@ -29,6 +29,13 @@ struct UiNode
 {
     explicit UiNode(Graph<Node>* graph, UiNodeType type) : ParentGraph(graph), Type(type), Id(INVALID_ID) {}
     
+    virtual ~UiNode()
+    {
+        LOG_TRACE("~UiNode()");
+        if(ParentGraph)
+            ParentGraph->EraseNode(Id);
+    }
+
     Graph<Node>* ParentGraph;
     UiNodeType Type;
     UiNodeId Id;

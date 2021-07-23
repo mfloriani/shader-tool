@@ -53,6 +53,8 @@ public:
 	void LoadPrimitiveModels();
 	
 	const GameTimer& GetTimer() const { return _Timer; }
+	const std::vector<std::unique_ptr<UiNode>>& GetUiNodes() const { return _UINodes; }
+	const Graph<Node>& GetGraph() const { return _Graph; }
 
 private:
 	// TODO: Camera stuff
@@ -90,5 +92,8 @@ private: // Node Graph
 	void RenderToTexture();
 	void ClearRenderTexture();
 	void HandleNewNodes();
+	void HandleNewLinks();
+	void HandleDeletedLinks();
+	void HandleDeletedNodes();
 
 };
