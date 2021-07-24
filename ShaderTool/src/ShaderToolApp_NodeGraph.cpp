@@ -193,8 +193,6 @@ void DebugInfo(ShaderToolApp* app)
 #endif
 }
 
-
-
 void ShaderToolApp::EvaluateGraph()
 {
 	if (_RootNodeId == INVALID_ID)

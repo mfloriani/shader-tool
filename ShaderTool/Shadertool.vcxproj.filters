@@ -218,14 +218,5 @@
     <FxCompile Include="src\Shaders\default_vs.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="src\Shaders\quad_ps.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="src\Shaders\quad_vs.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\Shaders\template_vs.hlsl" />
   </ItemGroup>
 </Project>

@@ -123,8 +123,7 @@ void ShaderToolApp::BuildRootSignature()
 				0,
 				serializedRootSig->GetBufferPointer(),
 				serializedRootSig->GetBufferSize(),
-				IID_PPV_ARGS(_RootSignature.GetAddressOf()))
-		);
+				IID_PPV_ARGS(_RootSignature.GetAddressOf())));
 	}
 }
 
@@ -134,8 +133,6 @@ void ShaderToolApp::BuildShadersAndInputLayout()
 	shaderMgr.LoadBinaryShader("backbuffer_vs.cso");
 	shaderMgr.LoadBinaryShader("default_vs.cso");
 	shaderMgr.LoadBinaryShader("default_ps.cso");
-	shaderMgr.LoadBinaryShader("quad_vs.cso");
-	shaderMgr.LoadBinaryShader("quad_ps.cso");
 
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
