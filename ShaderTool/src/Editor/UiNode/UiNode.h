@@ -7,8 +7,6 @@
 #include "Editor\ImGui\imgui.h"
 #include "Editor/nfd/nfd.h"
 
-using UiNodeId = int;
-
 const static int INVALID_ID = -1;
 
 enum class UiNodeType
@@ -38,7 +36,7 @@ struct UiNode
 
     Graph<Node>* ParentGraph;
     UiNodeType Type;
-    UiNodeId Id;
+    NodeId Id;
 
     virtual void OnCreate() = 0;
     virtual void OnDelete() = 0;

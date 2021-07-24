@@ -29,15 +29,86 @@ void mini_map_node_hovering_callback(int nodeId, void* userData)
 	ImGui::SetTooltip("node id %d", nodeId);
 }
 
+ImGuiWindowFlags overlay_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+
+void ShowDebugInfo(std::function<void(void)> info)
+{
+	static int corner = 0;
+	const float XPAD = 20.0f;
+	const float YPAD = 40.0f;
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+	ImVec2 work_size = viewport->WorkSize;
+	ImVec2 window_pos, window_pos_pivot;
+	window_pos.x = (corner & 1) ? (work_pos.x + work_size.x - XPAD) : (work_pos.x + XPAD);
+	window_pos.y = (corner & 2) ? (work_pos.y + work_size.y - YPAD) : (work_pos.y + YPAD);
+	window_pos_pivot.x = (corner & 1) ? 1.0f : 0.0f;
+	window_pos_pivot.y = (corner & 2) ? 1.0f : 0.0f;
+	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+	ImGui::SetNextWindowViewport(viewport->ID);
+
+	static bool open = true;
+	ImGui::Begin("Debug Info", &open, overlay_window_flags);
+	info();
+	ImGui::End();
+}
+
 void DebugInfo(ShaderToolApp* app)
 {
-	static bool open = true;
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-	ImGui::Begin("Debug", &open, window_flags);
-	ImGui::Text("UiNodes: %i", app->GetUiNodes().size());
-	ImGui::Text("Nodes:   %i", app->GetGraph().GetNodesCount());
-	ImGui::Text("Edges:   %i", app->GetGraph().GetEdgesCount());
-	ImGui::End();
+	{
+		static bool open = true;
+		ImGui::Begin("Debug", &open, overlay_window_flags);
+		ImGui::Text("UiNodes: %i", app->GetUiNodes().size());
+		ImGui::Text("Nodes:   %i", app->GetGraph().GetNodesCount());
+		ImGui::Text("Edges:   %i", app->GetGraph().GetEdgesCount());
+		ImGui::End();
+	}
+
+	{
+		//if (ImNodes::NumSelectedNodes() == 1)
+		int nodeId;
+		if (ImNodes::IsNodeHovered(&nodeId))
+		{
+			//static std::vector<int> selected_nodes;
+			//selected_nodes.resize(static_cast<size_t>(1));
+			//ImNodes::GetSelectedNodes(selected_nodes.data());
+			UiNode* node = app->GetUiNode(nodeId);
+
+			if (node->Type == UiNodeType::Add)
+			{
+				auto addNode = static_cast<AddNode*>(node);
+				ShowDebugInfo([&]() {
+					ImGui::Text("AddNode");
+					ImGui::Text("Id:      %i", addNode->Id);
+					ImGui::Text("Left:    %i", addNode->Left);
+					ImGui::Text("Right:   %i", addNode->Right);
+				});
+			}
+		}
+	}
+
+	{
+		int linkId;
+		if (ImNodes::IsLinkHovered(&linkId))
+		{
+			ShowDebugInfo([&]() {
+				ImGui::Text("Link");
+				ImGui::Text("Id: %i", linkId);
+			});
+		}
+	}
+
+	{
+		int pinId;
+		if (ImNodes::IsPinHovered(&pinId))
+		{
+			ShowDebugInfo([&]() {
+				ImGui::Text("Pin");
+				ImGui::Text("Id: %i", pinId);
+			});
+		}
+	}
+
 
 	if (ImGui::IsKeyReleased(VK_RETURN))
 	{
@@ -251,6 +322,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<AddNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -259,6 +331,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<MultiplyNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -267,6 +340,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<DrawNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -275,6 +349,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<SineNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -283,6 +358,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<TimeNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -292,6 +368,7 @@ void ShaderToolApp::HandleNewNodes()
 				node->OnCreate();
 				_RootNodeId = node->Id;
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -300,6 +377,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -308,6 +386,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<VertexShaderNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -316,6 +395,7 @@ void ShaderToolApp::HandleNewNodes()
 				auto node = std::make_unique<PixelShaderNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
 
@@ -388,6 +468,7 @@ void ShaderToolApp::HandleDeletedNodes()
 						_RootNodeId = INVALID_ID;
 
 					node->OnDelete();
+					_UINodeIdMap.erase(node->Id);
 					_UINodes.erase(it);
 					break;
 				}
@@ -435,19 +516,13 @@ void ShaderToolApp::RenderNodeGraph()
 	DebugInfo(this);
 
 	if (ImGui::IsKeyReleased(VK_S))
-	{
 		Save();
-	}
 
 	if (ImGui::IsKeyReleased(VK_L))
-	{
 		Load();
-	}
 
 	if (ImGui::IsKeyReleased(VK_N))
-	{
 		Reset();
-	}
 
 	ImGui::End();
 }
@@ -512,6 +587,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<AddNode>(&_Graph);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -519,6 +595,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<MultiplyNode>(&_Graph);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -526,6 +603,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<DrawNode>(&_Graph);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -533,6 +611,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<SineNode>(&_Graph);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -540,6 +619,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -547,6 +627,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -554,6 +635,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<TimeNode>(&_Graph);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -561,6 +643,7 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<VertexShaderNode>(&_Graph);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
@@ -568,10 +651,12 @@ void ShaderToolApp::Load()
 		{
 			auto node = std::make_unique<PixelShaderNode>(&_Graph);
 			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
 		default:
+			LOG_WARN("Failed to load Unknown UI node type {0}", nodeType);
 			break;
 		}
 	}
@@ -582,6 +667,7 @@ void ShaderToolApp::Load()
 void ShaderToolApp::Reset()
 {
 	_Graph.Reset();
+	_UINodeIdMap.clear();
 	_UINodes.clear();
 	_RootNodeId = INVALID_ID;
 }

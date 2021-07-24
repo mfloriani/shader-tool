@@ -55,6 +55,7 @@ public:
 	const GameTimer& GetTimer() const { return _Timer; }
 	const std::vector<std::unique_ptr<UiNode>>& GetUiNodes() const { return _UINodes; }
 	const Graph<Node>& GetGraph() const { return _Graph; }
+	UiNode* GetUiNode(NodeId id) { return _UINodeIdMap[id]; }
 
 private:
 	// TODO: Camera stuff
@@ -80,6 +81,7 @@ private: // Node Graph
 	std::unique_ptr<RenderTexture> _RenderTarget;  // TODO: at the moment only 1 render target supported
 	std::vector<const char*> _Primitives;
 	std::vector<std::unique_ptr<UiNode>> _UINodes;
+	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
 	Graph<Node> _Graph;
 	int _RootNodeId;
 	Entity _Entity;
