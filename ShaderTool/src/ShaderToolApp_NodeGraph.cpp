@@ -65,16 +65,12 @@ void DebugInfo(ShaderToolApp* app)
 	}
 
 	{
-		//if (ImNodes::NumSelectedNodes() == 1)
 		int nodeId;
 		if (ImNodes::IsNodeHovered(&nodeId))
 		{
-			//static std::vector<int> selected_nodes;
-			//selected_nodes.resize(static_cast<size_t>(1));
-			//ImNodes::GetSelectedNodes(selected_nodes.data());
 			UiNode* node = app->GetUiNode(nodeId);
 
-			if (node->Type == UiNodeType::Add)
+			if (node && node->Type == UiNodeType::Add)
 			{
 				auto addNode = static_cast<AddNode*>(node);
 				ShowDebugInfo([&]() {
@@ -157,6 +153,8 @@ void DebugInfo(ShaderToolApp* app)
 #endif
 }
 
+std::stack<int> postOrderClone;
+
 void ShaderToolApp::EvaluateGraph()
 {
 	if (_RootNodeId == INVALID_ID)
@@ -165,8 +163,9 @@ void ShaderToolApp::EvaluateGraph()
 	std::stack<int> postorder;
 	dfs_traverse(_Graph, _RootNodeId, [&postorder](const int nodeId) -> void { postorder.push(nodeId); });
 
-	LOG_TRACE("#######");
+	postOrderClone = postorder;
 
+	//LOG_TRACE("##############################");
 	std::stack<float> valueStack;
 	while (!postorder.empty())
 	{
@@ -174,17 +173,17 @@ void ShaderToolApp::EvaluateGraph()
 		postorder.pop();
 		const Node node = _Graph.GetNode(id);
 
-		LOG_TRACE("{0}", node.TypeName);
-
 		switch (node.Type)
 		{
 		case NodeType::Value:
 		{
+			//LOG_WARN("NodeType::Value {0}", _Graph.GetNumEdgesFromNode(id));
 			// If the edge does not have an edge connecting to another node, then just use the value
 			// at this node. It means the node's input pin has not been connected to anything and
 			// the value comes from the node's UI.
 			if (_Graph.GetNumEdgesFromNode(id) == 0ull)
 			{
+				//LOG_WARN("NodeType::Value valueStack.push({0})", node.Value);
 				valueStack.push(node.Value);
 			}
 		}
@@ -192,16 +191,21 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Add:
 		{
+			assert(valueStack.size() == 2ull && "Add node expects 2 inputs");
+
 			const float rhs = valueStack.top();
 			valueStack.pop();
 			const float lhs = valueStack.top();
 			valueStack.pop();
+			//DEBUGLOG("NodeType::Add valueStack.push({0}+{1})", lhs, rhs);
 			valueStack.push(lhs + rhs);
 		}
 		break;
 
 		case NodeType::Multiply:
 		{
+			assert(valueStack.size() == 2ull && "Multiply node expects 2 inputs");
+
 			const float rhs = valueStack.top();
 			valueStack.pop();
 			const float lhs = valueStack.top();
@@ -212,6 +216,8 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Sine:
 		{
+			assert(valueStack.size() == 1ull && "Sine node expects 1 input");
+
 			const float x = valueStack.top();
 			valueStack.pop();
 			const float res = std::abs(std::sin(x));
@@ -227,8 +233,12 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::RenderTarget:
 		{
+			assert(valueStack.size() == 1ull && "RenderTarget node expects 1 input");
+
 			const int i = static_cast<int>(valueStack.top());
 			valueStack.pop();
+
+			//DEBUGLOG("NodeType::RenderTarget {0}", i);
 			
 			//LOG_TRACE("RenderTarget {0}", i);
 
@@ -243,6 +253,17 @@ void ShaderToolApp::EvaluateGraph()
 		
 		case NodeType::Draw:
 		{
+			//LOG_ERROR("------ NodeType::Draw");
+			//auto valueStackClone = valueStack;
+			//while (!valueStackClone.empty())
+			//{
+			//	LOG_ERROR("NodeType::Draw {0}", valueStackClone.top());
+			//	valueStackClone.pop();
+			//}
+
+			if (valueStack.size() != 6)
+				LOG_ERROR("Draw node expects 6 inputs but got {0}", valueStack.size());
+
 			// The final output node isn't evaluated in the loop -- instead we just pop
 			// the three values which should be in the stack.
 			assert(valueStack.size() == 6ull && "Draw node expects 6 inputs");
@@ -263,7 +284,7 @@ void ShaderToolApp::EvaluateGraph()
 			const int vs = static_cast<int>(valueStack.top());
 			valueStack.pop();
 
-			LOG_TRACE("VS: {0}", vs);
+			//LOG_TRACE("VS: {0}", vs);
 
 
 			_Entity.Color = { r, g, b };
@@ -278,6 +299,8 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Primitive:
 		{
+			assert(valueStack.size() == 1ull && "Primitive node expects 1 input");
+
 			//assert(valueStack.size() == 1ull && "Testing the assert");
 			valueStack.push(valueStack.top());
 			valueStack.pop();
@@ -286,7 +309,11 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::VertexShader:
 		{
-			valueStack.push(node.Value);
+			assert(valueStack.size() == 1ull && "VertexShader node expects 1 input");
+
+			//LOG_INFO("NodeType::VertexShader valueStack.push({0})", valueStack.top());
+			valueStack.push(valueStack.top());
+			valueStack.pop();
 		}
 		break;
 		
@@ -299,6 +326,22 @@ void ShaderToolApp::EvaluateGraph()
 
 void ShaderToolApp::HandleNewNodes()
 {
+	ShowDebugInfo([&]() {
+
+		while (!postOrderClone.empty())
+		{
+			const int id = postOrderClone.top();
+			postOrderClone.pop();
+			const Node node = _Graph.GetNode(id);
+
+			ImGui::Text("Id: %i |", id); ImGui::SameLine();
+			ImGui::Text("Val: %.5f |", node.Value); ImGui::SameLine();
+			ImGui::Text("Type: %i |", node.Type); ImGui::SameLine();
+			ImGui::Text("TName: %s |", node.TypeName.c_str()); 
+		}
+
+	});
+
 	// Handle new nodes
 	{
 		const bool open_popup = (ImGui::IsWindowHovered() || ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) &&

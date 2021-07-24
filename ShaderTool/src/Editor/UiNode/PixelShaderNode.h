@@ -5,11 +5,11 @@
 struct PixelShaderNode : UiNode
 {
     explicit PixelShaderNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::PixelShader), Shader(INVALID_ID)
+        : UiNode(graph, UiNodeType::PixelShader), Input(INVALID_ID)
     {
     }
 
-    NodeId Shader;
+    NodeId Input;
     std::string Path;
 
     virtual void OnCreate() override
@@ -17,10 +17,10 @@ struct PixelShaderNode : UiNode
         const Node value(NodeType::Value, 0.f);
         const Node op(NodeType::PixelShader);
 
-        Shader = ParentGraph->CreateNode(value);
+        Input = ParentGraph->CreateNode(value);
         Id = ParentGraph->CreateNode(op);
 
-        ParentGraph->CreateEdge(Id, Shader);
+        ParentGraph->CreateEdge(Id, Input);
     }
 
     virtual void OnUpdate() override
@@ -29,7 +29,7 @@ struct PixelShaderNode : UiNode
 
     virtual void OnDelete() override
     {
-        ParentGraph->EraseNode(Shader);
+        ParentGraph->EraseNode(Input);
     }
 
     virtual void OnRender() override
@@ -60,7 +60,7 @@ struct PixelShaderNode : UiNode
                 {
                     // Loaded and Compiled successfully
                     Path = shaderPath;
-                    Shader = shaderIndex;
+                    Input = shaderIndex;
                 }
             }
             else if (result == NFD_CANCEL)
@@ -83,14 +83,14 @@ struct PixelShaderNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Shader;
+        out << " " << Input;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::PixelShader;
-        in >> Id >> Shader;
+        in >> Id >> Input;
         return in;
     }
 

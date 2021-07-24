@@ -5,22 +5,23 @@
 struct VertexShaderNode : UiNode
 {
     explicit VertexShaderNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::VertexShader), Shader(INVALID_ID)
+        : UiNode(graph, UiNodeType::VertexShader), Input(INVALID_ID)
     {
     }
 
-    NodeId Shader;
+    NodeId Input;
     std::string Path;
+    int ShaderIndex;
 
     virtual void OnCreate() override
     {
         const Node value(NodeType::Value, 0.f);
         const Node op(NodeType::VertexShader);
 
-        Shader = ParentGraph->CreateNode(value);
+        Input = ParentGraph->CreateNode(value);
         Id = ParentGraph->CreateNode(op);
 
-        ParentGraph->CreateEdge(Id, Shader);
+        ParentGraph->CreateEdge(Id, Input);
     }
 
     virtual void OnUpdate() override
@@ -29,7 +30,7 @@ struct VertexShaderNode : UiNode
 
     virtual void OnDelete() override
     {
-        ParentGraph->EraseNode(Shader);
+        ParentGraph->EraseNode(Input);
     }
 
     virtual void OnRender() override
@@ -60,7 +61,7 @@ struct VertexShaderNode : UiNode
                 {
                     // Loaded and Compiled successfully
                     Path = shaderPath;
-                    Shader = shaderIndex;
+                    ShaderIndex = shaderIndex;
                 }
             }
             else if (result == NFD_CANCEL)
@@ -83,14 +84,14 @@ struct VertexShaderNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Shader;
+        out << " " << Input;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::VertexShader;
-        in >> Id >> Shader;
+        in >> Id >> Input;
         return in;
     }
 
