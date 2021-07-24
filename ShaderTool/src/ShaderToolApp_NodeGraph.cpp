@@ -31,7 +31,11 @@ void mini_map_node_hovering_callback(int nodeId, void* userData)
 
 ImGuiWindowFlags overlay_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 
-void ShowDebugInfo(std::function<void(void)> info)
+static bool showDfsDebug = false;
+static bool showShadersDebug = false;
+std::stack<int> postOrderClone; // TODO: debug only
+
+void ShowHoverDebugInfo(std::function<void(void)> info)
 {
 	static int corner = 0;
 	const float XPAD = 20.0f;
@@ -46,9 +50,8 @@ void ShowDebugInfo(std::function<void(void)> info)
 	window_pos_pivot.y = (corner & 2) ? 1.0f : 0.0f;
 	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
 	ImGui::SetNextWindowViewport(viewport->ID);
-
-	static bool open = true;
-	ImGui::Begin("Debug Info", &open, overlay_window_flags);
+	bool show = true;
+	ImGui::Begin("Hover Debug Info", &show, overlay_window_flags);
 	info();
 	ImGui::End();
 }
@@ -73,12 +76,12 @@ void DebugInfo(ShaderToolApp* app)
 			if (node && node->Type == UiNodeType::Add)
 			{
 				auto addNode = static_cast<AddNode*>(node);
-				ShowDebugInfo([&]() {
+				ShowHoverDebugInfo([&]() {
 					ImGui::Text("AddNode");
 					ImGui::Text("Id:      %i", addNode->Id);
 					ImGui::Text("Left:    %i", addNode->Left);
 					ImGui::Text("Right:   %i", addNode->Right);
-				});
+					});
 			}
 		}
 	}
@@ -87,10 +90,10 @@ void DebugInfo(ShaderToolApp* app)
 		int linkId;
 		if (ImNodes::IsLinkHovered(&linkId))
 		{
-			ShowDebugInfo([&]() {
+			ShowHoverDebugInfo([&]() {
 				ImGui::Text("Link");
 				ImGui::Text("Id: %i", linkId);
-			});
+				});
 		}
 	}
 
@@ -98,13 +101,12 @@ void DebugInfo(ShaderToolApp* app)
 		int pinId;
 		if (ImNodes::IsPinHovered(&pinId))
 		{
-			ShowDebugInfo([&]() {
+			ShowHoverDebugInfo([&]() {
 				ImGui::Text("Pin");
 				ImGui::Text("Id: %i", pinId);
-			});
+				});
 		}
 	}
-
 
 	if (ImGui::IsKeyReleased(VK_RETURN))
 	{
@@ -115,6 +117,44 @@ void DebugInfo(ShaderToolApp* app)
 			shader->PrintDebugInfo();
 		}
 	}
+
+	if (ImGui::IsKeyReleased(VK_F1))
+		showDfsDebug = !showDfsDebug;
+
+	if (showDfsDebug)
+	{
+		while (!postOrderClone.empty())
+		{
+			const int id = postOrderClone.top();
+			postOrderClone.pop();
+			const Node node = app->GetGraph().GetNode(id);
+
+			ImGui::Begin("DFS Debug", &showDfsDebug, overlay_window_flags);
+			ImGui::Text("Id: %i |", id); ImGui::SameLine();
+			ImGui::Text("Val: %.5f |", node.Value); ImGui::SameLine();
+			ImGui::Text("Type: %i |", node.Type); ImGui::SameLine();
+			ImGui::Text("TName: %s |", node.TypeName.c_str());
+			ImGui::End();
+		}
+	}
+
+	if (ImGui::IsKeyReleased(VK_F2))
+		showShadersDebug = !showShadersDebug;
+
+	if(showShadersDebug)
+	{
+		auto& shaderMgr = ShaderManager::Get();
+		int i = 0;
+		for (auto& shader : shaderMgr.GetShaders())
+		{
+			ImGui::Begin("Shaders Debug", &showDfsDebug, overlay_window_flags);
+			ImGui::Text("Index: %i |", i); ImGui::SameLine();
+			ImGui::Text("Name: %s |", shader->GetName().c_str()); 
+			ImGui::End();
+			++i;
+		}
+	}
+
 
 #if 0
 	if (ImGui::IsKeyReleased(VK_RETURN))
@@ -153,7 +193,7 @@ void DebugInfo(ShaderToolApp* app)
 #endif
 }
 
-std::stack<int> postOrderClone;
+
 
 void ShaderToolApp::EvaluateGraph()
 {
@@ -191,7 +231,7 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Add:
 		{
-			assert(valueStack.size() == 2ull && "Add node expects 2 inputs");
+			//assert(valueStack.size() == 2ull && "Add node expects 2 inputs");
 
 			const float rhs = valueStack.top();
 			valueStack.pop();
@@ -204,7 +244,7 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Multiply:
 		{
-			assert(valueStack.size() == 2ull && "Multiply node expects 2 inputs");
+			//assert(valueStack.size() == 2ull && "Multiply node expects 2 inputs");
 
 			const float rhs = valueStack.top();
 			valueStack.pop();
@@ -216,7 +256,7 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Sine:
 		{
-			assert(valueStack.size() == 1ull && "Sine node expects 1 input");
+			//assert(valueStack.size() == 1ull && "Sine node expects 1 input");
 
 			const float x = valueStack.top();
 			valueStack.pop();
@@ -299,7 +339,7 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Primitive:
 		{
-			assert(valueStack.size() == 1ull && "Primitive node expects 1 input");
+			//assert(valueStack.size() == 1ull && "Primitive node expects 1 input");
 
 			//assert(valueStack.size() == 1ull && "Testing the assert");
 			valueStack.push(valueStack.top());
@@ -309,11 +349,9 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::VertexShader:
 		{
-			assert(valueStack.size() == 1ull && "VertexShader node expects 1 input");
+			//assert(valueStack.size() == 1ull && "VertexShader node expects 1 input");
 
-			//LOG_INFO("NodeType::VertexShader valueStack.push({0})", valueStack.top());
-			valueStack.push(valueStack.top());
-			valueStack.pop();
+			valueStack.push(node.Value);
 		}
 		break;
 		
@@ -326,22 +364,6 @@ void ShaderToolApp::EvaluateGraph()
 
 void ShaderToolApp::HandleNewNodes()
 {
-	ShowDebugInfo([&]() {
-
-		while (!postOrderClone.empty())
-		{
-			const int id = postOrderClone.top();
-			postOrderClone.pop();
-			const Node node = _Graph.GetNode(id);
-
-			ImGui::Text("Id: %i |", id); ImGui::SameLine();
-			ImGui::Text("Val: %.5f |", node.Value); ImGui::SameLine();
-			ImGui::Text("Type: %i |", node.Type); ImGui::SameLine();
-			ImGui::Text("TName: %s |", node.TypeName.c_str()); 
-		}
-
-	});
-
 	// Handle new nodes
 	{
 		const bool open_popup = (ImGui::IsWindowHovered() || ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) &&

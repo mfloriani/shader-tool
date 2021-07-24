@@ -5,36 +5,40 @@
 struct VertexShaderNode : UiNode
 {
     explicit VertexShaderNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::VertexShader), Input(INVALID_ID)
+        : UiNode(graph, UiNodeType::VertexShader)//, Input(INVALID_ID)
     {
     }
 
-    NodeId Input;
+    //NodeId Input;
     std::string Path;
-    int ShaderIndex;
+    std::string ShaderName;
+    size_t ShaderIndex;
 
     virtual void OnCreate() override
     {
         const Node value(NodeType::Value, 0.f);
         const Node op(NodeType::VertexShader);
 
-        Input = ParentGraph->CreateNode(value);
+        //Input = ParentGraph->CreateNode(value);
         Id = ParentGraph->CreateNode(op);
 
-        ParentGraph->CreateEdge(Id, Input);
+        //ParentGraph->CreateEdge(Id, Input);
     }
 
     virtual void OnUpdate() override
     {
+        
     }
 
     virtual void OnDelete() override
     {
-        ParentGraph->EraseNode(Input);
+        //ParentGraph->EraseNode(Input);
     }
 
     virtual void OnRender() override
     {
+        const float node_width = 100.0f;
+
         ImNodes::BeginNode(Id);
 
         ImNodes::BeginNodeTitleBar();
@@ -51,8 +55,8 @@ struct VertexShaderNode : UiNode
                 auto shaderPath = std::string(outPath);
                 free(outPath);
                 //LOG_TRACE("Selected file [{0} | {1} | {2}]", path, D3DUtil::ExtractFilename(path, true), D3DUtil::ExtractFilename(path));
-                int shaderIndex = ShaderManager::Get().LoadRawShader(shaderPath, "main", "vs_5_0");
-                if (shaderIndex < 0)
+                auto shaderName = ShaderManager::Get().LoadRawShader(shaderPath, "main", "vs_5_0");
+                if (shaderName.size() == 0)
                 {
                     // Failed
                     LOG_WARN("### Failed to load the selected shader! The previous shader was kept.");
@@ -61,7 +65,10 @@ struct VertexShaderNode : UiNode
                 {
                     // Loaded and Compiled successfully
                     Path = shaderPath;
-                    ShaderIndex = shaderIndex;
+                    ShaderName = shaderName;
+                    ShaderIndex = ShaderManager::Get().GetShaderIndex(ShaderName);
+
+                    ParentGraph->GetNode(Id).Value = static_cast<float>(ShaderIndex);
                 }
             }
             else if (result == NFD_CANCEL)
@@ -73,9 +80,13 @@ struct VertexShaderNode : UiNode
                 LOG_ERROR("Error: %s\n", NFD_GetError());
             }
         }
+        
+        ImGui::Text(ShaderName.c_str());
 
         ImNodes::BeginOutputAttribute(Id);
-        ImGui::Text("output");
+        const float label_width = ImGui::CalcTextSize("output").x;
+        ImGui::Indent(node_width - label_width);
+        ImGui::TextUnformatted("output");
         ImNodes::EndOutputAttribute();
 
         ImNodes::EndNode();
@@ -84,14 +95,16 @@ struct VertexShaderNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Input;
+        //out << " " << Input << " " << ShaderName;
+        out << " " << ShaderName << " " << Path;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::VertexShader;
-        in >> Id >> Input;
+        //in >> Id >> Input >> ShaderName;
+        in >> Id >> ShaderName >> Path;
         return in;
     }
 

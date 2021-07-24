@@ -5,32 +5,32 @@ using namespace DirectX;
 using namespace D3DUtil;
 using Microsoft::WRL::ComPtr;
 
-int ShaderManager::LoadBinaryShader(const std::string& name)
+std::string ShaderManager::LoadBinaryShader(const std::string& filename)
 {
-	LOG_TRACE("Loading cso shader {0}", name);
+	LOG_TRACE("Loading cso shader {0}", filename);
 	ComPtr<ID3DBlob> blob;
-	const std::string filename = name + ".cso";
+	const std::string name = D3DUtil::ExtractFilename(filename);
 	ThrowIfFailed(D3DReadFileToBlob(AnsiToWString(filename).c_str(), &blob));
 
 	_Shaders.push_back(std::make_unique<Shader>(name, blob));
-	auto index = _Shaders.size() - 1u;
-	_ShaderNameMap.insert(std::make_pair(name, index));
-	return static_cast<int>(index);
+	_ShaderNameMap.insert(std::make_pair(name, _Shaders.size() - 1u));
+	
+	return name;
 }
 
-int ShaderManager::LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target)
+std::string ShaderManager::LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target)
 {
 	LOG_TRACE("Loading hlsl shader [{0} | {1} | {2}]", filename, entryPoint, target);
 	ComPtr<ID3DBlob> blob;
 	if (D3DUtil::CompileShader(filename, entryPoint, target, blob))
 	{
-		auto name = D3DUtil::ExtractFilename(filename);	
+		const auto name = D3DUtil::ExtractFilename(filename);	
 		_Shaders.push_back(std::make_unique<Shader>(name, blob));
-		auto index = _Shaders.size() - 1u;
-		_ShaderNameMap.insert(std::make_pair(name, index));
-		return static_cast<int>(index);
+		_ShaderNameMap.insert(std::make_pair(name, _Shaders.size() - 1u));
+		
+		return name;
 	}
-	return -1;
+	return std::string();
 }
 
 Shader* ShaderManager::GetShader(size_t index)

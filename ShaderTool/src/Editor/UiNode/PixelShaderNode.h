@@ -50,8 +50,8 @@ struct PixelShaderNode : UiNode
                 auto shaderPath = std::string(outPath);
                 free(outPath);
                 //LOG_TRACE("Selected file [{0} | {1} | {2}]", path, D3DUtil::ExtractFilename(path, true), D3DUtil::ExtractFilename(path));
-                int shaderIndex = ShaderManager::Get().LoadRawShader(shaderPath, "main", "ps_5_0");
-                if (shaderIndex < 0)
+                auto shaderName = ShaderManager::Get().LoadRawShader(shaderPath, "main", "ps_5_0");
+                if (shaderName.size() == 0)
                 {
                     // Failed
                     LOG_WARN("### Failed to load the selected shader! The previous shader was kept.");
@@ -60,7 +60,7 @@ struct PixelShaderNode : UiNode
                 {
                     // Loaded and Compiled successfully
                     Path = shaderPath;
-                    Input = shaderIndex;
+                    //Input = shaderIndex;
                 }
             }
             else if (result == NFD_CANCEL)
