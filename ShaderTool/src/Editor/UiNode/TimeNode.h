@@ -18,8 +18,9 @@ struct TimeNode : UiNode
     {
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
+        ParentGraph->GetNode(Id).Value = timer.TotalTime();
     }
 
     virtual void OnRender() override

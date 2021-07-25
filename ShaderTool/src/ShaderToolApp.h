@@ -37,6 +37,7 @@ public:
 	void UpdateCamera();
 	void UpdatePerFrameCB();
 	void UpdatePerObjectCB();
+	void UpdateNodeGraph();
 	void RenderNodeGraph();
 
 	virtual void OnUpdate() override;

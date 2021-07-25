@@ -11,6 +11,12 @@ struct DrawNode : UiNode
 
     NodeId R, G, B, Model, VS, PS;
 
+    struct DrawData
+    {
+        float r, g, b;
+        int model, vs, ps, output;
+    } Data;
+
     virtual void OnCreate() override
     {
         const Node value(NodeType::Value, 0.f);
@@ -32,8 +38,14 @@ struct DrawNode : UiNode
         ParentGraph->CreateEdge(Id, B);
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
+        //Data.vs = (int)ParentGraph->GetNode(VS).Value;
+        //Data.ps = (int)ParentGraph->GetNode(PS).Value;
+        //Data.model = (int)ParentGraph->GetNode(Model).Value;
+        //Data.r = ParentGraph->GetNode(R).Value;
+        //Data.g = ParentGraph->GetNode(G).Value;
+        //Data.b = ParentGraph->GetNode(B).Value;
     }
 
     virtual void OnDelete() override

@@ -5,34 +5,31 @@
 struct VertexShaderNode : UiNode
 {
     explicit VertexShaderNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::VertexShader)//, Input(INVALID_ID)
+        : UiNode(graph, UiNodeType::VertexShader)
     {
     }
 
-    //NodeId Input;
-    std::string Path;
-    std::string ShaderName;
-    size_t ShaderIndex;
+    struct VSData
+    {
+        std::string path;
+        std::string shaderName;
+        size_t shaderIndex;
+    } Data;
 
     virtual void OnCreate() override
     {
-        const Node value(NodeType::Value, 0.f);
         const Node op(NodeType::VertexShader);
-
-        //Input = ParentGraph->CreateNode(value);
         Id = ParentGraph->CreateNode(op);
-
-        //ParentGraph->CreateEdge(Id, Input);
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
-        
+        ParentGraph->GetNode(Id).Value = static_cast<float>(Data.shaderIndex);
     }
 
     virtual void OnDelete() override
     {
-        //ParentGraph->EraseNode(Input);
+        
     }
 
     virtual void OnRender() override
@@ -64,11 +61,9 @@ struct VertexShaderNode : UiNode
                 else
                 {
                     // Loaded and Compiled successfully
-                    Path = shaderPath;
-                    ShaderName = shaderName;
-                    ShaderIndex = ShaderManager::Get().GetShaderIndex(ShaderName);
-
-                    ParentGraph->GetNode(Id).Value = static_cast<float>(ShaderIndex);
+                    Data.path = shaderPath;
+                    Data.shaderName = shaderName;
+                    Data.shaderIndex = ShaderManager::Get().GetShaderIndex(Data.shaderName);
                 }
             }
             else if (result == NFD_CANCEL)
@@ -81,7 +76,7 @@ struct VertexShaderNode : UiNode
             }
         }
         
-        ImGui::Text(ShaderName.c_str());
+        ImGui::Text(Data.shaderName.c_str());
 
         ImNodes::BeginOutputAttribute(Id);
         const float label_width = ImGui::CalcTextSize("output").x;
@@ -95,16 +90,15 @@ struct VertexShaderNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        //out << " " << Input << " " << ShaderName;
-        out << " " << ShaderName << " " << Path;
+        out << " " << Data.shaderName << " " << Data.path;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::VertexShader;
-        //in >> Id >> Input >> ShaderName;
-        in >> Id >> ShaderName >> Path;
+        in >> Id >> Data.shaderName >> Data.path;
+        Data.shaderIndex = ShaderManager::Get().GetShaderIndex(Data.shaderName);
         return in;
     }
 

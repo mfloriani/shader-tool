@@ -167,8 +167,6 @@ void ShaderToolApp::UpdatePerObjectCB()
 #endif
 }
 
-
-
 void ShaderToolApp::OnUpdate()
 {
 	_Timer.Tick();
@@ -225,7 +223,7 @@ void ShaderToolApp::OnRender()
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
 	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
-	_CommandList->SetPipelineState(_PSOs["back_buffer"].Get());
+	_CommandList->SetPipelineState(_PSOs["backbuffer"].Get());
 
 #if 0 // draw to backbuffer
 	ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
@@ -260,6 +258,7 @@ void ShaderToolApp::OnRender()
 #if 1
 	NewUIFrame();
 	RenderUIDockSpace();
+	UpdateNodeGraph();
 	RenderNodeGraph();
 	RenderUI();
 #endif
@@ -347,30 +346,18 @@ void ShaderToolApp::RenderUIDockSpace()
 		LOG_ERROR("ImGui Docking is disabled");
 	}
 
-	//if (ImGui::BeginMenuBar())
-	//{
-	//	if (ImGui::BeginMenu("Options"))
-	//	{
-			// Disabling fullscreen would allow the window to be moved to the front of other windows,
-			// which we can't undo at the moment without finer window depth/z control.
-			//ImGui::MenuItem("Fullscreen", NULL, &docking_opt_fullscreen);
-			//ImGui::MenuItem("Padding", NULL, &docking_opt_padding);
-			//ImGui::Separator();
-
-			//if (ImGui::MenuItem("Flag: NoSplit", "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoSplit; }
-			//if (ImGui::MenuItem("Flag: NoResize", "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoResize; }
-			//if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode; }
-			//if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
-			//if (ImGui::MenuItem("Flag: PassthruCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0, docking_opt_fullscreen)) { dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
-			//ImGui::Separator();
-
-			//if (ImGui::MenuItem("Close", NULL, false, docking_open != NULL))
-			//	docking_open = false;
-	//		ImGui::EndMenu();
-	//	}
-	//	ImGui::EndMenuBar();
-	//}
-
+	if (ImGui::BeginMenuBar())
+	{
+		if (ImGui::BeginMenu("Options"))
+		{
+			if (ImGui::MenuItem("New", NULL, false, docking_open != NULL)) LOG_TRACE("New");
+			if (ImGui::MenuItem("Save", NULL, false, docking_open != NULL)) LOG_TRACE("Save");
+			if (ImGui::MenuItem("Load", NULL, false, docking_open != NULL)) LOG_TRACE("Load");
+			if (ImGui::MenuItem("Close", NULL, false, docking_open != NULL)) LOG_TRACE("Close");
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
 
 	ImGui::End();
 }
@@ -384,7 +371,7 @@ void ShaderToolApp::RenderToTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
+	_CommandList->SetPipelineState(_PSOs["default"].Get());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
@@ -401,7 +388,7 @@ void ShaderToolApp::RenderToTexture()
 
 		UINT objCBIndex = _Entity.Id; // TODO: check this
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-		objCBAddress += objCBIndex * objCBByteSize;
+		objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
 
 		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 		_CommandList->DrawIndexedInstanced(
@@ -429,7 +416,7 @@ void ShaderToolApp::ClearRenderTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
+	_CommandList->SetPipelineState(_PSOs["default"].Get());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);

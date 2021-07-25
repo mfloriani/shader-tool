@@ -30,7 +30,7 @@ struct AddNode : UiNode
         ParentGraph->EraseNode(Right);
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
     }
 

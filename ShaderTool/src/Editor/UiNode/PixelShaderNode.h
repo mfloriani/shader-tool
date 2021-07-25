@@ -23,7 +23,7 @@ struct PixelShaderNode : UiNode
         ParentGraph->CreateEdge(Id, Input);
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
     }
 

@@ -40,7 +40,7 @@ struct UiNode
 
     virtual void OnCreate() = 0;
     virtual void OnDelete() = 0;
-    virtual void OnUpdate() = 0;
+    virtual void OnUpdate(GameTimer& timer) = 0;
     virtual void OnRender() = 0;
 
     virtual std::ostream& Serialize(std::ostream& out) const

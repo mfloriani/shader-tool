@@ -24,7 +24,7 @@ struct MultiplyNode : UiNode
         ParentGraph->CreateEdge(Id, Right);
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
     }
 

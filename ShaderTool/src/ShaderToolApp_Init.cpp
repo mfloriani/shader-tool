@@ -166,7 +166,7 @@ void ShaderToolApp::BuildPSO()
 		defaultPSO.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
 		//defaultPSO.DSVFormat = _DepthStencilFormat;
 
-		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["render_target"])));
+		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["default"])));
 	}
 
 	// backbuffer
@@ -188,7 +188,7 @@ void ShaderToolApp::BuildPSO()
 		psoDesc.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
 		psoDesc.DSVFormat = _DepthStencilFormat;
 
-		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&_PSOs["back_buffer"])));
+		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&_PSOs["backbuffer"])));
 	}
 }
 

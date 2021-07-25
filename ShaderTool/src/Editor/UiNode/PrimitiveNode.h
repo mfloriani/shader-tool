@@ -5,31 +5,26 @@
 struct PrimitiveNode : UiNode
 {
     explicit PrimitiveNode(Graph<Node>* graph, std::vector<const char*>& primitives)
-        : UiNode(graph, UiNodeType::Primitive), Primitives(primitives), Model(INVALID_ID)
+        : UiNode(graph, UiNodeType::Primitive), Primitives(primitives), Model(0)
     {
     }
 
     std::vector<const char*>& Primitives;
-    NodeId Model;
+    int Model;
 
     virtual void OnCreate() override
     {
-        const Node value(NodeType::Value, 0.f);
         const Node op(NodeType::Primitive);
-
-        Model = ParentGraph->CreateNode(value);
         Id = ParentGraph->CreateNode(op);
-
-        ParentGraph->CreateEdge(Id, Model);
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
     }
 
     virtual void OnDelete() override
     {
-        ParentGraph->EraseNode(Model);
+        
     }
 
     virtual void OnRender() override
@@ -41,11 +36,11 @@ struct PrimitiveNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         ImGui::PushItemWidth(node_width);
-        auto& modelNode = ParentGraph->GetNode(Model);
-        int value = static_cast<int>(modelNode.Value);
-        ImGui::Combo("##hidelabel", &value, Primitives.data(), (int)Primitives.size());
+        
+        Model = static_cast<int>(ParentGraph->GetNode(Id).Value);
+        ImGui::Combo("##hidelabel", &Model, Primitives.data(), (int)Primitives.size());
         ImGui::PopItemWidth();
-        modelNode.Value = static_cast<float>(value);
+        ParentGraph->GetNode(Id).Value = static_cast<float>(Model);
 
         ImNodes::BeginOutputAttribute(Id);
         const float label_width = ImGui::CalcTextSize("output").x;

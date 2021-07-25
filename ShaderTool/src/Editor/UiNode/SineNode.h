@@ -22,8 +22,10 @@ struct SineNode : UiNode
         ParentGraph->CreateEdge(Id, Input);
     }
 
-    virtual void OnUpdate() override
+    virtual void OnUpdate(GameTimer& timer) override
     {
+        //float input = ParentGraph->GetNode(Input).Value;
+        //ParentGraph->GetNode(Id).Value = std::abs(std::sin(input));
     }
 
     virtual void OnDelete() override

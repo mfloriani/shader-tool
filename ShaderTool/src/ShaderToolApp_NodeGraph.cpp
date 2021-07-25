@@ -22,8 +22,6 @@
 #define VK_L 0x4C
 #define VK_N 0x4E
 
-static float current_time_seconds = 0.f;
-
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
 	ImGui::SetTooltip("node id %d", nodeId);
@@ -72,16 +70,102 @@ void DebugInfo(ShaderToolApp* app)
 		if (ImNodes::IsNodeHovered(&nodeId))
 		{
 			UiNode* node = app->GetUiNode(nodeId);
-
-			if (node && node->Type == UiNodeType::Add)
+			if (node)
 			{
-				auto addNode = static_cast<AddNode*>(node);
-				ShowHoverDebugInfo([&]() {
-					ImGui::Text("AddNode");
-					ImGui::Text("Id:      %i", addNode->Id);
-					ImGui::Text("Left:    %i", addNode->Left);
-					ImGui::Text("Right:   %i", addNode->Right);
+				switch (node->Type)
+				{
+				case UiNodeType::Add:
+				{
+					auto addNode = static_cast<AddNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("AddNode");
+						ImGui::Text("Id:      %i", addNode->Id);
+						ImGui::Text("Left:    %.5f", addNode->Left);
+						ImGui::Text("Right:   %.5f", addNode->Right);
+						ImGui::Text("Output:  %.5f", app->GetGraph().GetNode(addNode->Id).Value);
+						});
+				}
+				break;
+
+				case UiNodeType::Time:
+				{
+					auto timeNode = static_cast<TimeNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("TimeNode");
+						ImGui::Text("Id:      %i", timeNode->Id);
+						ImGui::Text("Time:    %.5f", app->GetGraph().GetNode(timeNode->Id).Value);
 					});
+				}
+				break;
+
+				case UiNodeType::Sine:
+				{
+					auto sineNode = static_cast<SineNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("SineNode");
+						ImGui::Text("Id:      %i", sineNode->Id);
+						ImGui::Text("Sine:    %.5f", app->GetGraph().GetNode(sineNode->Id).Value);
+					});
+				}
+				break;
+
+				case UiNodeType::Multiply:
+				{
+					auto multNode = static_cast<MultiplyNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("MultiplyNode");
+						ImGui::Text("Id:      %i", multNode->Id);
+						ImGui::Text("Left:    %.5f", multNode->Left);
+						ImGui::Text("Right:   %.5f", multNode->Right);
+						ImGui::Text("Output:  %.5f", app->GetGraph().GetNode(multNode->Id).Value);
+					});
+				}
+				break;
+
+				case UiNodeType::Draw:
+				{
+					auto drawNode = static_cast<DrawNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("DrawNode");
+						ImGui::Text("Id:      %i", drawNode->Id);
+						ImGui::Text("VS:      %i", drawNode->Data.vs);
+						ImGui::Text("PS:      %i", drawNode->Data.ps);
+						ImGui::Text("Model:   %i", drawNode->Data.model);
+						ImGui::Text("R:       %.5f", drawNode->Data.r);
+						ImGui::Text("G:       %.5f", drawNode->Data.g);
+						ImGui::Text("B:       %.5f", drawNode->Data.b);
+						ImGui::Text("Output:  %i", drawNode->Data.output);
+						});
+				}
+				break;
+
+				case UiNodeType::Primitive:
+				{
+					auto primNode = static_cast<PrimitiveNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("PrimitiveNode");
+						ImGui::Text("Id:      %i", primNode->Id);
+						ImGui::Text("Model:   %i", primNode->Model);
+					});
+				}
+				break;
+
+				case UiNodeType::VertexShader:
+				{
+					auto vsNode = static_cast<VertexShaderNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("VertexShaderNode");
+						ImGui::Text("Id:     %i", vsNode->Id);
+						ImGui::Text("Index:  %i", vsNode->Data.shaderIndex);
+						ImGui::Text("Name:   %s", vsNode->Data.shaderName.c_str());
+						ImGui::Text("Path:   %s", vsNode->Data.path.c_str());
+					});
+				}
+				break;
+
+				default:
+					break;
+				}
 			}
 		}
 	}
@@ -209,7 +293,7 @@ void ShaderToolApp::EvaluateGraph()
 	{
 		const int id = postorder.top();
 		postorder.pop();
-		const Node node = _Graph.GetNode(id);
+		Node& node = _Graph.GetNode(id);
 
 		switch (node.Type)
 		{
@@ -229,43 +313,38 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Add:
 		{
-			//assert(valueStack.size() == 2ull && "Add node expects 2 inputs");
-
 			const float rhs = valueStack.top();
 			valueStack.pop();
 			const float lhs = valueStack.top();
 			valueStack.pop();
-			//DEBUGLOG("NodeType::Add valueStack.push({0}+{1})", lhs, rhs);
-			valueStack.push(lhs + rhs);
+			node.Value = lhs + rhs;
+			valueStack.push(node.Value);
 		}
 		break;
 
 		case NodeType::Multiply:
 		{
-			//assert(valueStack.size() == 2ull && "Multiply node expects 2 inputs");
-
 			const float rhs = valueStack.top();
 			valueStack.pop();
 			const float lhs = valueStack.top();
 			valueStack.pop();
-			valueStack.push(rhs * lhs);
+			node.Value = rhs * lhs;
+			valueStack.push(node.Value);
 		}
 		break;
 
 		case NodeType::Sine:
 		{
-			//assert(valueStack.size() == 1ull && "Sine node expects 1 input");
-
-			const float x = valueStack.top();
+			const float input = valueStack.top();
 			valueStack.pop();
-			const float res = std::abs(std::sin(x));
-			valueStack.push(res);
+			node.Value = std::abs(std::sin(input));
+			valueStack.push(node.Value);
 		}
 		break;
 
 		case NodeType::Time:
 		{
-			valueStack.push(current_time_seconds);
+			valueStack.push(node.Value);
 		}
 		break;
 
@@ -276,8 +355,7 @@ void ShaderToolApp::EvaluateGraph()
 			const int i = static_cast<int>(valueStack.top());
 			valueStack.pop();
 
-			//DEBUGLOG("NodeType::RenderTarget {0}", i);
-			
+			//DEBUGLOG("NodeType::RenderTarget {0}", i);			
 			//LOG_TRACE("RenderTarget {0}", i);
 
 			// it should receive an index with the texture rendered by draw node
@@ -287,7 +365,6 @@ void ShaderToolApp::EvaluateGraph()
 				ClearRenderTexture();
 		}
 		break;
-
 		
 		case NodeType::Draw:
 		{
@@ -306,49 +383,43 @@ void ShaderToolApp::EvaluateGraph()
 			// the three values which should be in the stack.
 			assert(valueStack.size() == 6ull && "Draw node expects 6 inputs");
 			
-			const float b = std::clamp(valueStack.top(), 0.f, 1.f);
+			auto drawNode = static_cast<DrawNode*>(_UINodeIdMap[id]);
+
+			drawNode->Data.b = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
-			const float g = std::clamp(valueStack.top(), 0.f, 1.f);
+			drawNode->Data.g = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
-			const float r = std::clamp(valueStack.top(), 0.f, 1.f);
+			drawNode->Data.r = std::clamp(valueStack.top(), 0.f, 1.f);
 			valueStack.pop();
 
-			const int model = static_cast<int>(valueStack.top());
+			drawNode->Data.model = static_cast<int>(valueStack.top());
 			valueStack.pop();
 			
-			const int ps = static_cast<int>(valueStack.top());
+			drawNode->Data.ps = static_cast<int>(valueStack.top());
 			valueStack.pop();
 
-			const int vs = static_cast<int>(valueStack.top());
+			drawNode->Data.vs = static_cast<int>(valueStack.top());
 			valueStack.pop();
 
-			//LOG_TRACE("VS: {0}", vs);
-
-
-			_Entity.Color = { r, g, b };
+			_Entity.Color = { drawNode->Data.r, drawNode->Data.g, drawNode->Data.b };
 			// TODO: at the moment only works with primitives, but later there will be loaded models
-			_Entity.Model = AssetManager::Get().GetModel(_Primitives[model]);
+			_Entity.Model = AssetManager::Get().GetModel(_Primitives[drawNode->Data.model]);
 			
 			RenderToTexture();
 
-			valueStack.push(1.f); // TODO: index where the texture is stored, now only one texture
+			drawNode->Data.output = 1;
+			valueStack.push( static_cast<float>(drawNode->Data.output) ); // TODO: index where the texture is stored, now only one texture
 		}
 		break;
 
 		case NodeType::Primitive:
 		{
-			//assert(valueStack.size() == 1ull && "Primitive node expects 1 input");
-
-			//assert(valueStack.size() == 1ull && "Testing the assert");
-			valueStack.push(valueStack.top());
-			valueStack.pop();
+			valueStack.push(node.Value);
 		}
 		break;
 
 		case NodeType::VertexShader:
 		{
-			//assert(valueStack.size() == 1ull && "VertexShader node expects 1 input");
-
 			valueStack.push(node.Value);
 		}
 		break;
@@ -540,13 +611,14 @@ void ShaderToolApp::HandleDeletedNodes()
 	}
 }
 
+void ShaderToolApp::UpdateNodeGraph()
+{
+	for (const auto& node : _UINodes)
+		node->OnUpdate(_Timer);
+}
+
 void ShaderToolApp::RenderNodeGraph()
 {
-	_Timer.Tick();
-
-	// Update timer context
-	current_time_seconds = _Timer.TotalTime();
-
 	// The node editor window
 	ImGui::Begin("Shader Editor");
 	ImGui::Columns(1);
