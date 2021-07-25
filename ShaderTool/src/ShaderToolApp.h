@@ -77,7 +77,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RootSignature{ nullptr };
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
 	std::unique_ptr<PipelineStateObject> _BackBufferPSO;
-	std::unique_ptr<PipelineStateObject> _RenderTargetPSO;
+	std::shared_ptr<PipelineStateObject> _RenderTargetPSO;
 	
 private: // Node Graph	
 	bool _RenderTargetReady{ false };

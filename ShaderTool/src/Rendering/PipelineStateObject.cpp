@@ -17,7 +17,7 @@ PipelineStateObject::PipelineStateObject(
 
 PipelineStateObject::~PipelineStateObject()
 {
-
+	LOG_TRACE("PipelineStateObject::~PipelineStateObject()");
 }
 
 void PipelineStateObject::Create(

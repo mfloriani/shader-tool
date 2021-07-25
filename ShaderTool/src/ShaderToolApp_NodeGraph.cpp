@@ -453,7 +453,7 @@ void ShaderToolApp::CreateRenderTargetPSO(int vsIndex, int psIndex)
 	auto vs = vsIndex == NOT_LINKED ? DEFAULT_VS : shaderMgr.GetShaderName((size_t)vsIndex);
 	auto ps = psIndex == NOT_LINKED ? DEFAULT_PS : shaderMgr.GetShaderName((size_t)psIndex);
 	
-	_RenderTargetPSO = std::make_unique<PipelineStateObject>(_BackBufferFormat, _DepthStencilFormat, _4xMsaaState, _4xMsaaQuality);
+	_RenderTargetPSO = std::make_shared<PipelineStateObject>(_BackBufferFormat, _DepthStencilFormat, _4xMsaaState, _4xMsaaQuality);
 	_RenderTargetPSO->Create(
 		_Device.Get(),
 		_RootSignature.Get(),
@@ -461,6 +461,8 @@ void ShaderToolApp::CreateRenderTargetPSO(int vsIndex, int psIndex)
 		vs,
 		ps,
 		false);
+
+	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
 }
 
 void ShaderToolApp::RenderToTexture()
@@ -472,7 +474,7 @@ void ShaderToolApp::RenderToTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	_CommandList->SetPipelineState(_RenderTargetPSO->GetPSO());
+	_CommandList->SetPipelineState(_CurrFrameResource->RenderTargetPSO.get()->GetPSO());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
@@ -517,7 +519,7 @@ void ShaderToolApp::ClearRenderTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	_CommandList->SetPipelineState(_RenderTargetPSO->GetPSO());
+	_CommandList->SetPipelineState(_CurrFrameResource->RenderTargetPSO.get()->GetPSO());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);

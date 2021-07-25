@@ -10,6 +10,7 @@
 #include <wrl.h>
 
 #include "UploadBuffer.h"
+#include "PipelineStateObject.h"
 
 struct ObjectConstants
 {
@@ -57,7 +58,7 @@ struct FrameResource
     std::unique_ptr<UploadBuffer<FrameConstants>> FrameCB = nullptr;
     std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
 
-    
+    std::shared_ptr<PipelineStateObject> RenderTargetPSO;
 
     // Fence value to mark commands up to this fence point.  This lets us
     // check if these frame resources are still in use by the GPU.

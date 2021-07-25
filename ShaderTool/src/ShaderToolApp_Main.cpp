@@ -189,6 +189,8 @@ void ShaderToolApp::OnRender()
 	auto frameCB = _CurrFrameResource->FrameCB->Resource();
 	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
 	
+	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
+
 	EvaluateGraph();
 	
 	// Render to back buffer
@@ -225,43 +227,11 @@ void ShaderToolApp::OnRender()
 	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
 	_CommandList->SetPipelineState(_BackBufferPSO->GetPSO());
 
-#if 0 // draw to backbuffer
-	ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
-	_CommandList->SetDescriptorHeaps(_countof(descHeapList), descHeapList);
-	_CommandList->SetGraphicsRootDescriptorTable(2, _RenderTexture->SRV());
-	
-	// QUAD
-	{
-		auto& quad = _Meshes["quad_geo"]; 
-
-		_CommandList->IASetVertexBuffers(0, 1, &quad->VertexBufferView());
-		_CommandList->IASetIndexBuffer(&quad->IndexBufferView());
-		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
-
-		UINT objCBIndex = 1;
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-		objCBAddress += objCBIndex * objCBByteSize;
-
-		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-		_CommandList->DrawIndexedInstanced(
-			quad->DrawArgs["quad"].IndexCount,
-			1,
-			quad->DrawArgs["quad"].StartIndexLocation,
-			quad->DrawArgs["quad"].BaseVertexLocation,
-			0);
-	}
-#endif
-
-#if 1
 	NewUIFrame();
 	RenderUIDockSpace();
 	UpdateNodeGraph();
 	RenderNodeGraph();
 	RenderUI();
-#endif
 
 	// PRESENT
 	{
