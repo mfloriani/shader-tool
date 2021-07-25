@@ -137,6 +137,7 @@
     <ClInclude Include="src\Rendering\D3DUtil.h" />
     <ClInclude Include="src\Rendering\FrameResource.h" />
     <ClInclude Include="src\Rendering\Mesh.h" />
+    <ClInclude Include="src\Rendering\PipelineStateObject.h" />
     <ClInclude Include="src\Rendering\RenderTexture.h" />
     <ClInclude Include="src\Rendering\Shader.h" />
     <ClInclude Include="src\Rendering\ShaderManager.h" />
@@ -186,6 +187,7 @@
     <ClCompile Include="src\Rendering\D3DApp.cpp" />
     <ClCompile Include="src\Rendering\D3DUtil.cpp" />
     <ClCompile Include="src\Rendering\FrameResource.cpp" />
+    <ClCompile Include="src\Rendering\PipelineStateObject.cpp" />
     <ClCompile Include="src\Rendering\RenderTexture.cpp" />
     <ClCompile Include="src\Rendering\Shader.cpp" />
     <ClCompile Include="src\Rendering\ShaderManager.cpp" />

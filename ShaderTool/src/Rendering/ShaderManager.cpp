@@ -13,8 +13,9 @@ std::string ShaderManager::LoadBinaryShader(const std::string& filename)
 	ThrowIfFailed(D3DReadFileToBlob(AnsiToWString(filename).c_str(), &blob));
 
 	_Shaders.push_back(std::make_unique<Shader>(name, blob));
-	_ShaderNameMap.insert(std::make_pair(name, _Shaders.size() - 1u));
-	
+	_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
+	_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
+
 	return name;
 }
 
@@ -26,8 +27,9 @@ std::string ShaderManager::LoadRawShader(const std::string& filename, const std:
 	{
 		const auto name = D3DUtil::ExtractFilename(filename);	
 		_Shaders.push_back(std::make_unique<Shader>(name, blob));
-		_ShaderNameMap.insert(std::make_pair(name, _Shaders.size() - 1u));
-		
+		_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
+		_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
+
 		return name;
 	}
 	return std::string();
@@ -45,8 +47,8 @@ Shader* ShaderManager::GetShader(size_t index)
 
 Shader* ShaderManager::GetShader(const std::string& name)
 {
-	auto it = _ShaderNameMap.find(name);
-	if (it == _ShaderNameMap.end()) // NOT FOUND
+	auto it = _ShaderNameIndexMap.find(name);
+	if (it == _ShaderNameIndexMap.end()) // NOT FOUND
 	{
 		LOG_ERROR("Shader {0} NOT LOADED", name);
 		return nullptr;

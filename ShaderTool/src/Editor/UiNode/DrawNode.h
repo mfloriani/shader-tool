@@ -13,6 +13,7 @@ struct DrawNode : UiNode
 
     struct DrawData
     {
+        DrawData() : r(0.f), g(0.f), b(0.f), model(NOT_LINKED), vs(NOT_LINKED), ps(NOT_LINKED), output(NOT_LINKED) {}
         float r, g, b;
         int model, vs, ps, output;
     } Data;
@@ -20,11 +21,12 @@ struct DrawNode : UiNode
     virtual void OnCreate() override
     {
         const Node value(NodeType::Value, 0.f);
+        const Node link(NodeType::Link, NOT_LINKED);
         const Node out(NodeType::Draw);
 
-        VS = ParentGraph->CreateNode(value);
-        PS = ParentGraph->CreateNode(value);
-        Model = ParentGraph->CreateNode(value);
+        VS = ParentGraph->CreateNode(link);
+        PS = ParentGraph->CreateNode(link);
+        Model = ParentGraph->CreateNode(link);
         R = ParentGraph->CreateNode(value);
         G = ParentGraph->CreateNode(value);
         B = ParentGraph->CreateNode(value);

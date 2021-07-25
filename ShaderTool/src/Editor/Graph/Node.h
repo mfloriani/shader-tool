@@ -2,9 +2,14 @@
 
 #include <fstream>
 
+const static int INVALID_ID = -1;
+const static int NOT_LINKED = -1;
+const static int INVALID_INDEX = -1;
+
 enum class NodeType
 {
     Value,
+    Link,
     Add,
     Multiply,
     Draw,

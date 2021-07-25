@@ -145,6 +145,7 @@
     <ClInclude Include="src\Editor\UiNode\VertexShaderNode.h" />
     <ClInclude Include="src\MagicEnum.h" />
     <ClInclude Include="src\Editor\UiNode\PixelShaderNode.h" />
+    <ClInclude Include="src\Rendering\PipelineStateObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -207,6 +208,7 @@
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\Rendering\PipelineStateObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">

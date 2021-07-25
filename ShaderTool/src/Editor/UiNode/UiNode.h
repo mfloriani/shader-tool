@@ -7,8 +7,6 @@
 #include "Editor\ImGui\imgui.h"
 #include "Editor/nfd/nfd.h"
 
-const static int INVALID_ID = -1;
-
 enum class UiNodeType
 {
     None,

@@ -223,7 +223,7 @@ void ShaderToolApp::OnRender()
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
 	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
-	_CommandList->SetPipelineState(_PSOs["backbuffer"].Get());
+	_CommandList->SetPipelineState(_BackBufferPSO->GetPSO());
 
 #if 0 // draw to backbuffer
 	ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
@@ -362,70 +362,3 @@ void ShaderToolApp::RenderUIDockSpace()
 	ImGui::End();
 }
 
-void ShaderToolApp::RenderToTexture()
-{
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	_CommandList->SetPipelineState(_PSOs["default"].Get());
-	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
-	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
-	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
-	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
-
-	// BOX
-	{
-		_CommandList->IASetVertexBuffers(0, 1, &_Entity.Model.VertexBufferView);
-		_CommandList->IASetIndexBuffer(&_Entity.Model.IndexBufferView);
-		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
-
-		UINT objCBIndex = _Entity.Id; // TODO: check this
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-		objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
-
-		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-		_CommandList->DrawIndexedInstanced(
-			_Entity.Model.IndexCount,
-			1,
-			_Entity.Model.StartIndexLocation,
-			_Entity.Model.BaseVertexLocation,
-			0);
-	}
-
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_GENERIC_READ));
-}
-
-void ShaderToolApp::ClearRenderTexture()
-{
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	_CommandList->SetPipelineState(_PSOs["default"].Get());
-	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
-	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
-	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
-	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
-
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_GENERIC_READ));
-}

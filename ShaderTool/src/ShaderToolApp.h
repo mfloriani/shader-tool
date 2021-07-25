@@ -12,6 +12,7 @@
 #include "Rendering\Vertex.h"
 #include "Rendering\Mesh.h"
 #include "Rendering\ShaderManager.h"
+#include "Rendering\PipelineStateObject.h"
 
 #include "Editor\Graph\Node.h"
 #include "Editor\UiNode\UiNode.h"
@@ -75,7 +76,8 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RootSignature{ nullptr };
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
-	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
+	std::unique_ptr<PipelineStateObject> _BackBufferPSO;
+	std::unique_ptr<PipelineStateObject> _RenderTargetPSO;
 	
 private: // Node Graph	
 	bool _RenderTargetReady{ false };
@@ -98,5 +100,6 @@ private: // Node Graph
 	void HandleNewLinks();
 	void HandleDeletedLinks();
 	void HandleDeletedNodes();
+	void CreateRenderTargetPSO(int vsIndex, int psIndex);
 
 };

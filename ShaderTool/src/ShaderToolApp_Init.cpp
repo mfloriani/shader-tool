@@ -62,7 +62,7 @@ bool ShaderToolApp::Init()
 
 void ShaderToolApp::InitNodeGraph()
 {
-	
+	//_CurrentRenderTargetPSO = _DefaultRenderTargetPSO.get();
 	
 }
 
@@ -130,9 +130,9 @@ void ShaderToolApp::BuildRootSignature()
 void ShaderToolApp::BuildShadersAndInputLayout()
 {
 	auto& shaderMgr = ShaderManager::Get();
-	shaderMgr.LoadBinaryShader("backbuffer_vs.cso");
-	shaderMgr.LoadBinaryShader("default_vs.cso");
-	shaderMgr.LoadBinaryShader("default_ps.cso");
+	shaderMgr.LoadBinaryShader(std::string(BACKBUFFER_VS) + std::string(".cso"));
+	shaderMgr.LoadBinaryShader(std::string(DEFAULT_VS) + std::string(".cso"));
+	shaderMgr.LoadBinaryShader(std::string(DEFAULT_PS) + std::string(".cso"));
 
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -144,52 +144,17 @@ void ShaderToolApp::BuildShadersAndInputLayout()
 
 void ShaderToolApp::BuildPSO()
 {
-	auto& shaderMgr = ShaderManager::Get();
+	D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
 
-	// default one used for render target
-	{
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC defaultPSO;
-		ZeroMemory(&defaultPSO, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	_BackBufferPSO = std::make_unique<PipelineStateObject>( _BackBufferFormat, _DepthStencilFormat, _4xMsaaState, _4xMsaaQuality );
+	_BackBufferPSO->Create(
+		_Device.Get(),
+		_RootSignature.Get(),
+		inputLayout,
+		BACKBUFFER_VS,
+		"");
 
-		defaultPSO.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
-		defaultPSO.pRootSignature = _RootSignature.Get();
-		defaultPSO.VS = shaderMgr.GetShader("default_vs")->GetByteCode();
-		defaultPSO.PS = shaderMgr.GetShader("default_ps")->GetByteCode();
-		defaultPSO.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		defaultPSO.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-		//defaultPSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-		defaultPSO.SampleMask = UINT_MAX;
-		defaultPSO.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		defaultPSO.NumRenderTargets = 1;
-		defaultPSO.RTVFormats[0] = _BackBufferFormat;
-		defaultPSO.SampleDesc.Count = _4xMsaaState ? 4 : 1;
-		defaultPSO.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-		//defaultPSO.DSVFormat = _DepthStencilFormat;
-
-		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&defaultPSO, IID_PPV_ARGS(&_PSOs["default"])));
-	}
-
-	// backbuffer
-	{
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-		ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-
-		psoDesc.InputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
-		psoDesc.pRootSignature = _RootSignature.Get();
-		psoDesc.VS = shaderMgr.GetShader("backbuffer_vs")->GetByteCode();
-		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-		psoDesc.SampleMask = UINT_MAX;
-		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = _BackBufferFormat;
-		psoDesc.SampleDesc.Count = _4xMsaaState ? 4 : 1;
-		psoDesc.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-		psoDesc.DSVFormat = _DepthStencilFormat;
-
-		ThrowIfFailed(_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&_PSOs["backbuffer"])));
-	}
+	CreateRenderTargetPSO(NOT_LINKED, NOT_LINKED);
 }
 
 void ShaderToolApp::LoadPrimitiveModels()

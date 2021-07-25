@@ -298,16 +298,13 @@ void ShaderToolApp::EvaluateGraph()
 		switch (node.Type)
 		{
 		case NodeType::Value:
+		case NodeType::Link:
 		{
-			//LOG_WARN("NodeType::Value {0}", _Graph.GetNumEdgesFromNode(id));
 			// If the edge does not have an edge connecting to another node, then just use the value
 			// at this node. It means the node's input pin has not been connected to anything and
 			// the value comes from the node's UI.
 			if (_Graph.GetNumEdgesFromNode(id) == 0ull)
-			{
-				//LOG_WARN("NodeType::Value valueStack.push({0})", node.Value);
 				valueStack.push(node.Value);
-			}
 		}
 		break;
 
@@ -368,6 +365,7 @@ void ShaderToolApp::EvaluateGraph()
 		
 		case NodeType::Draw:
 		{
+			bool psoHasChanged = false;
 			//LOG_ERROR("------ NodeType::Draw");
 			//auto valueStackClone = valueStack;
 			//while (!valueStackClone.empty())
@@ -395,15 +393,29 @@ void ShaderToolApp::EvaluateGraph()
 			drawNode->Data.model = static_cast<int>(valueStack.top());
 			valueStack.pop();
 			
-			drawNode->Data.ps = static_cast<int>(valueStack.top());
+			int ps = static_cast<int>(valueStack.top());
 			valueStack.pop();
-
-			drawNode->Data.vs = static_cast<int>(valueStack.top());
+			if (ps != drawNode->Data.ps)
+			{
+				drawNode->Data.ps = ps;
+				psoHasChanged = true;
+			}
+						
+			int vs = static_cast<int>(valueStack.top());
 			valueStack.pop();
+			if (vs != drawNode->Data.vs)
+			{
+				drawNode->Data.vs = vs;
+				psoHasChanged = true;
+			}
 
 			_Entity.Color = { drawNode->Data.r, drawNode->Data.g, drawNode->Data.b };
 			// TODO: at the moment only works with primitives, but later there will be loaded models
-			_Entity.Model = AssetManager::Get().GetModel(_Primitives[drawNode->Data.model]);
+			if(drawNode->Data.model != NOT_LINKED)
+				_Entity.Model = AssetManager::Get().GetModel(_Primitives[drawNode->Data.model]);
+			
+			if (psoHasChanged)
+				CreateRenderTargetPSO(drawNode->Data.vs, drawNode->Data.ps);
 			
 			RenderToTexture();
 
@@ -429,6 +441,94 @@ void ShaderToolApp::EvaluateGraph()
 			break;
 		}
 	}
+}
+
+void ShaderToolApp::CreateRenderTargetPSO(int vsIndex, int psIndex)
+{
+	LOG_INFO("ShaderToolApp::CreateRenderTargetPSO [{0} | {1}]", vsIndex, psIndex);
+
+	D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
+	
+	auto& shaderMgr = ShaderManager::Get();
+	auto vs = vsIndex == NOT_LINKED ? DEFAULT_VS : shaderMgr.GetShaderName((size_t)vsIndex);
+	auto ps = psIndex == NOT_LINKED ? DEFAULT_PS : shaderMgr.GetShaderName((size_t)psIndex);
+	
+	_RenderTargetPSO = std::make_unique<PipelineStateObject>(_BackBufferFormat, _DepthStencilFormat, _4xMsaaState, _4xMsaaQuality);
+	_RenderTargetPSO->Create(
+		_Device.Get(),
+		_RootSignature.Get(),
+		inputLayout,
+		vs,
+		ps,
+		false);
+}
+
+void ShaderToolApp::RenderToTexture()
+{
+	_CommandList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTarget->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	_CommandList->SetPipelineState(_RenderTargetPSO->GetPSO());
+	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
+	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
+	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
+	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
+
+	// BOX
+	{
+		_CommandList->IASetVertexBuffers(0, 1, &_Entity.Model.VertexBufferView);
+		_CommandList->IASetIndexBuffer(&_Entity.Model.IndexBufferView);
+		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
+
+		UINT objCBIndex = _Entity.Id; // TODO: check this
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+		objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
+
+		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+		_CommandList->DrawIndexedInstanced(
+			_Entity.Model.IndexCount,
+			1,
+			_Entity.Model.StartIndexLocation,
+			_Entity.Model.BaseVertexLocation,
+			0);
+	}
+
+	_CommandList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTarget->GetResource(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_GENERIC_READ));
+}
+
+void ShaderToolApp::ClearRenderTexture()
+{
+	_CommandList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTarget->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	_CommandList->SetPipelineState(_RenderTargetPSO->GetPSO());
+	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
+	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
+	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
+	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
+
+	_CommandList->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			_RenderTarget->GetResource(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_GENERIC_READ));
 }
 
 void ShaderToolApp::HandleNewNodes()
@@ -554,7 +654,7 @@ void ShaderToolApp::HandleNewLinks()
 		{
 			// Ensure the edge is always directed from the value to
 			// whatever produces the value
-			if (start_type != NodeType::Value)
+			if (start_type != NodeType::Value && start_type != NodeType::Link)
 			{
 				std::swap(start_attr, end_attr);
 			}
@@ -635,7 +735,7 @@ void ShaderToolApp::RenderNodeGraph()
 		// If edge doesn't start at value, then it's an internal edge, i.e.
 		// an edge which links a node's operation to its input. We don't
 		// want to render node internals with visible links.
-		if (_Graph.GetNode(edge.from).Type != NodeType::Value)
+		if (_Graph.GetNode(edge.from).Type != NodeType::Value && _Graph.GetNode(edge.from).Type != NodeType::Link)
 			continue;
 
 		ImNodes::Link(edge.id, edge.from, edge.to);

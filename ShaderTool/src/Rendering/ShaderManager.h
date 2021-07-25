@@ -21,12 +21,14 @@ public:
 	Shader* GetShader(size_t index);
 	Shader* GetShader(const std::string& name);
 	const std::vector<std::unique_ptr<Shader>>& GetShaders() const { return _Shaders; }
-	size_t GetShaderIndex(const std::string& name) { return _ShaderNameMap[name]; }
+	size_t GetShaderIndex(const std::string& name) { return _ShaderNameIndexMap[name]; }
+	const std::string& GetShaderName(size_t index) { return _ShaderIndexNameMap[index]; }
 
 private:
 	ShaderManager(){}
 
 private:
 	std::vector<std::unique_ptr<Shader>> _Shaders;
-	std::unordered_map<std::string, size_t> _ShaderNameMap;
+	std::unordered_map<std::string, size_t> _ShaderNameIndexMap;
+	std::unordered_map<size_t, std::string> _ShaderIndexNameMap;
 };

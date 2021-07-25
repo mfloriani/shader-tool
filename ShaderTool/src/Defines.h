@@ -17,6 +17,10 @@ constexpr uint32_t INIT_CLIENT_HEIGHT = 768;
 constexpr int NUM_BACK_BUFFERS = 3;
 constexpr int NUM_FRAMES = 3;
 
+constexpr char* BACKBUFFER_VS = "backbuffer_vs";
+constexpr char* DEFAULT_VS = "default_vs";
+constexpr char* DEFAULT_PS = "default_ps";
+
 #if defined(min)
 #undef min
 #endif

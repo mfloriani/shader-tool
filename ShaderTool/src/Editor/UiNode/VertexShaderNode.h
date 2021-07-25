@@ -13,13 +13,16 @@ struct VertexShaderNode : UiNode
     {
         std::string path;
         std::string shaderName;
-        size_t shaderIndex;
+        int shaderIndex{ INVALID_INDEX };
     } Data;
 
     virtual void OnCreate() override
     {
         const Node op(NodeType::VertexShader);
         Id = ParentGraph->CreateNode(op);
+
+        Data.shaderName = DEFAULT_VS;
+        Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
     }
 
     virtual void OnUpdate(GameTimer& timer) override
@@ -63,7 +66,7 @@ struct VertexShaderNode : UiNode
                     // Loaded and Compiled successfully
                     Data.path = shaderPath;
                     Data.shaderName = shaderName;
-                    Data.shaderIndex = ShaderManager::Get().GetShaderIndex(Data.shaderName);
+                    Data.shaderIndex = (int) ShaderManager::Get().GetShaderIndex(Data.shaderName);
                 }
             }
             else if (result == NFD_CANCEL)
@@ -98,7 +101,7 @@ struct VertexShaderNode : UiNode
     {
         Type = UiNodeType::VertexShader;
         in >> Id >> Data.shaderName >> Data.path;
-        Data.shaderIndex = ShaderManager::Get().GetShaderIndex(Data.shaderName);
+        Data.shaderIndex = (int) ShaderManager::Get().GetShaderIndex(Data.shaderName);
         return in;
     }
 
