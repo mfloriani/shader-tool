@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Shader.h"
 
+#include <bitset>
+
 using Microsoft::WRL::ComPtr;
 using namespace D3DUtil;
 
@@ -36,13 +38,14 @@ void Shader::Reflect()
 	shaderReflection->GetDesc(&shaderDesc);
 	_ShaderDesc = SHADER_DESC(shaderDesc);
 
+	// CONSTANT BUFFERS
 	for (unsigned int i = 0; i < _ShaderDesc.ConstantBuffers; ++i)
 	{
 		ID3D12ShaderReflectionConstantBuffer* buffer = shaderReflection->GetConstantBufferByIndex(i);
 
 		D3D12_SHADER_BUFFER_DESC bufferDesc;
 		buffer->GetDesc(&bufferDesc);
-		//LOG_TRACE("CBUFFER {0}", bufferDesc.Name);
+		LOG_TRACE("CBUFFER {0}", bufferDesc.Name);
 		_CBuffersDesc.push_back(SHADER_BUFFER_DESC(bufferDesc));
 
 		_CBufferVars.insert(
@@ -52,6 +55,7 @@ void Shader::Reflect()
 
 		_CBufferVars[bufferDesc.Name].reserve(bufferDesc.Variables);
 
+		// CONSTANT BUFFER VARS
 		for (UINT j = 0; j < bufferDesc.Variables; j++)
 		{
 			ID3D12ShaderReflectionVariable* var = buffer->GetVariableByIndex(j);
@@ -62,19 +66,43 @@ void Shader::Reflect()
 			D3D12_SHADER_TYPE_DESC typeDesc;
 			type->GetDesc(&typeDesc);
 
-			//LOG_TRACE("  {0} {1}", typeDesc.Name, varDesc.Name);
+			LOG_TRACE("  {0} {1}", typeDesc.Name, varDesc.Name);
 
 			_CBufferVars[bufferDesc.Name].push_back(SHADER_VARIABLE_DESC(varDesc, typeDesc));
 		}
 	}
 
+	// TEXTURES and SAMPLERS
 	for (unsigned int i = 0; i < _ShaderDesc.BoundResources; ++i)
 	{
 		D3D12_SHADER_INPUT_BIND_DESC bindDesc = {};
 		shaderReflection->GetResourceBindingDesc(i, &bindDesc);
 
-		//LOG_TRACE("INPUT_BIND_DESC {0} {1}", bindDesc.Type, bindDesc.Name);
+		LOG_TRACE("INPUT_BIND_DESC {0} {1}", bindDesc.Type, bindDesc.Name);
 	}
+
+	// SHADER INPUT
+	for (unsigned int i = 0; i < _ShaderDesc.InputParameters; ++i)
+	{
+		D3D12_SIGNATURE_PARAMETER_DESC desc;
+		shaderReflection->GetInputParameterDesc(i, &desc);
+
+		LOG_TRACE("INPUT {0} | {1} | {2} -> {3}, {4}, {5} ", 
+			desc.Register, desc.ComponentType, desc.SemanticIndex, desc.SemanticName, 
+			std::bitset<8>(desc.Mask), std::bitset<8>(desc.ReadWriteMask));
+	}
+
+	// SHADER OUTPUT
+	for (unsigned int i = 0; i < _ShaderDesc.OutputParameters; ++i)
+	{
+		D3D12_SIGNATURE_PARAMETER_DESC desc;
+		shaderReflection->GetOutputParameterDesc(i, &desc);
+
+		LOG_TRACE("OUTPUT {0} | {1} | {2} -> {3}, {4}, {5} ",
+			desc.Register, desc.ComponentType, desc.SemanticIndex, desc.SemanticName,
+			std::bitset<8>(desc.Mask), std::bitset<8>(desc.ReadWriteMask));
+	}
+
 
 	shaderReflection->Release();
 }

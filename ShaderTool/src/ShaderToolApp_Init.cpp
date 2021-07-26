@@ -134,6 +134,11 @@ void ShaderToolApp::BuildShadersAndInputLayout()
 	shaderMgr.LoadBinaryShader(std::string(DEFAULT_VS) + std::string(".cso"));
 	shaderMgr.LoadBinaryShader(std::string(DEFAULT_PS) + std::string(".cso"));
 
+	// TODO: testing
+	auto vsQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Vertex);
+	auto psQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Pixel);
+
+
 	_InputLayout = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -160,7 +165,6 @@ void ShaderToolApp::BuildPSO()
 void ShaderToolApp::LoadPrimitiveModels()
 {
 	GeometryGenerator geoGen;
-
 	GeometryGenerator::MeshData cube = geoGen.CreateBox(1.f, 1.f, 1.f, 0u);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(1.f, 20u, 20u);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(10.f, 10.f, 10u, 10u);

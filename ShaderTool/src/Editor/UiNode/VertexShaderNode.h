@@ -21,6 +21,7 @@ struct VertexShaderNode : UiNode
         const Node op(NodeType::VertexShader);
         Id = ParentGraph->CreateNode(op);
 
+        Data.path = "INTERNAL_SHADER_PATH";
         Data.shaderName = DEFAULT_VS;
         Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
     }

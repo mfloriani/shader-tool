@@ -12,7 +12,6 @@ PipelineStateObject::PipelineStateObject(
 	_4xMsaaState(msaa4xState), 
 	_4xMsaaQuality(msaa4xQuality)
 {
-	
 }
 
 PipelineStateObject::~PipelineStateObject()
@@ -34,19 +33,17 @@ void PipelineStateObject::Create(
 	ZeroMemory(&pso, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 
 	pso.InputLayout = inputLayout;
-	pso.pRootSignature = rootSign;	
+	pso.pRootSignature = rootSign;
 	pso.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	pso.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	if (setDepthStencil)
-		pso.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	if (setDepthStencil) pso.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // TODO: at the moment the render target PSO does not use the depth stencil
 	pso.SampleMask = UINT_MAX;
 	pso.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pso.NumRenderTargets = 1;
 	pso.RTVFormats[0] = _BackBufferFormat;
 	pso.SampleDesc.Count = _4xMsaaState ? 4 : 1;
 	pso.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-	if(setDepthStencil)
-		pso.DSVFormat = _DepthStencilFormat; // TODO: have to solve it, at the moment no format is used for render target
+	if(setDepthStencil) pso.DSVFormat = _DepthStencilFormat; // TODO: at the moment no format is used for render target
 	
 	auto& shaderMgr = ShaderManager::Get();
 	pso.VS = shaderMgr.GetShader(vs)->GetByteCode();
