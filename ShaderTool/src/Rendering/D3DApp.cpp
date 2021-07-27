@@ -32,7 +32,7 @@ D3DApp::D3DApp(HINSTANCE hInstance) : _Hinstance(hInstance)
 
 D3DApp::~D3DApp()
 {
-    LOG_TRACE("D3DApp::~D3DApp()");
+    //LOG_TRACE("D3DApp::~D3DApp()");
     FlushCommandQueue();
     
     ImNodes::DestroyContext();

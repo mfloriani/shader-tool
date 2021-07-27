@@ -9,7 +9,8 @@ using namespace D3DUtil;
 Shader::Shader(const std::string& name, ComPtr<ID3DBlob> vsBuffer, ComPtr<ID3DBlob> psBuffer)
 	: _Name(name), _VsByteCode(vsBuffer), _PsByteCode(psBuffer)
 {
-	//Reflect();
+	Reflect(vsBuffer);
+	Reflect(psBuffer);
 }
 
 Shader::~Shader()
@@ -34,13 +35,12 @@ D3D12_SHADER_BYTECODE Shader::GetPsByteCode()
 }
 
 
-void Shader::Reflect()
+void Shader::Reflect(ComPtr<ID3DBlob>& bytecode)
 {
-	/*
 	ID3D12ShaderReflection* shaderReflection;
 	auto hr = D3DReflect(
-		_ByteCode->GetBufferPointer(),
-		_ByteCode->GetBufferSize(),
+		bytecode->GetBufferPointer(),
+		bytecode->GetBufferSize(),
 		IID_ID3D12ShaderReflection,
 		reinterpret_cast<void**>(&shaderReflection)
 	);
@@ -97,9 +97,8 @@ void Shader::Reflect()
 		D3D12_SIGNATURE_PARAMETER_DESC desc;
 		shaderReflection->GetInputParameterDesc(i, &desc);
 
-		LOG_TRACE("INPUT {0} | {1} | {2} -> {3}, {4}, {5} ", 
-			desc.Register, desc.ComponentType, desc.SemanticIndex, desc.SemanticName, 
-			std::bitset<8>(desc.Mask), std::bitset<8>(desc.ReadWriteMask));
+		LOG_TRACE("INPUT  {0} | {1} | {2} | {3} | {4} -> {5}", 
+			desc.Register, desc.ComponentType, std::bitset<8>(desc.Mask), std::bitset<8>(desc.ReadWriteMask), desc.SemanticIndex, desc.SemanticName);
 	}
 
 	// SHADER OUTPUT
@@ -108,14 +107,11 @@ void Shader::Reflect()
 		D3D12_SIGNATURE_PARAMETER_DESC desc;
 		shaderReflection->GetOutputParameterDesc(i, &desc);
 
-		LOG_TRACE("OUTPUT {0} | {1} | {2} -> {3}, {4}, {5} ",
-			desc.Register, desc.ComponentType, desc.SemanticIndex, desc.SemanticName,
-			std::bitset<8>(desc.Mask), std::bitset<8>(desc.ReadWriteMask));
+		LOG_TRACE("OUTPUT {0} | {1} | {2} | {3} | {4} -> {5}",
+			desc.Register, desc.ComponentType, std::bitset<8>(desc.Mask), std::bitset<8>(desc.ReadWriteMask), desc.SemanticIndex, desc.SemanticName);
 	}
 
-
 	shaderReflection->Release();
-	*/
 }
 
 void Shader::PrintDebugInfo()

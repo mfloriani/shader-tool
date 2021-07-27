@@ -15,7 +15,7 @@ public:
 	void PrintDebugInfo();
 	
 private:
-	void Reflect();
+	void Reflect(Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
 
 private:
 	Microsoft::WRL::ComPtr<ID3DBlob> _VsByteCode;

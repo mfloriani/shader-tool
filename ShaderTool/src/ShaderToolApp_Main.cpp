@@ -13,7 +13,7 @@ ShaderToolApp::ShaderToolApp(HINSTANCE hInstance) : D3DApp(hInstance), _RootNode
 
 ShaderToolApp::~ShaderToolApp()
 {
-	LOG_TRACE("ShaderToolApp::~ShaderToolApp()");
+	//LOG_TRACE("ShaderToolApp::~ShaderToolApp()");
 	FlushCommandQueue();
 }
 
