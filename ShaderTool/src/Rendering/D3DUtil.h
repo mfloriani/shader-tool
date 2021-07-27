@@ -66,7 +66,7 @@ namespace D3DUtil
 	struct SHADER_DESC
 	{
 		SHADER_DESC() {}
-		SHADER_DESC(D3D12_SHADER_DESC desc)
+		SHADER_DESC(D3D12_SHADER_DESC& desc)
 		{
 			Version = desc.Version;
 			Creator = desc.Creator;
@@ -157,7 +157,7 @@ namespace D3DUtil
 	struct SHADER_BUFFER_DESC // D3D12_SHADER_BUFFER_DESC
 	{
 		SHADER_BUFFER_DESC() {}
-		SHADER_BUFFER_DESC(D3D12_SHADER_BUFFER_DESC bufferDesc)
+		SHADER_BUFFER_DESC(D3D12_SHADER_BUFFER_DESC& bufferDesc)
 		{
 			Name = bufferDesc.Name;
 			Type = bufferDesc.Type;
@@ -176,7 +176,7 @@ namespace D3DUtil
 	struct SHADER_TYPE_DESC // D3D12_SHADER_TYPE_DESC
 	{
 		SHADER_TYPE_DESC() {}
-		SHADER_TYPE_DESC(D3D12_SHADER_TYPE_DESC typeDesc)
+		SHADER_TYPE_DESC(D3D12_SHADER_TYPE_DESC& typeDesc)
 		{
 			Class = typeDesc.Class;
 			Type = typeDesc.Type;
@@ -201,7 +201,7 @@ namespace D3DUtil
 	struct SHADER_VARIABLE_DESC // D3D12_SHADER_VARIABLE_DESC
 	{
 		SHADER_VARIABLE_DESC() {}
-		SHADER_VARIABLE_DESC(D3D12_SHADER_VARIABLE_DESC varDesc, D3D12_SHADER_TYPE_DESC typeDesc)
+		SHADER_VARIABLE_DESC(D3D12_SHADER_VARIABLE_DESC& varDesc, D3D12_SHADER_TYPE_DESC& typeDesc)
 		{
 			Name = varDesc.Name;
 			StartOffset = varDesc.StartOffset;
@@ -225,5 +225,66 @@ namespace D3DUtil
 		UINT                    StartSampler;   // First sampler index (or -1 if no textures used)
 		UINT                    SamplerSize;    // Number of sampler slots possibly used.
 		SHADER_TYPE_DESC        Type;           // Type struct of the variable
+	};
+
+	struct SHADER_INPUT_BIND_DESC
+	{
+		SHADER_INPUT_BIND_DESC() {}
+		SHADER_INPUT_BIND_DESC(D3D12_SHADER_INPUT_BIND_DESC& desc)
+		{
+
+			Name = desc.Name;
+			Type = desc.Type;
+			BindPoint = desc.BindPoint;
+			BindCount = desc.BindCount;
+			uFlags = desc.uFlags;
+			ReturnType = desc.ReturnType;
+			Dimension = desc.Dimension;
+			NumSamples = desc.NumSamples;
+			Space = desc.Space;
+			uID = desc.uID;
+		}
+
+		std::string                 Name;           // Name of the resource
+		D3D_SHADER_INPUT_TYPE       Type;           // Type of resource (e.g. texture, cbuffer, etc.)
+		UINT                        BindPoint;      // Starting bind point
+		UINT                        BindCount;      // Number of contiguous bind points (for arrays)
+		UINT                        uFlags;         // Input binding flags
+		D3D_RESOURCE_RETURN_TYPE    ReturnType;     // Return type (if texture)
+		D3D_SRV_DIMENSION           Dimension;      // Dimension (if texture)
+		UINT                        NumSamples;     // Number of samples (0 if not MS texture)
+		UINT                        Space;          // Register space
+		UINT                        uID;            // Range ID in the bytecode
+	};
+
+	struct SIGNATURE_PARAMETER_DESC
+	{
+		SIGNATURE_PARAMETER_DESC() {}
+		SIGNATURE_PARAMETER_DESC(D3D12_SIGNATURE_PARAMETER_DESC& desc)
+		{
+			SemanticName = desc.SemanticName;
+			SemanticIndex = desc.SemanticIndex;
+			Register = desc.Register;
+			SystemValueType = desc.SystemValueType;
+			ComponentType = desc.ComponentType;
+			Mask = desc.Mask;
+			ReadWriteMask = desc.ReadWriteMask;
+			Stream = desc.Stream;
+			MinPrecision = desc.MinPrecision;
+		}
+
+		std::string                 SemanticName;   // Name of the semantic
+		UINT                        SemanticIndex;  // Index of the semantic
+		UINT                        Register;       // Number of member variables
+		D3D_NAME                    SystemValueType;// A predefined system value, or D3D_NAME_UNDEFINED if not applicable
+		D3D_REGISTER_COMPONENT_TYPE ComponentType;  // Scalar type (e.g. uint, float, etc.)
+		BYTE                        Mask;           // Mask to indicate which components of the register
+													// are used (combination of D3D10_COMPONENT_MASK values)
+		BYTE                        ReadWriteMask;  // Mask to indicate whether a given component is 
+													// never written (if this is an output signature) or
+													// always read (if this is an input signature).
+													// (combination of D3D_MASK_* values)
+		UINT                        Stream;         // Stream index
+		D3D_MIN_PRECISION           MinPrecision;   // Minimum desired interpolation precision
 	};
 }

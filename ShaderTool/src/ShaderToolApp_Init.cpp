@@ -33,7 +33,6 @@ bool ShaderToolApp::Init()
 	_CommandList->Reset(commandAllocator.Get(), nullptr);
 
 	CreateDescriptorHeaps();
-	BuildRootSignature();
 	BuildBackBufferPSO();
 	LoadPrimitiveModels();
 
@@ -67,18 +66,7 @@ void ShaderToolApp::InitNodeGraph()
 	//auto vsQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Vertex);
 	//auto psQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Pixel);
 
-	_InputLayout = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
-	
-
-	//D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
-
 	CreateRenderTargetPSO(NOT_LINKED);
-
 }
 
 void ShaderToolApp::CreateDescriptorHeaps()
@@ -89,58 +77,6 @@ void ShaderToolApp::CreateDescriptorHeaps()
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), NUM_BACK_BUFFERS, _RtvDescriptorSize)
 	);
 
-}
-
-void ShaderToolApp::BuildRootSignature()
-{
-
-	// 2 CBV and 1 SRV signature
-	{
-		// Root parameter can be a table, root descriptor or root constants.
-		CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
-
-		// Create root CBV.
-		rootParameters[0].InitAsConstantBufferView(0);
-		rootParameters[1].InitAsConstantBufferView(1);
-
-		CD3DX12_DESCRIPTOR_RANGE texTable;
-		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
-		rootParameters[2].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-
-		auto staticSamplers = D3DUtil::GetStaticSamplers();
-
-		// A root signature is an array of root parameters.
-		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
-			3,
-			rootParameters,
-			static_cast<UINT>(staticSamplers.size()),
-			staticSamplers.data(),
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-		// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
-		ComPtr<ID3DBlob> serializedRootSig = nullptr;
-		ComPtr<ID3DBlob> errorBlob = nullptr;
-		HRESULT hr = D3D12SerializeRootSignature(
-			&rootSigDesc,
-			D3D_ROOT_SIGNATURE_VERSION_1,
-			serializedRootSig.GetAddressOf(),
-			errorBlob.GetAddressOf());
-
-		if (errorBlob != nullptr)
-		{
-			LOG_ERROR("Error at D3D12SerializeRootSignature()");
-			::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		}
-		ThrowIfFailed(hr);
-
-		ThrowIfFailed(
-			_Device->CreateRootSignature(
-				0,
-				serializedRootSig->GetBufferPointer(),
-				serializedRootSig->GetBufferSize(),
-				IID_PPV_ARGS(_RootSignature.GetAddressOf())));
-	}
 }
 
 void ShaderToolApp::BuildBackBufferPSO()
@@ -169,13 +105,12 @@ void ShaderToolApp::BuildBackBufferPSO()
 	}
 	ThrowIfFailed(hr);
 
-	ComPtr<ID3D12RootSignature> rootSignature;
 	ThrowIfFailed(
 		_Device->CreateRootSignature(
 			0,
 			serializedRootSig->GetBufferPointer(),
 			serializedRootSig->GetBufferSize(),
-			IID_PPV_ARGS(rootSignature.GetAddressOf())));
+			IID_PPV_ARGS(_BackBufferRootSignature.GetAddressOf())));
 	
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout = {
@@ -189,7 +124,7 @@ void ShaderToolApp::BuildBackBufferPSO()
 	ZeroMemory(&pso, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 
 	pso.InputLayout = { inputLayout.data(), (UINT)inputLayout.size() };
-	pso.pRootSignature = rootSignature.Get();
+	pso.pRootSignature = _BackBufferRootSignature.Get();
 	pso.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	pso.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	pso.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);

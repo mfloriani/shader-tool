@@ -178,21 +178,16 @@ void ShaderToolApp::OnUpdate()
 
 void ShaderToolApp::OnRender()
 {
-	// CLEAR
+	// Reset command list
 	auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	commandAllocator->Reset();
-	
 	_CommandList->Reset(commandAllocator.Get(), nullptr);
-	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
-
-	auto frameCB = _CurrFrameResource->FrameCB->Resource();
-	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
 	
-	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
+	// Render to Texture
 
-	EvaluateGraph();
-	
+	EvaluateGraph();	
+
 	// Render to back buffer
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -224,7 +219,7 @@ void ShaderToolApp::OnRender()
 	);
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
-	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
+	_CommandList->SetGraphicsRootSignature(_BackBufferRootSignature.Get());
 	_CommandList->SetPipelineState(_BackBufferPSO.Get());
 
 	NewUIFrame();

@@ -146,6 +146,7 @@
     <ClInclude Include="src\Rendering\RenderTexture.h" />
     <ClInclude Include="src\Rendering\Shader.h" />
     <ClInclude Include="src\Rendering\ShaderManager.h" />
+    <ClInclude Include="src\Rendering\ShaderReflection.h" />
     <ClInclude Include="src\Rendering\UploadBuffer.h" />
     <ClInclude Include="src\Rendering\Vertex.h" />
     <ClInclude Include="src\Rendering\Window.h" />
@@ -196,6 +197,7 @@
     <ClCompile Include="src\Rendering\RenderTexture.cpp" />
     <ClCompile Include="src\Rendering\Shader.cpp" />
     <ClCompile Include="src\Rendering\ShaderManager.cpp" />
+    <ClCompile Include="src\Rendering\ShaderReflection.cpp" />
     <ClCompile Include="src\Rendering\Window.cpp" />
     <ClCompile Include="src\ShaderToolApp_Init.cpp" />
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />

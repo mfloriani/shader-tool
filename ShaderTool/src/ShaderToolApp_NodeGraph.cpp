@@ -21,6 +21,8 @@
 #define VK_L 0x4C
 #define VK_N 0x4E
 
+using Microsoft::WRL::ComPtr;
+
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
 	ImGui::SetTooltip("node id %d", nodeId);
@@ -277,6 +279,9 @@ void DebugInfo(ShaderToolApp* app)
 
 void ShaderToolApp::EvaluateGraph()
 {
+	// MUST set the PSO every frame due to the FrameResource swapping
+	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
+
 	if (_RootNodeId == INVALID_ID)
 		return;
 
@@ -434,17 +439,79 @@ void ShaderToolApp::EvaluateGraph()
 	}
 }
 
+void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName)
+{
+	auto shader = ShaderManager::Get().GetShader(shaderName);
+	UINT numConstantBuffers = shader->GetNumConstantBuffers();
+	UINT numTextures = shader->GetNumTextures();
+	UINT numTotalResources = numConstantBuffers + numTextures;
+
+	std::vector<CD3DX12_ROOT_PARAMETER> rootParameters(numTotalResources);
+	UINT i = 0;
+
+	for (; i < numConstantBuffers; ++i)
+		rootParameters[i].InitAsConstantBufferView(i);
+
+	for (UINT j=0; j < numTextures; ++j)
+	{
+		CD3DX12_DESCRIPTOR_RANGE texTable;
+		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, j);
+		rootParameters[i].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+		++i;
+	}
+
+	auto staticSamplers = D3DUtil::GetStaticSamplers();
+
+	// A root signature is an array of root parameters.
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		numTotalResources,
+		rootParameters.data(),
+		static_cast<UINT>(staticSamplers.size()),
+		staticSamplers.data(),
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+	ComPtr<ID3DBlob> serializedRootSig = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3D12SerializeRootSignature(
+		&rootSigDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1,
+		serializedRootSig.GetAddressOf(),
+		errorBlob.GetAddressOf());
+
+	if (errorBlob != nullptr)
+		LOG_ERROR("Error at D3D12SerializeRootSignature() {0}", (char*)errorBlob->GetBufferPointer());
+
+	ThrowIfFailed(hr);
+
+	ThrowIfFailed(
+		_Device->CreateRootSignature(
+			0,
+			serializedRootSig->GetBufferPointer(),
+			serializedRootSig->GetBufferSize(),
+			IID_PPV_ARGS(_RenderTargetRootSignature.GetAddressOf())));
+}
+
 void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 {
 	LOG_INFO("ShaderToolApp::CreateRenderTargetPSO [{0}]", shaderIndex);
 
-	auto shaderName = shaderIndex == NOT_LINKED ? DEFAULT_SHADER : ShaderManager::Get().GetShaderName((size_t)shaderIndex);	
+	_InputLayout = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
 	D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
+
+	auto shaderName = shaderIndex == NOT_LINKED ? DEFAULT_SHADER : ShaderManager::Get().GetShaderName((size_t)shaderIndex);
+
+	BuildRenderTargetRootSignature(shaderName);
 
 	_RenderTargetPSO = std::make_shared<PipelineStateObject>(_BackBufferFormat, _DepthStencilFormat, _4xMsaaState, _4xMsaaQuality);
 	_RenderTargetPSO->Create(
 		_Device.Get(),
-		_RootSignature.Get(),
+		_RenderTargetRootSignature.Get(),
 		inputLayout,
 		shaderName);
 
@@ -460,11 +527,16 @@ void ShaderToolApp::RenderToTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+	_CommandList->SetGraphicsRootSignature(_RenderTargetRootSignature.Get());	
 	_CommandList->SetPipelineState(_CurrFrameResource->RenderTargetPSO.get()->GetPSO());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
 	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
+
+	auto frameCB = _CurrFrameResource->FrameCB->Resource();
+	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+
 
 	// BOX
 	{
@@ -505,6 +577,7 @@ void ShaderToolApp::ClearRenderTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+	_CommandList->SetGraphicsRootSignature(_RenderTargetRootSignature.Get());
 	_CommandList->SetPipelineState(_CurrFrameResource->RenderTargetPSO.get()->GetPSO());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());

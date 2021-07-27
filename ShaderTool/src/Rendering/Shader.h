@@ -1,6 +1,6 @@
 #pragma once
 
-#include "D3DUtil.h"
+#include "ShaderReflection.h"
 
 class Shader
 {
@@ -12,17 +12,15 @@ public:
 	D3D12_SHADER_BYTECODE GetVsByteCode();
 	D3D12_SHADER_BYTECODE GetPsByteCode();
 
+	UINT GetNumConstantBuffers();
+	UINT GetNumTextures();
+
 	void PrintDebugInfo();
 	
 private:
-	void Reflect(Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
-
-private:
-	Microsoft::WRL::ComPtr<ID3DBlob> _VsByteCode;
-	Microsoft::WRL::ComPtr<ID3DBlob> _PsByteCode;
 	std::string _Name;
-	D3DUtil::SHADER_DESC _ShaderDesc;
-	std::vector<D3DUtil::SHADER_BUFFER_DESC> _CBuffersDesc;
-	std::unordered_map<std::string, std::vector<D3DUtil::SHADER_VARIABLE_DESC>> _CBufferVars;
+	Microsoft::WRL::ComPtr<ID3DBlob>  _VsByteCode;
+	Microsoft::WRL::ComPtr<ID3DBlob>  _PsByteCode;
+	std::unique_ptr<ShaderReflection> _Reflection;
 
 };
