@@ -5,17 +5,17 @@
 struct DrawNode : UiNode
 {
     explicit DrawNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::Draw), R(INVALID_ID), G(INVALID_ID), B(INVALID_ID), Model(INVALID_ID), VS(INVALID_ID), PS(INVALID_ID)
+        : UiNode(graph, UiNodeType::Draw), R(INVALID_ID), G(INVALID_ID), B(INVALID_ID), Model(INVALID_ID), Shader(INVALID_ID)
     {
     }
 
-    NodeId R, G, B, Model, VS, PS;
+    NodeId R, G, B, Model, Shader;
 
     struct DrawData
     {
-        DrawData() : r(0.f), g(0.f), b(0.f), model(NOT_LINKED), vs(NOT_LINKED), ps(NOT_LINKED), output(NOT_LINKED) {}
+        DrawData() : r(0.f), g(0.f), b(0.f), model(NOT_LINKED), shader(NOT_LINKED), output(NOT_LINKED) {}
         float r, g, b;
-        int model, vs, ps, output;
+        int model, shader, output;
     } Data;
 
     virtual void OnCreate() override
@@ -24,16 +24,14 @@ struct DrawNode : UiNode
         const Node link(NodeType::Link, NOT_LINKED);
         const Node out(NodeType::Draw);
 
-        VS = ParentGraph->CreateNode(link);
-        PS = ParentGraph->CreateNode(link);
+        Shader = ParentGraph->CreateNode(link);
         Model = ParentGraph->CreateNode(link);
         R = ParentGraph->CreateNode(value);
         G = ParentGraph->CreateNode(value);
         B = ParentGraph->CreateNode(value);
         Id = ParentGraph->CreateNode(out);
 
-        ParentGraph->CreateEdge(Id, VS);
-        ParentGraph->CreateEdge(Id, PS);
+        ParentGraph->CreateEdge(Id, Shader);
         ParentGraph->CreateEdge(Id, Model);
         ParentGraph->CreateEdge(Id, R);
         ParentGraph->CreateEdge(Id, G);
@@ -56,8 +54,7 @@ struct DrawNode : UiNode
         ParentGraph->EraseNode(G);
         ParentGraph->EraseNode(B);
         ParentGraph->EraseNode(Model);
-        ParentGraph->EraseNode(VS);
-        ParentGraph->EraseNode(PS);
+        ParentGraph->EraseNode(Shader);
     }
 
     virtual void OnRender() override
@@ -76,25 +73,10 @@ struct DrawNode : UiNode
         ImGui::Dummy(ImVec2(node_width, 0.f));
 
         {
-            ImNodes::BeginInputAttribute(VS);
-            const float label_width = ImGui::CalcTextSize("vs").x;
-            ImGui::TextUnformatted("vs");
-            if (ParentGraph->GetNumEdgesFromNode(VS) == 0ull)
-            {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::PopItemWidth();
-            }
-            ImNodes::EndInputAttribute();
-        }
-
-        ImGui::Spacing();
-
-        {
-            ImNodes::BeginInputAttribute(PS);
-            const float label_width = ImGui::CalcTextSize("ps").x;
-            ImGui::TextUnformatted("ps");
-            if (ParentGraph->GetNumEdgesFromNode(PS) == 0ull)
+            ImNodes::BeginInputAttribute(Shader);
+            const float label_width = ImGui::CalcTextSize("shader").x;
+            ImGui::TextUnformatted("shader");
+            if (ParentGraph->GetNumEdgesFromNode(Shader) == 0ull)
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
@@ -185,14 +167,14 @@ struct DrawNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << R << " " << G << " " << B << " " << Model << " " << VS << " " << PS;
+        out << " " << R << " " << G << " " << B << " " << Model << " " << Shader;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Draw;
-        in >> Id >> R >> G >> B >> Model >> VS >> PS;
+        in >> Id >> R >> G >> B >> Model >> Shader;
         return in;
     }
 

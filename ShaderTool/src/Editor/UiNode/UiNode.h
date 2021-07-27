@@ -17,8 +17,7 @@ enum class UiNodeType
     Time,
     RenderTarget,
     Primitive,
-    VertexShader,
-    PixelShader
+    Shader,
 };
 
 struct UiNode

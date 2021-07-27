@@ -34,8 +34,7 @@ bool ShaderToolApp::Init()
 
 	CreateDescriptorHeaps();
 	BuildRootSignature();
-	BuildShadersAndInputLayout();
-	BuildPSO();
+	BuildBackBufferPSO();
 	LoadPrimitiveModels();
 
 	ThrowIfFailed(_CommandList->Close());
@@ -62,8 +61,24 @@ bool ShaderToolApp::Init()
 
 void ShaderToolApp::InitNodeGraph()
 {
-	//_CurrentRenderTargetPSO = _DefaultRenderTargetPSO.get();
+	ShaderManager::Get().LoadShaderFromFile("default.fx");
+
+	// TODO: testing
+	//auto vsQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Vertex);
+	//auto psQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Pixel);
+
+	_InputLayout = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
 	
+
+	//D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
+
+	CreateRenderTargetPSO(NOT_LINKED);
+
 }
 
 void ShaderToolApp::CreateDescriptorHeaps()
@@ -78,6 +93,7 @@ void ShaderToolApp::CreateDescriptorHeaps()
 
 void ShaderToolApp::BuildRootSignature()
 {
+
 	// 2 CBV and 1 SRV signature
 	{
 		// Root parameter can be a table, root descriptor or root constants.
@@ -127,39 +143,73 @@ void ShaderToolApp::BuildRootSignature()
 	}
 }
 
-void ShaderToolApp::BuildShadersAndInputLayout()
+void ShaderToolApp::BuildBackBufferPSO()
 {
-	auto& shaderMgr = ShaderManager::Get();
-	shaderMgr.LoadBinaryShader(std::string(BACKBUFFER_VS) + std::string(".cso"));
-	shaderMgr.LoadBinaryShader(std::string(DEFAULT_VS) + std::string(".cso"));
-	shaderMgr.LoadBinaryShader(std::string(DEFAULT_PS) + std::string(".cso"));
+	LOG_INFO("Creating BackBuffer PSO");
+	
+	// A root signature is an array of root parameters.
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		0,
+		nullptr,
+		0,
+		nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// TODO: testing
-	auto vsQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Vertex);
-	auto psQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Pixel);
+	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+	ComPtr<ID3DBlob> serializedRootSig = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3D12SerializeRootSignature(
+		&rootSigDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1,
+		serializedRootSig.GetAddressOf(),
+		errorBlob.GetAddressOf());
 
+	if (errorBlob != nullptr)
+	{
+		LOG_ERROR("Error at D3D12SerializeRootSignature()");
+		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	}
+	ThrowIfFailed(hr);
 
-	_InputLayout = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	ComPtr<ID3D12RootSignature> rootSignature;
+	ThrowIfFailed(
+		_Device->CreateRootSignature(
+			0,
+			serializedRootSig->GetBufferPointer(),
+			serializedRootSig->GetBufferSize(),
+			IID_PPV_ARGS(rootSignature.GetAddressOf())));
+	
+
+	std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-}
 
-void ShaderToolApp::BuildPSO()
-{
-	D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
+	ComPtr<ID3DBlob> bytecode;
+	ShaderManager::Get().LoadBinaryShader(BACKBUFFER_VS, bytecode);
 
-	_BackBufferPSO = std::make_unique<PipelineStateObject>( _BackBufferFormat, _DepthStencilFormat, _4xMsaaState, _4xMsaaQuality );
-	_BackBufferPSO->Create(
-		_Device.Get(),
-		_RootSignature.Get(),
-		inputLayout,
-		BACKBUFFER_VS,
-		"");
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso;
+	ZeroMemory(&pso, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 
-	CreateRenderTargetPSO(NOT_LINKED, NOT_LINKED);
+	pso.InputLayout = { inputLayout.data(), (UINT)inputLayout.size() };
+	pso.pRootSignature = rootSignature.Get();
+	pso.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	pso.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	pso.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	pso.SampleMask = UINT_MAX;
+	pso.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pso.NumRenderTargets = 1;
+	pso.RTVFormats[0] = _BackBufferFormat;
+	pso.SampleDesc.Count = _4xMsaaState ? 4 : 1;
+	pso.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
+	pso.DSVFormat = _DepthStencilFormat; // TODO: at the moment no format is used for render target
+
+	pso.VS = {
+		reinterpret_cast<BYTE*>(bytecode->GetBufferPointer()),
+		bytecode->GetBufferSize()
+	};
+	
+	ThrowIfFailed(_Device->CreateGraphicsPipelineState(&pso, IID_PPV_ARGS(&_BackBufferPSO)));
+
 }
 
 void ShaderToolApp::LoadPrimitiveModels()

@@ -4,26 +4,17 @@
     <Filter Include="Editor">
       <UniqueIdentifier>{8C1A20B0-78BC-4A86-6177-5EDA4DB8D1D6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Editor\Graph">
+      <UniqueIdentifier>{8D430C3E-79A6-9BE2-222C-D4980E6E6765}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Editor\ImGui">
       <UniqueIdentifier>{B6482D3E-A2AB-BCE2-4B31-F59837738865}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Editor\ImGui\ImGuiFileBrowser">
-      <UniqueIdentifier>{048B789F-70A3-5FC9-3950-EF62A527F462}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Editor\ImGui\ImGuiFileBrowser\Dirent">
-      <UniqueIdentifier>{19BD51C0-05A4-13B8-AEF4-79D59ABA8C1E}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Editor\ImGui\ImGuiFileDialog">
-      <UniqueIdentifier>{70186856-5CD3-5702-058B-D04CF124A292}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Editor\ImGui\ImGuiFileDialog\dirent">
-      <UniqueIdentifier>{258D0BAD-9146-7657-1AA6-9031865E2CC7}</UniqueIdentifier>
     </Filter>
     <Filter Include="Editor\NFD">
       <UniqueIdentifier>{739B9DA0-5F53-DFED-C85A-B849B4317ADE}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Editor\NFD\include">
-      <UniqueIdentifier>{E6857C94-D269-3DEA-3BCA-373D27CD276C}</UniqueIdentifier>
+    <Filter Include="Editor\UiNode">
+      <UniqueIdentifier>{DFA18F1F-4B62-0B56-149D-54D3801C5032}</UniqueIdentifier>
     </Filter>
     <Filter Include="Rendering">
       <UniqueIdentifier>{E3AE1F7C-4F19-D4F2-9857-85980401B247}</UniqueIdentifier>
@@ -36,13 +27,16 @@
     <ClInclude Include="src\AssetManager.h" />
     <ClInclude Include="src\Defines.h" />
     <ClInclude Include="src\Editor\Graph\Edge.h">
-      <Filter>Editor</Filter>
+      <Filter>Editor\Graph</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\Graph\Graph.h">
-      <Filter>Editor</Filter>
+      <Filter>Editor\Graph</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\Graph\IdMap.h">
-      <Filter>Editor</Filter>
+      <Filter>Editor\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\Graph\Node.h">
+      <Filter>Editor\Graph</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\ImGui\imconfig.h">
       <Filter>Editor\ImGui</Filter>
@@ -81,7 +75,7 @@
       <Filter>Editor\NFD</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\NFD\nfd.h">
-      <Filter>Editor\NFD\include</Filter>
+      <Filter>Editor\NFD</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\NFD\nfd_common.h">
       <Filter>Editor\NFD</Filter>
@@ -89,16 +83,38 @@
     <ClInclude Include="src\Editor\NFD\simple_exec.h">
       <Filter>Editor\NFD</Filter>
     </ClInclude>
-    <ClInclude Include="src\Editor\Graph\Node.h">
-      <Filter>Editor</Filter>
+    <ClInclude Include="src\Editor\UiNode\AddNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\DrawNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\MultiplyNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\PrimitiveNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\SineNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\TimeNode.h">
+      <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\UiNode\UiNode.h">
-      <Filter>Editor</Filter>
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\ShaderNode.h">
+      <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\MagicEnum.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Rendering\D3DApp.h">
       <Filter>Rendering</Filter>
@@ -110,6 +126,9 @@
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\Mesh.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rendering\PipelineStateObject.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\RenderTexture.h">
@@ -135,17 +154,6 @@
     </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Editor\UiNode\AddNode.h" />
-    <ClInclude Include="src\Editor\UiNode\MultiplyNode.h" />
-    <ClInclude Include="src\Editor\UiNode\DrawNode.h" />
-    <ClInclude Include="src\Editor\UiNode\SineNode.h" />
-    <ClInclude Include="src\Editor\UiNode\PrimitiveNode.h" />
-    <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h" />
-    <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
-    <ClInclude Include="src\Editor\UiNode\VertexShaderNode.h" />
-    <ClInclude Include="src\MagicEnum.h" />
-    <ClInclude Include="src\Editor\UiNode\PixelShaderNode.h" />
-    <ClInclude Include="src\Rendering\PipelineStateObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -192,6 +200,9 @@
     <ClCompile Include="src\Rendering\FrameResource.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Rendering\PipelineStateObject.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Rendering\RenderTexture.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
@@ -208,17 +219,21 @@
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\Rendering\PipelineStateObject.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">
+    <FxCompile Include="src\Shaders\backbuffer.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="src\Shaders\default_ps.hlsl">
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Shaders\custom_red.fx">
       <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="src\Shaders\default_vs.hlsl">
+    </None>
+    <None Include="src\Shaders\default.fx">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
+    <None Include="src\Shaders\quad.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

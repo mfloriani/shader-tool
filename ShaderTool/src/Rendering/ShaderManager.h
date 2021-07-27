@@ -22,9 +22,9 @@ public:
 		return instance;
 	}
 
-	std::string LoadBinaryShader(const std::string& filename);
-	std::string LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target);
-	std::string LoadShaderFromFile(const std::string& filename, ShaderType type);
+	void LoadBinaryShader(const std::string& filename, Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
+	//std::string LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target);
+	std::string LoadShaderFromFile(const std::string& filename);
 
 	Shader* GetShader(size_t index);
 	Shader* GetShader(const std::string& name);

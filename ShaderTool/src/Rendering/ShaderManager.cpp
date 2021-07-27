@@ -5,70 +5,65 @@ using namespace DirectX;
 using namespace D3DUtil;
 using Microsoft::WRL::ComPtr;
 
-std::string ShaderManager::LoadBinaryShader(const std::string& filename)
+void ShaderManager::LoadBinaryShader(const std::string& filename, ComPtr<ID3DBlob>& bytecode)
 {
 	LOG_TRACE("Loading cso shader {0}", filename);
-	ComPtr<ID3DBlob> blob;
 	const std::string name = D3DUtil::ExtractFilename(filename);
-	ThrowIfFailed(D3DReadFileToBlob(AnsiToWString(filename).c_str(), &blob));
+	ThrowIfFailed(D3DReadFileToBlob(AnsiToWString(filename).c_str(), &bytecode));
 
-	_Shaders.push_back(std::make_unique<Shader>(name, blob));
-	_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
-	_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
-
-	return name;
+	//_Shaders.push_back(std::make_unique<Shader>(name, blob, nullptr));
+	//_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
+	//_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
 }
 
-std::string ShaderManager::LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target)
-{
-	LOG_TRACE("Loading raw shader [{0} | {1} | {2}]", filename, entryPoint, target);
-	ComPtr<ID3DBlob> blob;
-	if (D3DUtil::CompileShader(filename, entryPoint, target, blob))
-	{
-		const auto name = D3DUtil::ExtractFilename(filename);	
-		_Shaders.push_back(std::make_unique<Shader>(name, blob));
-		_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
-		_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
+//std::string ShaderManager::LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target)
+//{
+//	LOG_TRACE("Loading raw shader [{0} | {1} | {2}]", filename, entryPoint, target);
+//	ComPtr<ID3DBlob> blob;
+//	if (D3DUtil::CompileShader(filename, entryPoint, target, blob))
+//	{
+//		const auto name = D3DUtil::ExtractFilename(filename);	
+//		_Shaders.push_back(std::make_unique<Shader>(name, blob));
+//		_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
+//		_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
+//
+//		return name;
+//	}
+//	return std::string();
+//}
 
-		return name;
-	}
-	return std::string();
-}
-
-std::string ShaderManager::LoadShaderFromFile(const std::string& filename, ShaderType type)
+std::string ShaderManager::LoadShaderFromFile(const std::string& filename)
 {
-	std::string entryPoint;
-	std::string target;
 	std::string name = D3DUtil::ExtractFilename(filename);
-	switch (type)
+	
+	bool vsOk = false;
+	ComPtr<ID3DBlob> vsBlob;
 	{
-	case ShaderType::Vertex:
-		entryPoint = "VS";
-		target = "vs_5_0";
-		name += "_vs";
-		break;
-	case ShaderType::Pixel:
-		entryPoint = "PS";
-		target = "ps_5_0";
-		name += "_ps";
-		break;
-	default:
-		LOG_ERROR("Invalid shader type {0}", type);
-		entryPoint = "INVALID_SHADER";
-		target = "INVALID_SHADER";
-		name += "_INVALID_SHADER";
-		break;
+		std::string entryPoint = "VS";
+		std::string target = "vs_5_0";
+		LOG_TRACE("Compiling shader [{0} | {1} | {2}]", filename, entryPoint, target);		
+		if (D3DUtil::CompileShader(filename, entryPoint, target, vsBlob))
+			vsOk = true;
 	}
 
-	LOG_TRACE("Compiling shader [{0} | {1} | {2}]", filename, entryPoint, target);
-	ComPtr<ID3DBlob> blob;
-	if (D3DUtil::CompileShader(filename, entryPoint, target, blob))
+	bool psOk = false;
+	ComPtr<ID3DBlob> psBlob;
 	{
-		_Shaders.push_back(std::make_unique<Shader>(name, blob));
+		std::string entryPoint = "PS";
+		std::string target = "ps_5_0";
+		LOG_TRACE("Compiling shader [{0} | {1} | {2}]", filename, entryPoint, target);
+		if (D3DUtil::CompileShader(filename, entryPoint, target, psBlob))
+			psOk = true;
+	}
+
+	if (vsOk && psOk)
+	{
+		_Shaders.push_back(std::make_unique<Shader>(name, vsBlob, psBlob));
 		_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
 		_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
 		return name;
 	}
+
 	return std::string();
 }
 

@@ -6,27 +6,36 @@
 using Microsoft::WRL::ComPtr;
 using namespace D3DUtil;
 
-Shader::Shader(const std::string& name, ComPtr<ID3DBlob> buffer) 
-	: _Name(name), _ByteCode(buffer)
+Shader::Shader(const std::string& name, ComPtr<ID3DBlob> vsBuffer, ComPtr<ID3DBlob> psBuffer)
+	: _Name(name), _VsByteCode(vsBuffer), _PsByteCode(psBuffer)
 {
-	Reflect();
+	//Reflect();
 }
 
 Shader::~Shader()
 {
 }
 
-D3D12_SHADER_BYTECODE Shader::GetByteCode()
+D3D12_SHADER_BYTECODE Shader::GetVsByteCode()
 {
 	return { 
-		reinterpret_cast<BYTE*>(_ByteCode->GetBufferPointer()), 
-		_ByteCode->GetBufferSize()	
+		reinterpret_cast<BYTE*>(_VsByteCode->GetBufferPointer()), 
+		_VsByteCode->GetBufferSize()	
+	};
+}
+
+D3D12_SHADER_BYTECODE Shader::GetPsByteCode()
+{
+	return {
+		reinterpret_cast<BYTE*>(_PsByteCode->GetBufferPointer()),
+		_PsByteCode->GetBufferSize()
 	};
 }
 
 
 void Shader::Reflect()
 {
+	/*
 	ID3D12ShaderReflection* shaderReflection;
 	auto hr = D3DReflect(
 		_ByteCode->GetBufferPointer(),
@@ -105,6 +114,7 @@ void Shader::Reflect()
 
 
 	shaderReflection->Release();
+	*/
 }
 
 void Shader::PrintDebugInfo()

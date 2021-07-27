@@ -7,8 +7,7 @@
 #include "Editor\UiNode\DrawNode.h"
 #include "Editor\UiNode\PrimitiveNode.h"
 #include "Editor\UiNode\RenderTargetNode.h"
-#include "Editor\UiNode\VertexShaderNode.h"
-#include "Editor\UiNode\PixelShaderNode.h"
+#include "Editor\UiNode\ShaderNode.h"
 #include "Editor\UiNode\SineNode.h"
 #include "Editor\UiNode\TimeNode.h"
 
@@ -128,8 +127,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("DrawNode");
 						ImGui::Text("Id:      %i", drawNode->Id);
-						ImGui::Text("VS:      %i", drawNode->Data.vs);
-						ImGui::Text("PS:      %i", drawNode->Data.ps);
+						ImGui::Text("Shader:  %i", drawNode->Data.shader);
 						ImGui::Text("Model:   %i", drawNode->Data.model);
 						ImGui::Text("R:       %.5f", drawNode->Data.r);
 						ImGui::Text("G:       %.5f", drawNode->Data.g);
@@ -150,11 +148,11 @@ void DebugInfo(ShaderToolApp* app)
 				}
 				break;
 
-				case UiNodeType::VertexShader:
+				case UiNodeType::Shader:
 				{
-					auto vsNode = static_cast<VertexShaderNode*>(node);
+					auto vsNode = static_cast<ShaderNode*>(node);
 					ShowHoverDebugInfo([&]() {
-						ImGui::Text("VertexShaderNode");
+						ImGui::Text("ShaderNode");
 						ImGui::Text("Id:     %i", vsNode->Id);
 						ImGui::Text("Index:  %i", vsNode->Data.shaderIndex);
 						ImGui::Text("Name:   %s", vsNode->Data.shaderName.c_str());
@@ -374,12 +372,12 @@ void ShaderToolApp::EvaluateGraph()
 			//	valueStackClone.pop();
 			//}
 
-			if (valueStack.size() != 6)
-				LOG_ERROR("Draw node expects 6 inputs but got {0}", valueStack.size());
+			if (valueStack.size() != 5)
+				LOG_ERROR("Draw node expects 5 inputs but got {0}", valueStack.size());
 
 			// The final output node isn't evaluated in the loop -- instead we just pop
 			// the three values which should be in the stack.
-			assert(valueStack.size() == 6ull && "Draw node expects 6 inputs");
+			assert(valueStack.size() == 5ull && "Draw node expects 5 inputs");
 			
 			auto drawNode = static_cast<DrawNode*>(_UINodeIdMap[id]);
 
@@ -393,29 +391,21 @@ void ShaderToolApp::EvaluateGraph()
 			drawNode->Data.model = static_cast<int>(valueStack.top());
 			valueStack.pop();
 			
-			int ps = static_cast<int>(valueStack.top());
+			int shaderIndex = static_cast<int>(valueStack.top());
 			valueStack.pop();
-			if (ps != drawNode->Data.ps)
+			if (shaderIndex != drawNode->Data.shader)
 			{
-				drawNode->Data.ps = ps;
+				drawNode->Data.shader = shaderIndex;
 				psoHasChanged = true;
 			}
-						
-			int vs = static_cast<int>(valueStack.top());
-			valueStack.pop();
-			if (vs != drawNode->Data.vs)
-			{
-				drawNode->Data.vs = vs;
-				psoHasChanged = true;
-			}
-
+			
 			_Entity.Color = { drawNode->Data.r, drawNode->Data.g, drawNode->Data.b };
 			// TODO: at the moment only works with primitives, but later there will be loaded models
 			if(drawNode->Data.model != NOT_LINKED)
 				_Entity.Model = AssetManager::Get().GetModel(_Primitives[drawNode->Data.model]);
 			
 			if (psoHasChanged)
-				CreateRenderTargetPSO(drawNode->Data.vs, drawNode->Data.ps);
+				CreateRenderTargetPSO(drawNode->Data.shader);
 			
 			RenderToTexture();
 
@@ -430,7 +420,7 @@ void ShaderToolApp::EvaluateGraph()
 		}
 		break;
 
-		case NodeType::VertexShader:
+		case NodeType::Shader:
 		{
 			valueStack.push(node.Value);
 		}
@@ -443,24 +433,19 @@ void ShaderToolApp::EvaluateGraph()
 	}
 }
 
-void ShaderToolApp::CreateRenderTargetPSO(int vsIndex, int psIndex)
+void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 {
-	LOG_INFO("ShaderToolApp::CreateRenderTargetPSO [{0} | {1}]", vsIndex, psIndex);
+	LOG_INFO("ShaderToolApp::CreateRenderTargetPSO [{0}]", shaderIndex);
 
+	auto shaderName = shaderIndex == NOT_LINKED ? DEFAULT_SHADER : ShaderManager::Get().GetShaderName((size_t)shaderIndex);	
 	D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
-	
-	auto& shaderMgr = ShaderManager::Get();
-	auto vs = vsIndex == NOT_LINKED ? DEFAULT_VS : shaderMgr.GetShaderName((size_t)vsIndex);
-	auto ps = psIndex == NOT_LINKED ? DEFAULT_PS : shaderMgr.GetShaderName((size_t)psIndex);
-	
+
 	_RenderTargetPSO = std::make_shared<PipelineStateObject>(_BackBufferFormat, _DepthStencilFormat, _4xMsaaState, _4xMsaaQuality);
 	_RenderTargetPSO->Create(
 		_Device.Get(),
 		_RootSignature.Get(),
 		inputLayout,
-		vs,
-		ps,
-		false);
+		shaderName);
 
 	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
 }
@@ -617,24 +602,15 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodes.push_back(std::move(node));
 			}
 
-			if (ImGui::MenuItem("Vertex Shader"))
+			if (ImGui::MenuItem("Shader"))
 			{
-				auto node = std::make_unique<VertexShaderNode>(&_Graph);
+				auto node = std::make_unique<ShaderNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Pixel Shader"))
-			{
-				auto node = std::make_unique<PixelShaderNode>(&_Graph);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
+			
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleVar();
@@ -876,22 +852,15 @@ void ShaderToolApp::Load()
 			_UINodes.push_back(std::move(node));
 		}
 		break;
-		case UiNodeType::VertexShader:
+		case UiNodeType::Shader:
 		{
-			auto node = std::make_unique<VertexShaderNode>(&_Graph);
+			auto node = std::make_unique<ShaderNode>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
 		}
 		break;
-		case UiNodeType::PixelShader:
-		{
-			auto node = std::make_unique<PixelShaderNode>(&_Graph);
-			fin >> *node.get();
-			_UINodeIdMap[node->Id] = node.get();
-			_UINodes.push_back(std::move(node));
-		}
-		break;
+		
 		default:
 			LOG_WARN("Failed to load Unknown UI node type {0}", nodeType);
 			break;

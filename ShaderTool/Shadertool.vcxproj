@@ -72,6 +72,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST src\Shaders\*.fx\ (xcopy /Q /E /Y /I src\Shaders\*.fx ..\bin\Debug-x86_64\ShaderTool &gt; nul) ELSE (xcopy /Q /Y /I src\Shaders\*.fx ..\bin\Debug-x86_64\ShaderTool &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -94,6 +97,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST src\Shaders\*.fx\ (xcopy /Q /E /Y /I src\Shaders\*.fx ..\bin\Release-x86_64\ShaderTool &gt; nul) ELSE (xcopy /Q /Y /I src\Shaders\*.fx ..\bin\Release-x86_64\ShaderTool &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\AssetManager.h" />
@@ -101,6 +107,7 @@
     <ClInclude Include="src\Editor\Graph\Edge.h" />
     <ClInclude Include="src\Editor\Graph\Graph.h" />
     <ClInclude Include="src\Editor\Graph\IdMap.h" />
+    <ClInclude Include="src\Editor\Graph\Node.h" />
     <ClInclude Include="src\Editor\ImGui\imconfig.h" />
     <ClInclude Include="src\Editor\ImGui\imfilebrowser.h" />
     <ClInclude Include="src\Editor\ImGui\imgui.h" />
@@ -116,17 +123,15 @@
     <ClInclude Include="src\Editor\NFD\nfd.h" />
     <ClInclude Include="src\Editor\NFD\nfd_common.h" />
     <ClInclude Include="src\Editor\NFD\simple_exec.h" />
-    <ClInclude Include="src\Editor\Graph\Node.h" />
     <ClInclude Include="src\Editor\UiNode\AddNode.h" />
     <ClInclude Include="src\Editor\UiNode\DrawNode.h" />
     <ClInclude Include="src\Editor\UiNode\MultiplyNode.h" />
-    <ClInclude Include="src\Editor\UiNode\PixelShaderNode.h" />
     <ClInclude Include="src\Editor\UiNode\PrimitiveNode.h" />
     <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h" />
-    <ClInclude Include="src\Editor\UiNode\VertexShaderNode.h" />
     <ClInclude Include="src\Editor\UiNode\SineNode.h" />
     <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
     <ClInclude Include="src\Editor\UiNode\UiNode.h" />
+    <ClInclude Include="src\Editor\UiNode\ShaderNode.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
@@ -200,18 +205,15 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">
+    <FxCompile Include="src\Shaders\backbuffer.hlsl">
       <ShaderType>Vertex</ShaderType>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="src\Shaders\default_ps.hlsl">
-      <ShaderType>Pixel</ShaderType>
-      <ShaderModel>5.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="src\Shaders\default_vs.hlsl">
-      <ShaderType>Vertex</ShaderType>
-      <ShaderModel>5.0</ShaderModel>
-    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Shaders\custom_red.fx" />
+    <None Include="src\Shaders\default.fx" />
+    <None Include="src\Shaders\quad.fx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

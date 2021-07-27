@@ -17,8 +17,7 @@ enum class NodeType
     Time,
     RenderTarget,
     Primitive,
-    VertexShader,
-    PixelShader
+    Shader,
 };
 
 using NodeId = int;

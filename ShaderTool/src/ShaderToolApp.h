@@ -50,8 +50,7 @@ public:
 	void SwapFrameResource();
 	void CreateDescriptorHeaps();
 	void BuildRootSignature();
-	void BuildShadersAndInputLayout();
-	void BuildPSO();
+	void BuildBackBufferPSO();
 	void LoadPrimitiveModels();
 	
 	const GameTimer& GetTimer() const { return _Timer; }
@@ -75,8 +74,8 @@ private:
 	bool _IsRunning{ true };
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RootSignature{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> _BackBufferPSO;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
-	std::unique_ptr<PipelineStateObject> _BackBufferPSO;
 	std::shared_ptr<PipelineStateObject> _RenderTargetPSO;
 	
 private: // Node Graph	
@@ -100,6 +99,6 @@ private: // Node Graph
 	void HandleNewLinks();
 	void HandleDeletedLinks();
 	void HandleDeletedNodes();
-	void CreateRenderTargetPSO(int vsIndex, int psIndex);
+	void CreateRenderTargetPSO(int shaderIndex);
 
 };

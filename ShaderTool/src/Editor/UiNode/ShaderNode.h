@@ -2,10 +2,10 @@
 
 #include "UiNode.h"
 
-struct VertexShaderNode : UiNode
+struct ShaderNode : UiNode
 {
-    explicit VertexShaderNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::VertexShader)
+    explicit ShaderNode(Graph<Node>* graph)
+        : UiNode(graph, UiNodeType::Shader)
     {
     }
 
@@ -18,11 +18,11 @@ struct VertexShaderNode : UiNode
 
     virtual void OnCreate() override
     {
-        const Node op(NodeType::VertexShader);
+        const Node op(NodeType::Shader);
         Id = ParentGraph->CreateNode(op);
 
         Data.path = "INTERNAL_SHADER_PATH";
-        Data.shaderName = DEFAULT_VS;
+        Data.shaderName = DEFAULT_SHADER;
         Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
     }
 
@@ -43,20 +43,22 @@ struct VertexShaderNode : UiNode
         ImNodes::BeginNode(Id);
 
         ImNodes::BeginNodeTitleBar();
-        ImGui::TextUnformatted("VERTEX SHADER");
+        ImGui::TextUnformatted("VERTEX SHADER [?]");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Expected function names:\nVS, HS, DS, GS and PS");
         ImNodes::EndNodeTitleBar();
-
-        if (ImGui::Button("..."))
+        
+        if (ImGui::Button("Open"))
         {
             nfdchar_t* outPath = nullptr;
-            nfdresult_t result = NFD_OpenDialog("hlsl", NULL, &outPath);
+            nfdresult_t result = NFD_OpenDialog("*", NULL, &outPath);
 
             if (result == NFD_OKAY)
             {
                 auto shaderPath = std::string(outPath);
                 free(outPath);
                 //LOG_TRACE("Selected file [{0} | {1} | {2}]", path, D3DUtil::ExtractFilename(path, true), D3DUtil::ExtractFilename(path));
-                auto shaderName = ShaderManager::Get().LoadRawShader(shaderPath, "main", "vs_5_0");
+                //auto shaderName = ShaderManager::Get().LoadRawShader(shaderPath, "main", "vs_5_0");
+                auto shaderName = ShaderManager::Get().LoadShaderFromFile(shaderPath);
                 if (shaderName.size() == 0)
                 {
                     // Failed
@@ -79,7 +81,17 @@ struct VertexShaderNode : UiNode
                 LOG_ERROR("Error: %s\n", NFD_GetError());
             }
         }
-        
+        //ImGui::SameLine();
+        //if (ImGui::Button("Edit"))
+        //{
+
+        //}
+        //ImGui::SameLine();
+        //if (ImGui::Button("Compile"))
+        //{
+
+        //}
+
         ImGui::Text(Data.shaderName.c_str());
 
         ImNodes::BeginOutputAttribute(Id);
@@ -100,18 +112,18 @@ struct VertexShaderNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        Type = UiNodeType::VertexShader;
+        Type = UiNodeType::Shader;
         in >> Id >> Data.shaderName >> Data.path;
         Data.shaderIndex = (int) ShaderManager::Get().GetShaderIndex(Data.shaderName);
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const VertexShaderNode& n)
+    friend std::ostream& operator<<(std::ostream& out, const ShaderNode& n)
     {
         return n.Serialize(out);
     }
 
-    friend std::istream& operator>>(std::istream& in, VertexShaderNode& n)
+    friend std::istream& operator>>(std::istream& in, ShaderNode& n)
     {
         return n.Deserialize(in);
     }

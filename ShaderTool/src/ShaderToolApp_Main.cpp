@@ -225,7 +225,7 @@ void ShaderToolApp::OnRender()
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
 	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
-	_CommandList->SetPipelineState(_BackBufferPSO->GetPSO());
+	_CommandList->SetPipelineState(_BackBufferPSO.Get());
 
 	NewUIFrame();
 	RenderUIDockSpace();

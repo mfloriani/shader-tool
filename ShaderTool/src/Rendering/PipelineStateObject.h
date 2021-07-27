@@ -12,9 +12,7 @@ public:
 		ID3D12Device* device,
 		ID3D12RootSignature* rootSign,
 		D3D12_INPUT_LAYOUT_DESC inputLayout,
-		const std::string& vs,
-		const std::string& ps,
-		bool setDepthStencil = true);
+		const std::string& shader);
 
 	ID3D12PipelineState* GetPSO() { return _PSO.Get(); }
 
