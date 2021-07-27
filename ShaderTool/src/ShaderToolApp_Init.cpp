@@ -145,8 +145,6 @@ void ShaderToolApp::BuildRootSignature()
 
 void ShaderToolApp::BuildBackBufferPSO()
 {
-	LOG_INFO("Creating BackBuffer PSO");
-	
 	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
 		0,
@@ -201,7 +199,7 @@ void ShaderToolApp::BuildBackBufferPSO()
 	pso.RTVFormats[0] = _BackBufferFormat;
 	pso.SampleDesc.Count = _4xMsaaState ? 4 : 1;
 	pso.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
-	pso.DSVFormat = _DepthStencilFormat; // TODO: at the moment no format is used for render target
+	pso.DSVFormat = _DepthStencilFormat;
 
 	pso.VS = {
 		reinterpret_cast<BYTE*>(bytecode->GetBufferPointer()),

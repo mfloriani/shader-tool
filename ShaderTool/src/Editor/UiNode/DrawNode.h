@@ -40,12 +40,7 @@ struct DrawNode : UiNode
 
     virtual void OnUpdate(GameTimer& timer) override
     {
-        //Data.vs = (int)ParentGraph->GetNode(VS).Value;
-        //Data.ps = (int)ParentGraph->GetNode(PS).Value;
-        //Data.model = (int)ParentGraph->GetNode(Model).Value;
-        //Data.r = ParentGraph->GetNode(R).Value;
-        //Data.g = ParentGraph->GetNode(G).Value;
-        //Data.b = ParentGraph->GetNode(B).Value;
+        
     }
 
     virtual void OnDelete() override

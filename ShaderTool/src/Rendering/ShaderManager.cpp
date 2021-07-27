@@ -58,9 +58,17 @@ std::string ShaderManager::LoadShaderFromFile(const std::string& filename)
 
 	if (vsOk && psOk)
 	{
-		_Shaders.push_back(std::make_unique<Shader>(name, vsBlob, psBlob));
-		_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
-		_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
+		if (!HasShader(name)) // new shader
+		{
+			_Shaders.push_back(std::make_unique<Shader>(name, vsBlob, psBlob));
+			_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
+			_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
+		}
+		else // overwrite the current shader
+		{
+			size_t index = GetShaderIndex(name);
+			_Shaders[index] = std::make_unique<Shader>(name, vsBlob, psBlob);
+		}
 		return name;
 	}
 

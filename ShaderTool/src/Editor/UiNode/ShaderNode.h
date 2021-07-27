@@ -114,7 +114,26 @@ struct ShaderNode : UiNode
     {
         Type = UiNodeType::Shader;
         in >> Id >> Data.shaderName >> Data.path;
-        Data.shaderIndex = (int) ShaderManager::Get().GetShaderIndex(Data.shaderName);
+        
+        if (ShaderManager::Get().HasShader(Data.shaderName))
+        {
+            Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
+        }
+        else
+        {
+            auto shaderName = ShaderManager::Get().LoadShaderFromFile(Data.path);
+            if (shaderName.size() == 0)
+            {
+                LOG_ERROR("Failed to load shader {0}", Data.path);
+                Data.shaderName = "SHADER_NOT_FOUND";
+                Data.shaderIndex = INVALID_INDEX;
+            }
+            else
+            {
+                Data.shaderName = shaderName;
+                Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
+            }
+        }
         return in;
     }
 

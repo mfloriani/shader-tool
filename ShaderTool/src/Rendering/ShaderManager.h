@@ -31,6 +31,7 @@ public:
 	const std::vector<std::unique_ptr<Shader>>& GetShaders() const { return _Shaders; }
 	size_t GetShaderIndex(const std::string& name) { return _ShaderNameIndexMap[name]; }
 	const std::string& GetShaderName(size_t index) { return _ShaderIndexNameMap[index]; }
+	bool HasShader(const std::string& name) { return _ShaderNameIndexMap.find(name) != _ShaderNameIndexMap.end(); }
 
 private:
 	ShaderManager(){}

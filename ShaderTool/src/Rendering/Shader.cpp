@@ -14,6 +14,7 @@ Shader::Shader(const std::string& name, ComPtr<ID3DBlob> vsBuffer, ComPtr<ID3DBl
 
 Shader::~Shader()
 {
+	//LOG_TRACE("Shader::~Shader() {0}", _Name);
 }
 
 D3D12_SHADER_BYTECODE Shader::GetVsByteCode()

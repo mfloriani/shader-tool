@@ -285,6 +285,7 @@ void ShaderToolApp::EvaluateGraph()
 
 	postOrderClone = postorder;
 
+
 	//LOG_TRACE("##############################");
 	std::stack<float> valueStack;
 	while (!postorder.empty())
