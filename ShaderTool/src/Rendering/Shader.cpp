@@ -33,7 +33,7 @@ D3D12_SHADER_BYTECODE Shader::GetPsByteCode()
 
 UINT Shader::GetNumConstantBuffers()
 {
-	return _Reflection->GetBufferDesc().size();
+	return (UINT)_Reflection->GetBufferDesc().size();
 }
 
 UINT Shader::GetNumTextures()
@@ -43,6 +43,18 @@ UINT Shader::GetNumTextures()
 		if (bind.Type == D3D_SIT_TEXTURE)
 			++count;
 	return count;
+}
+
+std::vector<D3DUtil::SHADER_VARIABLE_DESC> Shader::GetConstantBufferVars()
+{
+	std::vector<D3DUtil::SHADER_VARIABLE_DESC> result;
+
+	auto& cbVarMap =  _Reflection->GetCBufferVars();
+	for (auto& cbvars : cbVarMap)
+		for (auto& var : cbvars.second)
+			result.push_back(var);
+	
+	return result;
 }
 
 void Shader::PrintDebugInfo()

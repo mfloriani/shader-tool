@@ -131,9 +131,6 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:      %i", drawNode->Id);
 						ImGui::Text("Shader:  %i", drawNode->Data.shader);
 						ImGui::Text("Model:   %i", drawNode->Data.model);
-						ImGui::Text("R:       %.5f", drawNode->Data.r);
-						ImGui::Text("G:       %.5f", drawNode->Data.g);
-						ImGui::Text("B:       %.5f", drawNode->Data.b);
 						ImGui::Text("Output:  %i", drawNode->Data.output);
 						});
 				}
@@ -378,21 +375,14 @@ void ShaderToolApp::EvaluateGraph()
 			//	valueStackClone.pop();
 			//}
 
-			if (valueStack.size() != 5)
-				LOG_ERROR("Draw node expects 5 inputs but got {0}", valueStack.size());
+			if (valueStack.size() != 2)
+				LOG_ERROR("Draw node expects 2 inputs but got {0}", valueStack.size());
 
 			// The final output node isn't evaluated in the loop -- instead we just pop
 			// the three values which should be in the stack.
-			assert(valueStack.size() == 5ull && "Draw node expects 5 inputs");
+			assert(valueStack.size() == 2ull && "Draw node expects 2 inputs");
 			
 			auto drawNode = static_cast<DrawNode*>(_UINodeIdMap[id]);
-
-			drawNode->Data.b = std::clamp(valueStack.top(), 0.f, 1.f);
-			valueStack.pop();
-			drawNode->Data.g = std::clamp(valueStack.top(), 0.f, 1.f);
-			valueStack.pop();
-			drawNode->Data.r = std::clamp(valueStack.top(), 0.f, 1.f);
-			valueStack.pop();
 
 			drawNode->Data.model = static_cast<int>(valueStack.top());
 			valueStack.pop();
@@ -405,7 +395,6 @@ void ShaderToolApp::EvaluateGraph()
 				psoHasChanged = true;
 			}
 			
-			_Entity.Color = { drawNode->Data.r, drawNode->Data.g, drawNode->Data.b };
 			// TODO: at the moment only works with primitives, but later there will be loaded models
 			if(drawNode->Data.model != NOT_LINKED)
 				_Entity.Model = AssetManager::Get().GetModel(_Primitives[drawNode->Data.model]);

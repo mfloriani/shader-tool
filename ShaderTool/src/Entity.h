@@ -11,5 +11,4 @@ struct Entity
 	DirectX::XMFLOAT3 Position;
 	DirectX::XMFLOAT3 Rotation;
 	DirectX::XMFLOAT3 Scale;
-	DirectX::XMFLOAT3 Color; // TODO: temporary
 };

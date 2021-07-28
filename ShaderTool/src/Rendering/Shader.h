@@ -15,6 +15,8 @@ public:
 	UINT GetNumConstantBuffers();
 	UINT GetNumTextures();
 
+	std::vector<D3DUtil::SHADER_VARIABLE_DESC> GetConstantBufferVars();
+
 	void PrintDebugInfo();
 	
 private:

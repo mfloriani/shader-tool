@@ -145,7 +145,7 @@ void ShaderToolApp::UpdatePerObjectCB()
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		
-		objConstants.Color = _Entity.Color;
+		objConstants.Color = XMFLOAT3();
 
 		int objCBIndex = _Entity.Id; // TODO: handle multiple objects
 		currObjectCB->CopyData(objCBIndex, objConstants);

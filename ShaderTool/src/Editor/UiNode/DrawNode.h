@@ -5,16 +5,15 @@
 struct DrawNode : UiNode
 {
     explicit DrawNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::Draw), R(INVALID_ID), G(INVALID_ID), B(INVALID_ID), Model(INVALID_ID), Shader(INVALID_ID)
+        : UiNode(graph, UiNodeType::Draw), Model(INVALID_ID), Shader(INVALID_ID)
     {
     }
 
-    NodeId R, G, B, Model, Shader;
+    NodeId Model, Shader;
 
     struct DrawData
     {
-        DrawData() : r(0.f), g(0.f), b(0.f), model(NOT_LINKED), shader(NOT_LINKED), output(NOT_LINKED) {}
-        float r, g, b;
+        DrawData() : model(NOT_LINKED), shader(NOT_LINKED), output(NOT_LINKED) {}
         int model, shader, output;
     } Data;
 
@@ -26,16 +25,10 @@ struct DrawNode : UiNode
 
         Shader = ParentGraph->CreateNode(link);
         Model = ParentGraph->CreateNode(link);
-        R = ParentGraph->CreateNode(value);
-        G = ParentGraph->CreateNode(value);
-        B = ParentGraph->CreateNode(value);
         Id = ParentGraph->CreateNode(out);
 
         ParentGraph->CreateEdge(Id, Shader);
         ParentGraph->CreateEdge(Id, Model);
-        ParentGraph->CreateEdge(Id, R);
-        ParentGraph->CreateEdge(Id, G);
-        ParentGraph->CreateEdge(Id, B);
     }
 
     virtual void OnUpdate(GameTimer& timer) override
@@ -45,16 +38,13 @@ struct DrawNode : UiNode
 
     virtual void OnDelete() override
     {
-        ParentGraph->EraseNode(R);
-        ParentGraph->EraseNode(G);
-        ParentGraph->EraseNode(B);
         ParentGraph->EraseNode(Model);
         ParentGraph->EraseNode(Shader);
     }
 
     virtual void OnRender() override
     {
-        const float node_width = 100.0f;
+        const float node_width = 200.0f;
         ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
         ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(81, 148, 204, 255));
         ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(81, 148, 204, 255));
@@ -95,55 +85,29 @@ struct DrawNode : UiNode
             ImNodes::EndInputAttribute();
         }
 
+        // SHADER BINDINGS
+
+        ImGui::Spacing();
+        ImGui::Text("BINDS");
         ImGui::Spacing();
 
+        if (Data.shader != INVALID_INDEX)
         {
-            ImNodes::BeginInputAttribute(R);
-            const float label_width = ImGui::CalcTextSize("r").x;
-            ImGui::TextUnformatted("r");
-            if (ParentGraph->GetNumEdgesFromNode(R) == 0ull)
+            int id = 100; // TODO: TEMPORARY
+            auto vars = ShaderManager::Get().GetShader(Data.shader)->GetConstantBufferVars();
+            for (auto& var : vars)
             {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(R).Value, 0.01f, 0.f, 1.0f);
-                ImGui::PopItemWidth();
+                std::string varNameType = var.Name + " (" + var.Type.Name + ")";
+
+                ImNodes::BeginInputAttribute(id++);
+                const float label_width = ImGui::CalcTextSize(varNameType.c_str()).x;
+                ImGui::TextUnformatted(varNameType.c_str());
+                ImNodes::EndInputAttribute();
+                ImGui::Spacing();
             }
-            ImNodes::EndInputAttribute();
         }
 
-        ImGui::Spacing();
-
-        {
-            ImNodes::BeginInputAttribute(G);
-            const float label_width = ImGui::CalcTextSize("g").x;
-            ImGui::TextUnformatted("g");
-            if (ParentGraph->GetNumEdgesFromNode(G) == 0ull)
-            {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(G).Value, 0.01f, 0.f, 1.f);
-                ImGui::PopItemWidth();
-            }
-            ImNodes::EndInputAttribute();
-        }
-
-        ImGui::Spacing();
-
-        {
-            ImNodes::BeginInputAttribute(B);
-            const float label_width = ImGui::CalcTextSize("b").x;
-            ImGui::TextUnformatted("b");
-            if (ParentGraph->GetNumEdgesFromNode(B) == 0ull)
-            {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(B).Value, 0.01f, 0.f, 1.0f);
-                ImGui::PopItemWidth();
-            }
-            ImNodes::EndInputAttribute();
-        }
-
-        ImGui::Spacing();
+        ImGui::Spacing(); ImGui::Spacing();
 
         {
             ImNodes::BeginOutputAttribute(Id);
@@ -153,6 +117,8 @@ struct DrawNode : UiNode
             ImNodes::EndOutputAttribute();
         }
 
+        ImGui::Spacing();
+                
         ImNodes::EndNode();
         ImNodes::PopColorStyle();
         ImNodes::PopColorStyle();
@@ -162,14 +128,14 @@ struct DrawNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << R << " " << G << " " << B << " " << Model << " " << Shader;
+        out << " " << Model << " " << Shader;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Draw;
-        in >> Id >> R >> G >> B >> Model >> Shader;
+        in >> Id >> Model >> Shader;
         return in;
     }
 
