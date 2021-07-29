@@ -61,10 +61,11 @@ project "ShaderTool"
 			
 		}
 
+		--prebuildcommands
 		postbuildcommands
 		{
 			--("{MKDIR} ../bin/" ..outputdir.. "/Sandbox"),
-			("{COPY} src/Shaders/*.fx %{cfg.targetdir}")
+			--("{COPY} src/Shaders/*.fx %{cfg.targetdir}")
 		}
 
 	filter "configurations:Debug"
@@ -95,14 +96,18 @@ project "ShaderTool"
 	filter { "files:**.hlsl" }
 		flags "ExcludeFromBuild"
 		shadermodel "5.0"
-			
+	
 	filter { "files:**_vs.hlsl" }
 		removeflags "ExcludeFromBuild"
 		shadertype "Vertex"
-		-- shaderentry "ForVertex"
 
 	 filter { "files:**_ps.hlsl" }
 		removeflags "ExcludeFromBuild"
 		shadertype "Pixel"
-		-- shaderentry "ForPixel"
-		
+	
+	-- To make sure the fx files are up to date in the targetdir
+	filter 'files:**.fx'
+	   buildmessage 'Copying %{file.relpath}'
+	   buildcommands { '{COPY} %{file.relpath} %{cfg.targetdir}' }
+	   buildoutputs '%{cfg.targetdir}'
+	   

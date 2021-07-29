@@ -16,6 +16,7 @@ public:
 	UINT GetNumTextures();
 
 	std::vector<D3DUtil::SHADER_VARIABLE_DESC> GetConstantBufferVars();
+	ShaderReflection* GetReflection() const { return _Reflection.get(); }
 
 	void PrintDebugInfo();
 	

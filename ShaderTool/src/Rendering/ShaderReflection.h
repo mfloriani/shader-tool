@@ -23,6 +23,7 @@ public:
 	const InputBindVec& GetInputBinds() const { return _ShaderInputBinds; }
 	const SignatureParameterVec& GetInputs() const { return _ShaderInputs; }
 	const SignatureParameterVec& GetOutputs() const { return _ShaderOutputs; }
+	const UINT GetNumTotalCBuffervars() const { return _NumTotalCBufferVars; }
 
 private:
 	void Reflect(Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
@@ -34,4 +35,5 @@ private:
 	InputBindVec _ShaderInputBinds;
 	SignatureParameterVec _ShaderInputs;
 	SignatureParameterVec _ShaderOutputs;
+	UINT _NumTotalCBufferVars;
 };

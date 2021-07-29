@@ -17,7 +17,6 @@ bool D3DUtil::CompileShader(
     compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-    //ComPtr<ID3DBlob> byteCode = nullptr;
     ComPtr<ID3DBlob> errors;
     auto hr = D3DCompileFromFile(
         AnsiToWString(filename).c_str(),

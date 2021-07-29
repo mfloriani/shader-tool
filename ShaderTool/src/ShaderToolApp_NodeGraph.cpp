@@ -431,29 +431,84 @@ void ShaderToolApp::EvaluateGraph()
 void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName)
 {
 	auto shader = ShaderManager::Get().GetShader(shaderName);
-	UINT numConstantBuffers = shader->GetNumConstantBuffers();
-	UINT numTextures = shader->GetNumTextures();
-	UINT numTotalResources = numConstantBuffers + numTextures;
+	auto reflection = shader->GetReflection();
+	auto& binds = reflection->GetInputBinds();
+	auto& cbufferVars = reflection->GetCBufferVars();
 
-	std::vector<CD3DX12_ROOT_PARAMETER> rootParameters(numTotalResources);
+	UINT numTotalParameters = reflection->GetNumTotalCBuffervars(); // TODO: add here textures, samplers, etc...
+	std::vector<CD3DX12_ROOT_PARAMETER> rootParameters(numTotalParameters);
 	UINT i = 0;
 
-	for (; i < numConstantBuffers; ++i)
-		rootParameters[i].InitAsConstantBufferView(i);
+	LOG_WARN("{0} {1} {2}", sizeof(float), sizeof(DirectX::XMFLOAT4X4), sizeof(DirectX::XMMATRIX));
 
-	for (UINT j=0; j < numTextures; ++j)
+	// TODO: move this map to the d3dutil.h
+	std::unordered_map<std::string, UINT> dxTypeMap = {
+		{"float4x4", 16},
+		{"float4", 4},
+		{"float3", 3},
+		{"float2", 2},
+		{"float", 1},
+	};
+
+	for (auto& bind : binds)
 	{
-		CD3DX12_DESCRIPTOR_RANGE texTable;
-		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, j);
-		rootParameters[i].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-		++i;
+		LOG_TRACE("bind {0} {1} {2}", bind.BindPoint, bind.Type, bind.Name);
+		switch (bind.Type)
+		{
+		case D3D_SIT_CBUFFER:
+		{
+			auto it = cbufferVars.find(bind.Name);
+			if (it != cbufferVars.end())
+			{
+				for (auto var : it->second)
+				{
+					auto it = dxTypeMap.find(var.Type.Name);
+					if (it == dxTypeMap.end())
+					{
+						LOG_CRITICAL("DirectXMath value for {0} is not mapped", var.Type.Name);
+						throw std::runtime_error("DirectXMath value for {0} is not mapped");
+					}
+
+					UINT num32BitValues = it->second;
+					LOG_TRACE("  var {0} {1} {2}", var.Name, var.Type.Name, num32BitValues);
+
+					rootParameters[i++].InitAsConstants(num32BitValues, bind.BindPoint);
+				}
+			}
+		}
+		break;
+
+		case D3D_SIT_TEXTURE:
+		{
+
+		}
+		break;
+
+		default:
+			break;
+		}
 	}
+
+
+	//// TODO: a lot of fixed values for testing
+	//for (; i < numConstantBuffers-1; ++i)
+	//	rootParameters[i].InitAsConstantBufferView(i);
+
+	//rootParameters[2].InitAsConstants(3, 2);
+
+	//for (UINT j=0; j < numTextures; ++j)
+	//{
+	//	CD3DX12_DESCRIPTOR_RANGE texTable;
+	//	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, j);
+	//	rootParameters[i].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	//	++i;
+	//}
 
 	auto staticSamplers = D3DUtil::GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
-		numTotalResources,
+		numTotalParameters,
 		rootParameters.data(),
 		static_cast<UINT>(staticSamplers.size()),
 		staticSamplers.data(),
@@ -516,15 +571,21 @@ void ShaderToolApp::RenderToTexture()
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	_CommandList->SetGraphicsRootSignature(_RenderTargetRootSignature.Get());	
+	_CommandList->SetGraphicsRootSignature(_RenderTargetRootSignature.Get());
 	_CommandList->SetPipelineState(_CurrFrameResource->RenderTargetPSO.get()->GetPSO());
 	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
 	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
 	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
 
-	auto frameCB = _CurrFrameResource->FrameCB->Resource();
-	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+	//auto frameCB = _CurrFrameResource->FrameCB->Resource();
+	//_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+
+	//std::vector<float> color = {1.f, 1.f, 0.f};
+	_CommandList->SetGraphicsRoot32BitConstants(2, (UINT)color.size(), color.data(), 0);
+
+	
+
 
 
 	// BOX
@@ -533,14 +594,18 @@ void ShaderToolApp::RenderToTexture()
 		_CommandList->IASetIndexBuffer(&_Entity.Model.IndexBufferView);
 		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
+		//UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+		//auto objectCB = _CurrFrameResource->ObjectCB->Resource();
+
 
 		UINT objCBIndex = _Entity.Id; // TODO: check this
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-		objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
+		//D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+		//objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
 
-		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+		//_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+
+
+
 		_CommandList->DrawIndexedInstanced(
 			_Entity.Model.IndexCount,
 			1,

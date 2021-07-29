@@ -76,8 +76,8 @@ void ShaderToolApp::OnResize(uint32_t width, uint32_t height)
 	D3DApp::OnResize(width, height);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
-	XMStoreFloat4x4(&_Proj, P);
+	//XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
+	//XMStoreFloat4x4(&_Proj, P);
 
 	// TODO: move this to the resize event of the render target node 
 	//if(_RenderTarget)
@@ -104,8 +104,7 @@ void ShaderToolApp::UpdatePerFrameCB()
 {
 	XMMATRIX view = XMLoadFloat4x4(&_View);
 	XMMATRIX proj = XMLoadFloat4x4(&_Proj);
-	XMMATRIX rtProj = XMLoadFloat4x4(&_RTProj);
-
+	
 	//XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 	//XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
 	//XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
@@ -114,7 +113,6 @@ void ShaderToolApp::UpdatePerFrameCB()
 	XMStoreFloat4x4(&_FrameCB.View, XMMatrixTranspose(view));
 	//XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
 	XMStoreFloat4x4(&_FrameCB.Proj, XMMatrixTranspose(proj));
-	XMStoreFloat4x4(&_FrameCB.RTProj, XMMatrixTranspose(rtProj));
 	//XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
 	//XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
 	//XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
@@ -126,13 +124,13 @@ void ShaderToolApp::UpdatePerFrameCB()
 	//mMainPassCB.TotalTime = gt.TotalTime();
 	//mMainPassCB.DeltaTime = gt.DeltaTime();
 
-	auto currPassCB = _CurrFrameResource->FrameCB.get();
-	currPassCB->CopyData(0, _FrameCB);
+	//auto currPassCB = _CurrFrameResource->FrameCB.get();
+	//currPassCB->CopyData(0, _FrameCB);
 }
 
 void ShaderToolApp::UpdatePerObjectCB()
 {
-	auto currObjectCB = _CurrFrameResource->ObjectCB.get();
+	//auto currObjectCB = _CurrFrameResource->ObjectCB.get();
 	XMMATRIX world = XMMatrixIdentity();
 
 	// BOX ROTATION
@@ -145,10 +143,8 @@ void ShaderToolApp::UpdatePerObjectCB()
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		
-		objConstants.Color = XMFLOAT3();
-
 		int objCBIndex = _Entity.Id; // TODO: handle multiple objects
-		currObjectCB->CopyData(objCBIndex, objConstants);
+		//currObjectCB->CopyData(objCBIndex, objConstants);
 	}
 
 #if 0

@@ -19,7 +19,7 @@ bool ShaderToolApp::Init()
 	UINT height = 1024;
 	auto aspectRatio = static_cast<float>(width) / height;
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspectRatio, 1.0f, 1000.0f);
-	XMStoreFloat4x4(&_RTProj, P);
+	XMStoreFloat4x4(&_Proj, P);
 
 	// Render texture used by the render target node
 	_RenderTarget = std::make_unique<RenderTexture>(

@@ -6,7 +6,7 @@
 using Microsoft::WRL::ComPtr;
 using namespace D3DUtil;
 
-ShaderReflection::ShaderReflection(Microsoft::WRL::ComPtr<ID3DBlob>& vsBytecode, Microsoft::WRL::ComPtr<ID3DBlob>& psBytecode)
+ShaderReflection::ShaderReflection(Microsoft::WRL::ComPtr<ID3DBlob>& vsBytecode, Microsoft::WRL::ComPtr<ID3DBlob>& psBytecode) : _NumTotalCBufferVars(0)
 {
 	Reflect(vsBytecode);
 	Reflect(psBytecode);
@@ -36,7 +36,7 @@ void ShaderReflection::Reflect(Microsoft::WRL::ComPtr<ID3DBlob>& bytecode)
 		buffer->GetDesc(&bufferDesc);
 		LOG_TRACE("CBUFFER {0}", bufferDesc.Name);
 		_CBuffersDesc.push_back(SHADER_BUFFER_DESC(bufferDesc));
-
+		
 		_CBufferVars[bufferDesc.Name] = std::vector<SHADER_VARIABLE_DESC>();
 		_CBufferVars[bufferDesc.Name].reserve(bufferDesc.Variables);
 
@@ -53,6 +53,7 @@ void ShaderReflection::Reflect(Microsoft::WRL::ComPtr<ID3DBlob>& bytecode)
 			LOG_TRACE("  {0} {1}", typeDesc.Name, varDesc.Name);
 
 			_CBufferVars[bufferDesc.Name].push_back(SHADER_VARIABLE_DESC(varDesc, typeDesc));
+			++_NumTotalCBufferVars;
 		}
 	}
 

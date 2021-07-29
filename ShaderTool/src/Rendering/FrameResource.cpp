@@ -10,8 +10,8 @@ FrameResource::FrameResource(ID3D12Device* device, UINT frameCount, UINT objectC
         )
     );
 
-    FrameCB = std::make_unique<UploadBuffer<FrameConstants>>(device, frameCount, true);
-    ObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(device, objectCount, true);
+    //FrameCB = std::make_unique<UploadBuffer<FrameConstants>>(device, frameCount, true);
+    //ObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(device, objectCount, true);
 }
 
 FrameResource::~FrameResource()

@@ -98,6 +98,9 @@
     <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\ShaderNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\UiNode\SineNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
@@ -105,9 +108,6 @@
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\UiNode\UiNode.h">
-      <Filter>Editor\UiNode</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Editor\UiNode\ShaderNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Entity.h" />
@@ -140,6 +140,9 @@
     <ClInclude Include="src\Rendering\ShaderManager.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Rendering\ShaderReflection.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rendering\UploadBuffer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -154,7 +157,6 @@
     </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Rendering\ShaderReflection.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -213,6 +215,9 @@
     <ClCompile Include="src\Rendering\ShaderManager.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Rendering\ShaderReflection.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Rendering\Window.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
@@ -220,22 +225,21 @@
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\Rendering\ShaderReflection.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\Shaders\backbuffer.hlsl">
+    <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Shaders\custom_red.fx">
+    <CustomBuild Include="src\Shaders\custom_red.fx">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="src\Shaders\default.fx">
+    </CustomBuild>
+    <CustomBuild Include="src\Shaders\default.fx">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="src\Shaders\quad.fx">
+    </CustomBuild>
+    <CustomBuild Include="src\Shaders\quad.fx">
       <Filter>Shaders</Filter>
-    </None>
+    </CustomBuild>
   </ItemGroup>
 </Project>

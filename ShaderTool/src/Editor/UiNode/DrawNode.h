@@ -91,7 +91,7 @@ struct DrawNode : UiNode
         ImGui::Text("BINDS");
         ImGui::Spacing();
 
-        if (Data.shader != INVALID_INDEX)
+        if (Data.shader != NOT_LINKED)
         {
             int id = 100; // TODO: TEMPORARY
             auto vars = ShaderManager::Get().GetShader(Data.shader)->GetConstantBufferVars();
