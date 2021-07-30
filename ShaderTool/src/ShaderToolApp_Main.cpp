@@ -84,35 +84,25 @@ void ShaderToolApp::OnResize(uint32_t width, uint32_t height)
 	//	_RenderTarget->OnResize(width, height);
 }
 
-void ShaderToolApp::UpdateCamera()
-{
-	// Convert Spherical to Cartesian coordinates.
-	_EyePos.x = _Radius * sinf(_Phi) * cosf(_Theta);
-	_EyePos.z = _Radius * sinf(_Phi) * sinf(_Theta);
-	_EyePos.y = _Radius * cosf(_Phi);
-
-	// Build the view matrix.
-	XMVECTOR pos = XMVectorSet(_EyePos.x, _EyePos.y, _EyePos.z, 1.0f);
-	XMVECTOR target = XMVectorZero();
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-	XMStoreFloat4x4(&_View, view);
-}
-
-void ShaderToolApp::UpdatePerFrameCB()
-{
-	XMMATRIX view = XMLoadFloat4x4(&_View);
-	XMMATRIX proj = XMLoadFloat4x4(&_Proj);
+//void ShaderToolApp::UpdateCamera()
+//{
+//	
+//}
+//
+//void ShaderToolApp::UpdatePerFrameCB()
+//{
+	//XMMATRIX view = XMLoadFloat4x4(&_View);
+	//XMMATRIX proj = XMLoadFloat4x4(&_Proj);
+	//XMStoreFloat4x4(&_FrameCB.View, XMMatrixTranspose(view));
+	//XMStoreFloat4x4(&_FrameCB.Proj, XMMatrixTranspose(proj));
 	
+
 	//XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 	//XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
 	//XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
 	//XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
 
-	XMStoreFloat4x4(&_FrameCB.View, XMMatrixTranspose(view));
 	//XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
-	XMStoreFloat4x4(&_FrameCB.Proj, XMMatrixTranspose(proj));
 	//XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
 	//XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
 	//XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
@@ -126,50 +116,50 @@ void ShaderToolApp::UpdatePerFrameCB()
 
 	//auto currPassCB = _CurrFrameResource->FrameCB.get();
 	//currPassCB->CopyData(0, _FrameCB);
-}
+//}
 
-void ShaderToolApp::UpdatePerObjectCB()
-{
-	//auto currObjectCB = _CurrFrameResource->ObjectCB.get();
-	XMMATRIX world = XMMatrixIdentity();
-
-	// BOX ROTATION
-	{
-		_Entity.Rotation = { 0.f, _Timer.TotalTime(), 0.f };
-		auto rotation = XMMatrixRotationY(_Entity.Rotation.y);
-		auto scale = XMMatrixScaling(_Entity.Scale.x, _Entity.Scale.y, _Entity.Scale.z);
-		world = XMMatrixMultiply(scale, rotation);
-
-		ObjectConstants objConstants;
-		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-		
-		int objCBIndex = _Entity.Id; // TODO: handle multiple objects
-		//currObjectCB->CopyData(objCBIndex, objConstants);
-	}
-
-#if 0
-	// QUAD
-	{
-		//world = XMMatrixIdentity();
-		FLOAT size = 10.f;
-		world = XMMatrixScaling(1.f * size, 1.f * size, 1.f * size);
-	
-		ObjectConstants objConstants;
-		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-
-		int objCBIndex = 1;
-		currObjectCB->CopyData(objCBIndex, objConstants);
-	}
-#endif
-}
+//void ShaderToolApp::UpdatePerObjectCB()
+//{
+//	//auto currObjectCB = _CurrFrameResource->ObjectCB.get();
+//	XMMATRIX world = XMMatrixIdentity();
+//
+//	// BOX ROTATION
+//	{
+//		_Entity.Rotation = { 0.f, _Timer.TotalTime(), 0.f };
+//		auto rotation = XMMatrixRotationY(_Entity.Rotation.y);
+//		auto scale = XMMatrixScaling(_Entity.Scale.x, _Entity.Scale.y, _Entity.Scale.z);
+//		world = XMMatrixMultiply(scale, rotation);
+//
+//		ObjectConstants objConstants;
+//		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+//		
+//		int objCBIndex = _Entity.Id; // TODO: handle multiple objects
+//		//currObjectCB->CopyData(objCBIndex, objConstants);
+//	}
+//
+//#if 0
+//	// QUAD
+//	{
+//		//world = XMMatrixIdentity();
+//		FLOAT size = 10.f;
+//		world = XMMatrixScaling(1.f * size, 1.f * size, 1.f * size);
+//	
+//		ObjectConstants objConstants;
+//		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+//
+//		int objCBIndex = 1;
+//		currObjectCB->CopyData(objCBIndex, objConstants);
+//	}
+//#endif
+//}
 
 void ShaderToolApp::OnUpdate()
 {
 	_Timer.Tick();
-	UpdateCamera();
+	//UpdateCamera();
 	SwapFrameResource();
-	UpdatePerObjectCB();
-	UpdatePerFrameCB();
+	//UpdatePerObjectCB();
+	//UpdatePerFrameCB();
 }
 
 void ShaderToolApp::OnRender()
@@ -182,7 +172,7 @@ void ShaderToolApp::OnRender()
 	
 	// Render to Texture
 
-	EvaluateGraph();	
+	EvaluateGraph();
 
 	// Render to back buffer
 	{
@@ -311,10 +301,10 @@ void ShaderToolApp::RenderUIDockSpace()
 	{
 		if (ImGui::BeginMenu("Options"))
 		{
-			if (ImGui::MenuItem("New", NULL, false, docking_open != NULL)) LOG_TRACE("New");
-			if (ImGui::MenuItem("Save", NULL, false, docking_open != NULL)) LOG_TRACE("Save");
-			if (ImGui::MenuItem("Load", NULL, false, docking_open != NULL)) LOG_TRACE("Load");
-			if (ImGui::MenuItem("Close", NULL, false, docking_open != NULL)) LOG_TRACE("Close");
+			if (ImGui::MenuItem("New", NULL, false, docking_open != NULL)) LOG_WARN("New NOT IMPLEMENTED");
+			if (ImGui::MenuItem("Save", NULL, false, docking_open != NULL)) LOG_WARN("Save NOT IMPLEMENTED");
+			if (ImGui::MenuItem("Load", NULL, false, docking_open != NULL)) LOG_WARN("Load NOT IMPLEMENTED");
+			if (ImGui::MenuItem("Close", NULL, false, docking_open != NULL)) LOG_WARN("Close NOT IMPLEMENTED");
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();

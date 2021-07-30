@@ -24,6 +24,8 @@ struct Primitive
 	std::string Name;
 };
 
+struct DrawNode;
+
 class ShaderToolApp : public D3DApp
 {
 public:
@@ -35,9 +37,9 @@ public:
 	bool Init();
 	void Run();
 	void RenderUIDockSpace();
-	void UpdateCamera();
-	void UpdatePerFrameCB();
-	void UpdatePerObjectCB();
+	//void UpdateCamera();
+	//void UpdatePerFrameCB();
+	//void UpdatePerObjectCB();
 	void UpdateNodeGraph();
 	void RenderNodeGraph();
 
@@ -58,17 +60,7 @@ public:
 	UiNode* GetUiNode(NodeId id) { return _UINodeIdMap[id]; }
 
 private:
-	// TODO: Camera stuff
-	DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4X4 _View = D3DUtil::Identity4x4();
-	DirectX::XMFLOAT4X4 _Proj = D3DUtil::Identity4x4();
-	DirectX::XMFLOAT4X4 _RTProj = D3DUtil::Identity4x4();
-	float _Theta = 1.5f * DirectX::XM_PI;
-	float _Phi = DirectX::XM_PIDIV2 - 0.1f;
-	float _Radius = 50.0f;
-	//
-
-	FrameConstants _FrameCB;
+	//FrameConstants _FrameCB;
 	GameTimer _Timer;
 	bool _IsRunning{ true };
 
@@ -93,7 +85,7 @@ private: // Node Graph
 	void Save();
 	void Load();
 	void EvaluateGraph();
-	void RenderToTexture();
+	void RenderToTexture(Shader* shader, DrawNode* drawNode);
 	void ClearRenderTexture();
 	void HandleNewNodes();
 	void HandleNewLinks();

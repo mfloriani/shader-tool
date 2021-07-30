@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <wrl.h>
 #include <string>
+#include <unordered_map>
 
 #include <d3d12.h>
 #include <d3dcompiler.h>
@@ -12,6 +13,15 @@
 
 namespace D3DUtil
 {
+	static std::unordered_map<std::string, UINT> DxMathTypeMap = {
+		{"float4x4", 16},
+		{"float4", 4},
+		{"float3", 3},
+		{"float2", 2},
+		{"float", 1},
+	};
+
+
 	bool CompileShader(
 		const std::string& filename, 
 		const std::string& entryPoint, 

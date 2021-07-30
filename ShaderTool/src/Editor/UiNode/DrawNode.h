@@ -2,14 +2,24 @@
 
 #include "UiNode.h"
 
+#include <vector>
+
+struct BindingPinNode
+{
+    NodeId Id;
+    std::string Name;
+    UINT ShaderRegister;
+    UINT Num32BitValues;
+};
+
+
 struct DrawNode : UiNode
 {
-    explicit DrawNode(Graph<Node>* graph)
-        : UiNode(graph, UiNodeType::Draw), Model(INVALID_ID), Shader(INVALID_ID)
-    {
-    }
+    DrawNode(Graph<Node>* graph);
 
-    NodeId Model, Shader;
+    NodeId ModelPin, ShaderPin;
+    std::vector<NodeId> BindingPins;
+
 
     struct DrawData
     {
@@ -17,125 +27,39 @@ struct DrawNode : UiNode
         int model, shader, output;
     } Data;
 
-    virtual void OnCreate() override
-    {
-        const Node value(NodeType::Value, 0.f);
-        const Node link(NodeType::Link, NOT_LINKED);
-        const Node out(NodeType::Draw);
 
-        Shader = ParentGraph->CreateNode(link);
-        Model = ParentGraph->CreateNode(link);
-        Id = ParentGraph->CreateNode(out);
+    // TODO: move to Camera node 
+    DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT4X4 _View = D3DUtil::Identity4x4();
+    DirectX::XMFLOAT4X4 _Proj = D3DUtil::Identity4x4();
+    float _Theta = 1.5f * DirectX::XM_PI;
+    float _Phi = DirectX::XM_PIDIV2 - 0.1f;
+    float _Radius = 50.0f;
+    //
+    DirectX::XMFLOAT4X4 _World;
 
-        ParentGraph->CreateEdge(Id, Shader);
-        ParentGraph->CreateEdge(Id, Model);
-    }
 
-    virtual void OnUpdate(GameTimer& timer) override
-    {
-        
-    }
+    virtual void OnCreate() override;
+    virtual void OnUpdate(GameTimer& timer) override;
+    virtual void OnDelete() override;
+    virtual void OnRender() override;
 
-    virtual void OnDelete() override
-    {
-        ParentGraph->EraseNode(Model);
-        ParentGraph->EraseNode(Shader);
-    }
-
-    virtual void OnRender() override
-    {
-        const float node_width = 200.0f;
-        ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(11, 109, 191, 255));
-        ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(81, 148, 204, 255));
-        ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(81, 148, 204, 255));
-        //ImNodes::PushColorStyle(ImNodesCol_NodeOutline, IM_COL32(255, 255, 0, 255));
-        ImNodes::BeginNode(Id);
-
-        ImNodes::BeginNodeTitleBar();
-        ImGui::TextUnformatted("DRAW");
-        ImNodes::EndNodeTitleBar();
-
-        ImGui::Dummy(ImVec2(node_width, 0.f));
-
-        {
-            ImNodes::BeginInputAttribute(Shader);
-            const float label_width = ImGui::CalcTextSize("shader").x;
-            ImGui::TextUnformatted("shader");
-            if (ParentGraph->GetNumEdgesFromNode(Shader) == 0ull)
-            {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::PopItemWidth();
-            }
-            ImNodes::EndInputAttribute();
-        }
-
-        ImGui::Spacing();
-
-        {
-            ImNodes::BeginInputAttribute(Model);
-            const float label_width = ImGui::CalcTextSize("model").x;
-            ImGui::TextUnformatted("model");
-            if (ParentGraph->GetNumEdgesFromNode(Model) == 0ull)
-            {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::PopItemWidth();
-            }
-            ImNodes::EndInputAttribute();
-        }
-
-        // SHADER BINDINGS
-
-        ImGui::Spacing();
-        ImGui::Text("BINDS");
-        ImGui::Spacing();
-
-        if (Data.shader != NOT_LINKED)
-        {
-            int id = 100; // TODO: TEMPORARY
-            auto vars = ShaderManager::Get().GetShader(Data.shader)->GetConstantBufferVars();
-            for (auto& var : vars)
-            {
-                std::string varNameType = var.Name + " (" + var.Type.Name + ")";
-
-                ImNodes::BeginInputAttribute(id++);
-                const float label_width = ImGui::CalcTextSize(varNameType.c_str()).x;
-                ImGui::TextUnformatted(varNameType.c_str());
-                ImNodes::EndInputAttribute();
-                ImGui::Spacing();
-            }
-        }
-
-        ImGui::Spacing(); ImGui::Spacing();
-
-        {
-            ImNodes::BeginOutputAttribute(Id);
-            const float label_width = ImGui::CalcTextSize("output").x;
-            ImGui::Indent(node_width - label_width);
-            ImGui::TextUnformatted("output");
-            ImNodes::EndOutputAttribute();
-        }
-
-        ImGui::Spacing();
-                
-        ImNodes::EndNode();
-        ImNodes::PopColorStyle();
-        ImNodes::PopColorStyle();
-        ImNodes::PopColorStyle();
-    }
+    // TODO: rather useful methods
+    // OnLoad()
+    // OnNewLink()
+    // OnLinkDelete()
 
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Model << " " << Shader;
+        out << " " << ModelPin << " " << ShaderPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Draw;
-        in >> Id >> Model >> Shader;
+        in >> Id >> ModelPin >> ShaderPin;
         return in;
     }
 

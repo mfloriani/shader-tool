@@ -13,21 +13,12 @@ bool ShaderToolApp::Init()
 	if (!D3DApp::Init())
 		return false;
 
-	// TODO: review this render-texture perspective
-	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	UINT width = 1024;
-	UINT height = 1024;
-	auto aspectRatio = static_cast<float>(width) / height;
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspectRatio, 1.0f, 1000.0f);
-	XMStoreFloat4x4(&_Proj, P);
-
 	// Render texture used by the render target node
 	_RenderTarget = std::make_unique<RenderTexture>(
 		_Device.Get(),
 		_BackBufferFormat,
-		width,
-		height
-		);
+		RENDER_TARGET_WIDTH,
+		RENDER_TARGET_HEIGHT);
 
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	_CommandList->Reset(commandAllocator.Get(), nullptr);

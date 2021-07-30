@@ -22,6 +22,7 @@
 #define VK_N 0x4E
 
 using Microsoft::WRL::ComPtr;
+using namespace DirectX;
 
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
@@ -189,15 +190,15 @@ void DebugInfo(ShaderToolApp* app)
 		}
 	}
 
-	if (ImGui::IsKeyReleased(VK_RETURN))
-	{
-		auto& shaderMgr = ShaderManager::Get();
+	//if (ImGui::IsKeyReleased(VK_RETURN))
+	//{
+	//	auto& shaderMgr = ShaderManager::Get();
 
-		for (auto& shader : shaderMgr.GetShaders())
-		{
-			shader->PrintDebugInfo();
-		}
-	}
+	//	for (auto& shader : shaderMgr.GetShaders())
+	//	{
+	//		shader->PrintDebugInfo();
+	//	}
+	//}
 
 	if (ImGui::IsKeyReleased(VK_F1))
 		showDfsDebug = !showDfsDebug;
@@ -402,7 +403,11 @@ void ShaderToolApp::EvaluateGraph()
 			if (psoHasChanged)
 				CreateRenderTargetPSO(drawNode->Data.shader);
 			
-			RenderToTexture();
+			if (drawNode->Data.shader != INVALID_INDEX)
+			{
+				auto shadr = ShaderManager::Get().GetShader(drawNode->Data.shader);
+				RenderToTexture(shadr, drawNode);
+			}
 
 			drawNode->Data.output = 1;
 			valueStack.push( static_cast<float>(drawNode->Data.output) ); // TODO: index where the texture is stored, now only one texture
@@ -430,65 +435,10 @@ void ShaderToolApp::EvaluateGraph()
 
 void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName)
 {
-	auto shader = ShaderManager::Get().GetShader(shaderName);
-	auto reflection = shader->GetReflection();
-	auto& binds = reflection->GetInputBinds();
-	auto& cbufferVars = reflection->GetCBufferVars();
+	auto shader = ShaderManager::Get().GetShader(shaderName);	
+	auto& rootParameters = shader->GetRootParameters();
 
-	UINT numTotalParameters = reflection->GetNumTotalCBuffervars(); // TODO: add here textures, samplers, etc...
-	std::vector<CD3DX12_ROOT_PARAMETER> rootParameters(numTotalParameters);
-	UINT i = 0;
-
-	LOG_WARN("{0} {1} {2}", sizeof(float), sizeof(DirectX::XMFLOAT4X4), sizeof(DirectX::XMMATRIX));
-
-	// TODO: move this map to the d3dutil.h
-	std::unordered_map<std::string, UINT> dxTypeMap = {
-		{"float4x4", 16},
-		{"float4", 4},
-		{"float3", 3},
-		{"float2", 2},
-		{"float", 1},
-	};
-
-	for (auto& bind : binds)
-	{
-		LOG_TRACE("bind {0} {1} {2}", bind.BindPoint, bind.Type, bind.Name);
-		switch (bind.Type)
-		{
-		case D3D_SIT_CBUFFER:
-		{
-			auto it = cbufferVars.find(bind.Name);
-			if (it != cbufferVars.end())
-			{
-				for (auto var : it->second)
-				{
-					auto it = dxTypeMap.find(var.Type.Name);
-					if (it == dxTypeMap.end())
-					{
-						LOG_CRITICAL("DirectXMath value for {0} is not mapped", var.Type.Name);
-						throw std::runtime_error("DirectXMath value for {0} is not mapped");
-					}
-
-					UINT num32BitValues = it->second;
-					LOG_TRACE("  var {0} {1} {2}", var.Name, var.Type.Name, num32BitValues);
-
-					rootParameters[i++].InitAsConstants(num32BitValues, bind.BindPoint);
-				}
-			}
-		}
-		break;
-
-		case D3D_SIT_TEXTURE:
-		{
-
-		}
-		break;
-
-		default:
-			break;
-		}
-	}
-
+	//LOG_WARN("{0} {1} {2}", sizeof(float), sizeof(DirectX::XMFLOAT4X4), sizeof(DirectX::XMMATRIX));
 
 	//// TODO: a lot of fixed values for testing
 	//for (; i < numConstantBuffers-1; ++i)
@@ -508,9 +458,9 @@ void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName
 
 	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
-		numTotalParameters,
+		(UINT)rootParameters.size(),
 		rootParameters.data(),
-		static_cast<UINT>(staticSamplers.size()),
+		(UINT)staticSamplers.size(),
 		staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -562,8 +512,10 @@ void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
 }
 
-void ShaderToolApp::RenderToTexture()
+void ShaderToolApp::RenderToTexture(Shader* shader, DrawNode* drawNode)
 {
+	if (!shader) return;
+
 	_CommandList->ResourceBarrier(
 		1,
 		&CD3DX12_RESOURCE_BARRIER::Transition(
@@ -578,33 +530,62 @@ void ShaderToolApp::RenderToTexture()
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
 	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
 
-	//auto frameCB = _CurrFrameResource->FrameCB->Resource();
-	//_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+	auto& bindVars = shader->GetBindingVars();
 
-	//std::vector<float> color = {1.f, 1.f, 0.f};
+	for (auto& [id, vars] : bindVars)
+	{
+		for (auto& var : vars)
+		{
+			float* data = nullptr;
+			// TODO: TEMPORARY!!! Only for testing. It should be properly managed
+			if (var.VarName == "World")
+			{
+				data = &drawNode->_World._11;
+			}
+			else if (var.VarName == "View")
+			{
+				data = &drawNode->_View._11;
+			}
+			else if (var.VarName == "Proj")
+			{
+				data = &drawNode->_Proj._11;
+			}
+			else if (var.VarName == "Color")
+			{
+				XMFLOAT3 color(1.f, 1.f, 0.f);
+				data = &color.x;
+			}
+			
+			_CommandList->SetGraphicsRoot32BitConstants(id, var.VarNum32BitValues, data, var.VarNum32BitValuesOffset);
+		}
+	}
+
+
+#if 0
+
+	auto frameCB = _CurrFrameResource->FrameCB->Resource();
+	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
+
+	std::vector<float> color = {1.f, 1.f, 0.f};
 	_CommandList->SetGraphicsRoot32BitConstants(2, (UINT)color.size(), color.data(), 0);
 
 	
+	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+	auto objectCB = _CurrFrameResource->ObjectCB->Resource();
 
+	UINT objCBIndex = _Entity.Id; // TODO: check this
+	D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+	objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
 
+	_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+
+#endif
 
 	// BOX
 	{
 		_CommandList->IASetVertexBuffers(0, 1, &_Entity.Model.VertexBufferView);
 		_CommandList->IASetIndexBuffer(&_Entity.Model.IndexBufferView);
 		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		//UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-		//auto objectCB = _CurrFrameResource->ObjectCB->Resource();
-
-
-		UINT objCBIndex = _Entity.Id; // TODO: check this
-		//D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-		//objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
-
-		//_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-
-
 
 		_CommandList->DrawIndexedInstanced(
 			_Entity.Model.IndexCount,

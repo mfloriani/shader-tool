@@ -180,6 +180,7 @@
     <ClCompile Include="src\Editor\NFD\nfd_win.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\Editor\UiNode\DrawNode.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\GeometryGenerator.cpp" />
     <ClCompile Include="src\Log.cpp" />

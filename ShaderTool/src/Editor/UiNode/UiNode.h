@@ -1,11 +1,14 @@
 #pragma once
 
+#include "GameTimer.h"
+
 #include "Editor\Graph\Graph.h"
 #include "Editor\Graph\Node.h"
-
 #include "Editor\ImGui\imnodes.h"
 #include "Editor\ImGui\imgui.h"
 #include "Editor/nfd/nfd.h"
+
+#include "Rendering/D3DUtil.h"
 
 enum class UiNodeType
 {
