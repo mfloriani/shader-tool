@@ -37,13 +37,6 @@ bool ShaderToolApp::Init()
 	ImNodesIO& io = ImNodes::GetIO();
 	io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
-	// TODO: move this to the proper place
-	_Entity.Id = 0;
-	_Entity.Model = AssetManager::Get().GetModel("cube");
-	_Entity.Position = {0.f, 0.f, 0.f};
-	_Entity.Scale = {10.f, 10.f, 10.f};
-	_Entity.Rotation = {0.f, 0.f, 0.f};
-	
 	InitNodeGraph();
 
 	return true;
@@ -52,11 +45,6 @@ bool ShaderToolApp::Init()
 void ShaderToolApp::InitNodeGraph()
 {
 	ShaderManager::Get().LoadShaderFromFile("default.fx");
-
-	// TODO: testing
-	//auto vsQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Vertex);
-	//auto psQuad = shaderMgr.LoadShaderFromFile("C:\\Users\\muril\\Downloads\\quad.fx", ShaderType::Pixel);
-
 	CreateRenderTargetPSO(NOT_LINKED);
 }
 

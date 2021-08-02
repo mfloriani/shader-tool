@@ -126,7 +126,6 @@
     <ClInclude Include="src\Editor\UiNode\SineNode.h" />
     <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
     <ClInclude Include="src\Editor\UiNode\UiNode.h" />
-    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />

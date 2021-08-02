@@ -5,7 +5,6 @@
 #include <string>
 
 #include "GameTimer.h"
-#include "Entity.h"
 
 #include "Rendering\D3DApp.h"
 #include "Rendering\RenderTexture.h"
@@ -37,9 +36,6 @@ public:
 	bool Init();
 	void Run();
 	void RenderUIDockSpace();
-	//void UpdateCamera();
-	//void UpdatePerFrameCB();
-	//void UpdatePerObjectCB();
 	void UpdateNodeGraph();
 	void RenderNodeGraph();
 
@@ -78,14 +74,13 @@ private: // Node Graph
 	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
 	Graph<Node> _Graph;
 	int _RootNodeId;
-	Entity _Entity;
 	
 	void InitNodeGraph();
 	void Reset();
 	void Save();
 	void Load();
 	void EvaluateGraph();
-	void RenderToTexture(Shader* shader, DrawNode* drawNode);
+	void RenderToTexture(DrawNode* drawNode);
 	void ClearRenderTexture();
 	void HandleNewNodes();
 	void HandleNewLinks();

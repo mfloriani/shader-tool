@@ -4,6 +4,8 @@
 
 #include <vector>
 
+const static int DEFAULT_SHADER_INDEX = 0;
+
 struct BindingPinNode
 {
     NodeId Id;
@@ -20,14 +22,6 @@ struct DrawNode : UiNode
     NodeId ModelPin, ShaderPin;
     std::vector<NodeId> BindingPins;
 
-
-    struct DrawData
-    {
-        DrawData() : model(NOT_LINKED), shader(NOT_LINKED), output(NOT_LINKED) {}
-        int model, shader, output;
-    } Data;
-
-
     // TODO: move to Camera node 
     DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
     DirectX::XMFLOAT4X4 _View = D3DUtil::Identity4x4();
@@ -43,6 +37,8 @@ struct DrawNode : UiNode
     virtual void OnUpdate(GameTimer& timer) override;
     virtual void OnDelete() override;
     virtual void OnRender() override;
+
+    
 
     // TODO: rather useful methods
     // OnLoad()

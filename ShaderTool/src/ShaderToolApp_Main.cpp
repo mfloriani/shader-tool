@@ -74,92 +74,13 @@ void ShaderToolApp::Run()
 void ShaderToolApp::OnResize(uint32_t width, uint32_t height)
 {
 	D3DApp::OnResize(width, height);
-
-	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	//XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
-	//XMStoreFloat4x4(&_Proj, P);
-
-	// TODO: move this to the resize event of the render target node 
-	//if(_RenderTarget)
-	//	_RenderTarget->OnResize(width, height);
 }
-
-//void ShaderToolApp::UpdateCamera()
-//{
-//	
-//}
-//
-//void ShaderToolApp::UpdatePerFrameCB()
-//{
-	//XMMATRIX view = XMLoadFloat4x4(&_View);
-	//XMMATRIX proj = XMLoadFloat4x4(&_Proj);
-	//XMStoreFloat4x4(&_FrameCB.View, XMMatrixTranspose(view));
-	//XMStoreFloat4x4(&_FrameCB.Proj, XMMatrixTranspose(proj));
-	
-
-	//XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-	//XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
-	//XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
-	//XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
-
-	//XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
-	//XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
-	//XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	//XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	//mMainPassCB.EyePosW = mEyePos;
-	//mMainPassCB.RenderTargetSize = XMFLOAT2((float)mClientWidth, (float)mClientHeight);
-	//mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
-	//mMainPassCB.NearZ = 1.0f;
-	//mMainPassCB.FarZ = 1000.0f;
-	//mMainPassCB.TotalTime = gt.TotalTime();
-	//mMainPassCB.DeltaTime = gt.DeltaTime();
-
-	//auto currPassCB = _CurrFrameResource->FrameCB.get();
-	//currPassCB->CopyData(0, _FrameCB);
-//}
-
-//void ShaderToolApp::UpdatePerObjectCB()
-//{
-//	//auto currObjectCB = _CurrFrameResource->ObjectCB.get();
-//	XMMATRIX world = XMMatrixIdentity();
-//
-//	// BOX ROTATION
-//	{
-//		_Entity.Rotation = { 0.f, _Timer.TotalTime(), 0.f };
-//		auto rotation = XMMatrixRotationY(_Entity.Rotation.y);
-//		auto scale = XMMatrixScaling(_Entity.Scale.x, _Entity.Scale.y, _Entity.Scale.z);
-//		world = XMMatrixMultiply(scale, rotation);
-//
-//		ObjectConstants objConstants;
-//		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-//		
-//		int objCBIndex = _Entity.Id; // TODO: handle multiple objects
-//		//currObjectCB->CopyData(objCBIndex, objConstants);
-//	}
-//
-//#if 0
-//	// QUAD
-//	{
-//		//world = XMMatrixIdentity();
-//		FLOAT size = 10.f;
-//		world = XMMatrixScaling(1.f * size, 1.f * size, 1.f * size);
-//	
-//		ObjectConstants objConstants;
-//		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-//
-//		int objCBIndex = 1;
-//		currObjectCB->CopyData(objCBIndex, objConstants);
-//	}
-//#endif
-//}
 
 void ShaderToolApp::OnUpdate()
 {
 	_Timer.Tick();
-	//UpdateCamera();
 	SwapFrameResource();
-	//UpdatePerObjectCB();
-	//UpdatePerFrameCB();
+	UpdateNodeGraph();
 }
 
 void ShaderToolApp::OnRender()
@@ -170,7 +91,7 @@ void ShaderToolApp::OnRender()
 	commandAllocator->Reset();
 	_CommandList->Reset(commandAllocator.Get(), nullptr);
 	
-	// Render to Texture
+	// Traverse the graph and evaluate the node values (Render to Texture, etc)
 
 	EvaluateGraph();
 
@@ -210,7 +131,6 @@ void ShaderToolApp::OnRender()
 
 	NewUIFrame();
 	RenderUIDockSpace();
-	UpdateNodeGraph();
 	RenderNodeGraph();
 	RenderUI();
 

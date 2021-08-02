@@ -84,7 +84,7 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:      %i", addNode->Id);
 						ImGui::Text("Left:    %.5f", addNode->Left);
 						ImGui::Text("Right:   %.5f", addNode->Right);
-						ImGui::Text("Output:  %.5f", app->GetGraph().GetNode(addNode->Id).Value);
+						ImGui::Text("Output:  %.5f", addNode->GetPinValue(addNode->Id));
 						});
 				}
 				break;
@@ -95,7 +95,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("TimeNode");
 						ImGui::Text("Id:      %i", timeNode->Id);
-						ImGui::Text("Time:    %.5f", app->GetGraph().GetNode(timeNode->Id).Value);
+						ImGui::Text("Time:    %.5f", timeNode->GetPinValue(timeNode->Id));
 					});
 				}
 				break;
@@ -106,7 +106,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("SineNode");
 						ImGui::Text("Id:      %i", sineNode->Id);
-						ImGui::Text("Sine:    %.5f", app->GetGraph().GetNode(sineNode->Id).Value);
+						ImGui::Text("Sine:    %.5f", sineNode->GetPinValue(sineNode->Id));
 					});
 				}
 				break;
@@ -119,7 +119,7 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:      %i", multNode->Id);
 						ImGui::Text("Left:    %.5f", multNode->Left);
 						ImGui::Text("Right:   %.5f", multNode->Right);
-						ImGui::Text("Output:  %.5f", app->GetGraph().GetNode(multNode->Id).Value);
+						ImGui::Text("Output:  %.5f", multNode->GetPinValue(multNode->Id));
 					});
 				}
 				break;
@@ -130,9 +130,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("DrawNode");
 						ImGui::Text("Id:      %i", drawNode->Id);
-						ImGui::Text("Shader:  %i", drawNode->Data.shader);
-						ImGui::Text("Model:   %i", drawNode->Data.model);
-						ImGui::Text("Output:  %i", drawNode->Data.output);
+						ImGui::Text("Shader:  %i", (int)drawNode->GetPinValue(drawNode->ShaderPin));
+						ImGui::Text("Model:   %i", (int)drawNode->GetPinValue(drawNode->ModelPin));
+						ImGui::Text("Output:  %i", (int)drawNode->GetPinValue(drawNode->Id));
 						});
 				}
 				break;
@@ -142,8 +142,8 @@ void DebugInfo(ShaderToolApp* app)
 					auto primNode = static_cast<PrimitiveNode*>(node);
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("PrimitiveNode");
-						ImGui::Text("Id:      %i", primNode->Id);
-						ImGui::Text("Model:   %i", primNode->Model);
+						ImGui::Text("Id:            %i", primNode->Id);
+						ImGui::Text("SelectedModel: %i", (int)primNode->GetPinValue(primNode->Id));
 					});
 				}
 				break;
@@ -287,9 +287,8 @@ void ShaderToolApp::EvaluateGraph()
 	dfs_traverse(_Graph, _RootNodeId, [&postorder](const int nodeId) -> void { postorder.push(nodeId); });
 
 	postOrderClone = postorder;
-
-
 	//LOG_TRACE("##############################");
+
 	std::stack<float> valueStack;
 	while (!postorder.empty())
 	{
@@ -354,9 +353,6 @@ void ShaderToolApp::EvaluateGraph()
 			const int i = static_cast<int>(valueStack.top());
 			valueStack.pop();
 
-			//DEBUGLOG("NodeType::RenderTarget {0}", i);			
-			//LOG_TRACE("RenderTarget {0}", i);
-
 			// it should receive an index with the texture rendered by draw node
 			if (i > 0)
 				_RenderTargetReady = true;
@@ -385,32 +381,16 @@ void ShaderToolApp::EvaluateGraph()
 			
 			auto drawNode = static_cast<DrawNode*>(_UINodeIdMap[id]);
 
-			drawNode->Data.model = static_cast<int>(valueStack.top());
+			drawNode->SetPinValue(drawNode->ModelPin, valueStack.top());
 			valueStack.pop();
 			
-			int shaderIndex = static_cast<int>(valueStack.top());
+			drawNode->SetPinValue(drawNode->ShaderPin, valueStack.top());
 			valueStack.pop();
-			if (shaderIndex != drawNode->Data.shader)
-			{
-				drawNode->Data.shader = shaderIndex;
-				psoHasChanged = true;
-			}
-			
-			// TODO: at the moment only works with primitives, but later there will be loaded models
-			if(drawNode->Data.model != NOT_LINKED)
-				_Entity.Model = AssetManager::Get().GetModel(_Primitives[drawNode->Data.model]);
-			
-			if (psoHasChanged)
-				CreateRenderTargetPSO(drawNode->Data.shader);
-			
-			if (drawNode->Data.shader != INVALID_INDEX)
-			{
-				auto shadr = ShaderManager::Get().GetShader(drawNode->Data.shader);
-				RenderToTexture(shadr, drawNode);
-			}
 
-			drawNode->Data.output = 1;
-			valueStack.push( static_cast<float>(drawNode->Data.output) ); // TODO: index where the texture is stored, now only one texture
+			RenderToTexture(drawNode);
+
+			drawNode->SetPinValue(drawNode->Id, 1.f); // TODO: fixed 1 as only one texture is allowed at the moment
+			valueStack.push(drawNode->GetPinValue(drawNode->Id)); // TODO: index where the texture is stored, now only one texture
 		}
 		break;
 
@@ -437,23 +417,6 @@ void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName
 {
 	auto shader = ShaderManager::Get().GetShader(shaderName);	
 	auto& rootParameters = shader->GetRootParameters();
-
-	//LOG_WARN("{0} {1} {2}", sizeof(float), sizeof(DirectX::XMFLOAT4X4), sizeof(DirectX::XMMATRIX));
-
-	//// TODO: a lot of fixed values for testing
-	//for (; i < numConstantBuffers-1; ++i)
-	//	rootParameters[i].InitAsConstantBufferView(i);
-
-	//rootParameters[2].InitAsConstants(3, 2);
-
-	//for (UINT j=0; j < numTextures; ++j)
-	//{
-	//	CD3DX12_DESCRIPTOR_RANGE texTable;
-	//	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, j);
-	//	rootParameters[i].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	//	++i;
-	//}
-
 	auto staticSamplers = D3DUtil::GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
@@ -512,10 +475,24 @@ void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
 }
 
-void ShaderToolApp::RenderToTexture(Shader* shader, DrawNode* drawNode)
-{
-	if (!shader) return;
+static int PreviousShaderIndexRT = -1;
 
+void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
+{
+	int currentModel = (int)drawNode->GetPinValue(drawNode->ModelPin);
+	if (currentModel == INVALID_INDEX) return;
+
+	int currentShaderIndex = (int)drawNode->GetPinValue(drawNode->ShaderPin);
+	if (currentShaderIndex == INVALID_INDEX) return;
+
+	// when shader is changed, it has to recreate the PSO
+	if(PreviousShaderIndexRT != currentShaderIndex)
+	//if (drawNode->IsDirty)
+	{
+		CreateRenderTargetPSO(currentShaderIndex);
+		PreviousShaderIndexRT = currentShaderIndex;
+	}
+	
 	_CommandList->ResourceBarrier(
 		1,
 		&CD3DX12_RESOURCE_BARRIER::Transition(
@@ -530,7 +507,7 @@ void ShaderToolApp::RenderToTexture(Shader* shader, DrawNode* drawNode)
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
 	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
 
-	auto& bindVars = shader->GetBindingVars();
+	auto& bindVars = ShaderManager::Get().GetShader(currentShaderIndex)->GetBindingVars();
 
 	for (auto& [id, vars] : bindVars)
 	{
@@ -560,38 +537,19 @@ void ShaderToolApp::RenderToTexture(Shader* shader, DrawNode* drawNode)
 		}
 	}
 
-
-#if 0
-
-	auto frameCB = _CurrFrameResource->FrameCB->Resource();
-	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
-
-	std::vector<float> color = {1.f, 1.f, 0.f};
-	_CommandList->SetGraphicsRoot32BitConstants(2, (UINT)color.size(), color.data(), 0);
-
-	
-	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-	auto objectCB = _CurrFrameResource->ObjectCB->Resource();
-
-	UINT objCBIndex = _Entity.Id; // TODO: check this
-	D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-	objCBAddress += static_cast<UINT64>(objCBIndex) * objCBByteSize;
-
-	_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-
-#endif
-
 	// BOX
 	{
-		_CommandList->IASetVertexBuffers(0, 1, &_Entity.Model.VertexBufferView);
-		_CommandList->IASetIndexBuffer(&_Entity.Model.IndexBufferView);
+		auto& selectedModel = AssetManager::Get().GetModel(_Primitives[currentModel]);
+		
+		_CommandList->IASetVertexBuffers(0, 1, &selectedModel.VertexBufferView);
+		_CommandList->IASetIndexBuffer(&selectedModel.IndexBufferView);
 		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		_CommandList->DrawIndexedInstanced(
-			_Entity.Model.IndexCount,
+			selectedModel.IndexCount,
 			1,
-			_Entity.Model.StartIndexLocation,
-			_Entity.Model.BaseVertexLocation,
+			selectedModel.StartIndexLocation,
+			selectedModel.BaseVertexLocation,
 			0);
 	}
 
@@ -746,6 +704,11 @@ void ShaderToolApp::HandleNewLinks()
 				std::swap(start_attr, end_attr);
 			}
 			_Graph.CreateEdge(start_attr, end_attr);
+
+			// TODO: trigger event
+
+
+
 		}
 	}
 }
@@ -784,9 +747,7 @@ void ShaderToolApp::HandleDeletedNodes()
 				auto node = (*it).get();
 				if (node->Id == node_id)
 				{
-					// TODO: find a better way of reseting the root node id
-					if (node->Type == UiNodeType::RenderTarget)
-						_RootNodeId = INVALID_ID;
+					if (_RootNodeId == node_id) _RootNodeId = INVALID_ID;
 
 					node->OnDelete();
 					_UINodeIdMap.erase(node->Id);

@@ -43,6 +43,9 @@ struct UiNode
     virtual void OnUpdate(GameTimer& timer) = 0;
     virtual void OnRender() = 0;
 
+    void SetPinValue(NodeId id, float value) { ParentGraph->GetNode(id).Value = value; }
+    float GetPinValue(NodeId id) const { return ParentGraph->GetNode(id).Value; }
+
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         out << static_cast<int>(Type) << " " << Id;

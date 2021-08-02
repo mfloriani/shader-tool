@@ -9,7 +9,7 @@ struct ShaderNode : UiNode
     {
     }
 
-    struct VSData
+    struct ShaderData
     {
         std::string path;
         std::string shaderName;

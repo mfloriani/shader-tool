@@ -12,13 +12,17 @@ DrawNode::DrawNode(Graph<Node>* graph)
 
 void DrawNode::OnCreate()
 {
-    const Node value(NodeType::Value, 0.f);
+    //const Node value(NodeType::Value, 0.f);
     const Node link(NodeType::Link, NOT_LINKED);
     const Node out(NodeType::Draw);
 
     ShaderPin = ParentGraph->CreateNode(link);
     ModelPin = ParentGraph->CreateNode(link);
     Id = ParentGraph->CreateNode(out);
+
+    //BindingPins.push_back(ShaderPin);
+    //BindingPins.push_back(ModelPin);
+    //BindingPins.push_back(Id);
 
     ParentGraph->CreateEdge(Id, ShaderPin);
     ParentGraph->CreateEdge(Id, ModelPin);
@@ -46,24 +50,20 @@ void DrawNode::OnUpdate(GameTimer& timer)
     XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspectRatio, 1.0f, 1000.0f);
     XMStoreFloat4x4(&_Proj, XMMatrixTranspose(P));
 
-    XMStoreFloat4x4(&_World, XMMatrixIdentity());
 
-    // BOX ROTATION
-    {
-        //XMFLOAT3 Entity_Rotation = { 0.f, timer.TotalTime(), 0.f };
-        //XMFLOAT3 Entity_Scale = { 10.f, 10.f, 10.f };
-        //auto rotation = XMMatrixRotationY(Entity_Rotation.y);
-        //auto scale = XMMatrixScaling(Entity_Scale.x, Entity_Scale.y, Entity_Scale.z);        
-        //_World = XMMatrixMultiply(scale, rotation);
-
-        //ObjectConstants objConstants;
-        //XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-
-        //int objCBIndex = _Entity.Id; // TODO: handle multiple objects
-        //currObjectCB->CopyData(objCBIndex, objConstants);
-    }
+    XMFLOAT3 Entity_Rotation = { 0.f, timer.TotalTime(), 0.f };
+    XMFLOAT3 Entity_Scale = { 10.f, 10.f, 10.f };
+    auto rotation = XMMatrixRotationY(Entity_Rotation.y);
+    auto scale = XMMatrixScaling(Entity_Scale.x, Entity_Scale.y, Entity_Scale.z);        
+    
+    XMStoreFloat4x4(&_World, XMMatrixMultiply(scale, rotation));
 
 #endif
+
+
+
+    
+
 }
 
 void DrawNode::OnDelete() 
@@ -118,13 +118,11 @@ void DrawNode::OnRender()
     // SHADER BINDINGS
 
     ImGui::Spacing();
-    ImGui::Text("BINDS");
-    ImGui::Spacing();
-
-    if (Data.shader != NOT_LINKED)
+    
+    if ((int)GetPinValue(ShaderPin) != NOT_LINKED)
     {
         int pinId = 100; // TODO: TEMPORARY
-        auto& bindVars = ShaderManager::Get().GetShader(Data.shader)->GetBindingVars();
+        auto& bindVars = ShaderManager::Get().GetShader((size_t)GetPinValue(ShaderPin))->GetBindingVars();
         for (auto& [id, bindVar] : bindVars)
         {
             for (auto& bind : bindVar)

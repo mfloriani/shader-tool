@@ -110,7 +110,6 @@
     <ClInclude Include="src\Editor\UiNode\UiNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
-    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
