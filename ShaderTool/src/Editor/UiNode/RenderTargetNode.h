@@ -5,14 +5,51 @@
 struct RenderTargetNode : UiNode
 {
     explicit RenderTargetNode(Graph<Node>* graph, RenderTexture* renderTexture)
-        : UiNode(graph, UiNodeType::RenderTarget), RenderTex(renderTexture), Input(INVALID_ID)
+        : UiNode(graph, UiNodeType::RenderTarget), RenderTex(renderTexture), Input(INVALID_ID), IsLinkedToDrawNode(false)
     {
+        EVENT_MANAGER.Attach(this);
+    }
+
+    virtual ~RenderTargetNode()
+    {
+        EVENT_MANAGER.Detach(this);
     }
     
     RenderTexture* RenderTex;
     NodeId Input;
 
-    virtual void OnEvent(Event* e) override {}
+    bool IsLinkedToDrawNode;
+
+    virtual void OnEvent(Event* e) override
+    {
+        if (dynamic_cast<LinkCreatedEvent*>(e))
+        {
+            auto lce = dynamic_cast<LinkCreatedEvent*>(e);
+            LOG_TRACE("RenderTargetNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
+
+            if (Input == lce->from)
+                OnDrawLinkCreated(lce->from, lce->to);
+        }
+
+        if (dynamic_cast<LinkDeletedEvent*>(e))
+        {
+            auto lde = dynamic_cast<LinkDeletedEvent*>(e);
+            LOG_TRACE("RenderTargetNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
+
+            if (Input == lde->from)
+                OnDrawLinkDeleted(lde->from, lde->to);
+        }
+    }
+
+    void OnDrawLinkCreated(int from, int to)
+    {
+        IsLinkedToDrawNode = true;
+    }
+
+    void OnDrawLinkDeleted(int from, int to)
+    {
+        IsLinkedToDrawNode = false;
+    }
 
     virtual void OnCreate() override
     {
@@ -57,8 +94,9 @@ struct RenderTargetNode : UiNode
 
             static int w = 256;
             static int h = 256;
-            //if(_RenderTargetReady)
-            ImGui::Image((ImTextureID)RenderTex->SRV().ptr, ImVec2((float)w, (float)h));
+            
+            if(IsLinkedToDrawNode)
+                ImGui::Image((ImTextureID)RenderTex->SRV().ptr, ImVec2((float)w, (float)h));
         }
 
         ImNodes::EndNode();

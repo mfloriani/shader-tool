@@ -26,9 +26,24 @@ void EventManager::Detach(IObserver* observer)
 }
 
 void EventManager::Notify(Event* e)
-{
+{	
 	for (auto observer : _Observers)
 	{
 		observer->OnEvent(e);
+	}
+}
+
+void EventManager::Enqueue(std::shared_ptr<Event> e)
+{
+	_EventQueue.push(e);
+}
+
+void EventManager::NotifyQueuedEvents()
+{
+	while (!_EventQueue.empty())
+	{
+		auto evt = _EventQueue.front();
+		_EventQueue.pop();
+		Notify(evt.get());
 	}
 }

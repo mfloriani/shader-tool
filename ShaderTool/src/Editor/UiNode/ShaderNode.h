@@ -13,7 +13,6 @@ struct ShaderNode : UiNode
     {
         std::string path;
         std::string shaderName;
-        int shaderIndex{ INVALID_INDEX };
     } Data;
 
     virtual void OnEvent(Event* e) override {}
@@ -25,12 +24,12 @@ struct ShaderNode : UiNode
 
         Data.path = "INTERNAL_SHADER_PATH";
         Data.shaderName = DEFAULT_SHADER;
-        Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
+        SetPinValue( Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName) );
     }
 
     virtual void OnUpdate(GameTimer& timer) override
     {
-        ParentGraph->GetNode(Id).Value = static_cast<float>(Data.shaderIndex);
+        //ParentGraph->GetNode(Id).Value = static_cast<float>(Data.shaderIndex);
     }
 
     virtual void OnDelete() override
@@ -71,7 +70,7 @@ struct ShaderNode : UiNode
                     // Loaded and Compiled successfully
                     Data.path = shaderPath;
                     Data.shaderName = shaderName;
-                    Data.shaderIndex = (int) ShaderManager::Get().GetShaderIndex(Data.shaderName);
+                    SetPinValue(Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName));
                 }
             }
             else if (result == NFD_CANCEL)
@@ -119,7 +118,7 @@ struct ShaderNode : UiNode
         
         if (ShaderManager::Get().HasShader(Data.shaderName))
         {
-            Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
+            SetPinValue(Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName));
         }
         else
         {
@@ -128,12 +127,12 @@ struct ShaderNode : UiNode
             {
                 LOG_ERROR("Failed to load shader {0}", Data.path);
                 Data.shaderName = "SHADER_NOT_FOUND";
-                Data.shaderIndex = INVALID_INDEX;
+                SetPinValue(Id, (float)INVALID_INDEX);
             }
             else
             {
                 Data.shaderName = shaderName;
-                Data.shaderIndex = (int)ShaderManager::Get().GetShaderIndex(Data.shaderName);
+                SetPinValue(Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName));
             }
         }
         return in;

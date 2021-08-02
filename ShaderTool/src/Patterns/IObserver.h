@@ -1,6 +1,6 @@
 #pragma once
 
-struct Event;
+#include "Events/Event.h"
 
 class IObserver
 {

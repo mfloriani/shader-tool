@@ -22,6 +22,7 @@ class Shader
 public:
 	using RootParameterId = UINT;
 	using BindingVarsMap = std::map<RootParameterId, std::vector<ShaderBind>>;
+
 public:
 	Shader(const std::string& name, Microsoft::WRL::ComPtr<ID3DBlob> vsBuffer, Microsoft::WRL::ComPtr<ID3DBlob> psBuffer);
 	~Shader();

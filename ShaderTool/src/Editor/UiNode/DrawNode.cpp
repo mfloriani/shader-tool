@@ -24,21 +24,19 @@ void DrawNode::OnEvent(Event* e)
     {
         auto lce = dynamic_cast<LinkCreatedEvent*>(e);
         LOG_TRACE("DrawNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
-
-        if (ShaderPin == lce->from)
-            LOG_TRACE("ShaderPin link created");
-
+        
+        if(ShaderPin == lce->from)
+            OnShaderLinkCreated(lce->from, lce->to);
     }
     
     if (dynamic_cast<LinkDeletedEvent*>(e))
     {
         auto lde = dynamic_cast<LinkDeletedEvent*>(e);
         LOG_TRACE("DrawNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
-
+        
         if (ShaderPin == lde->from)
-            LOG_TRACE("ShaderPin link deleted");
+            OnShaderLinkDeleted(lde->from, lde->to);
     }
-
 }
 
 
@@ -51,10 +49,6 @@ void DrawNode::OnCreate()
     ShaderPin = ParentGraph->CreateNode(link);
     ModelPin = ParentGraph->CreateNode(link);
     Id = ParentGraph->CreateNode(out);
-
-    //BindingPins.push_back(ShaderPin);
-    //BindingPins.push_back(ModelPin);
-    //BindingPins.push_back(Id);
 
     ParentGraph->CreateEdge(Id, ShaderPin);
     ParentGraph->CreateEdge(Id, ModelPin);
@@ -102,6 +96,9 @@ void DrawNode::OnDelete()
 {
     ParentGraph->EraseNode(ModelPin);
     ParentGraph->EraseNode(ShaderPin);
+
+    for (auto& bind : ShaderBindingPins)
+        ParentGraph->EraseNode(bind.PinId);
 }
 
 void DrawNode::OnRender() 
@@ -153,20 +150,15 @@ void DrawNode::OnRender()
     
     if ((int)GetPinValue(ShaderPin) != NOT_LINKED)
     {
-        int pinId = 100; // TODO: TEMPORARY
-        auto& bindVars = ShaderManager::Get().GetShader((size_t)GetPinValue(ShaderPin))->GetBindingVars();
-        for (auto& [id, bindVar] : bindVars)
+        for (auto& bind : ShaderBindingPins)
         {
-            for (auto& bind : bindVar)
-            {
-                std::string varNameType = bind.VarName + " (" + bind.VarTypeName + ")";
-
-                ImNodes::BeginInputAttribute(pinId++);
-                const float label_width = ImGui::CalcTextSize(varNameType.c_str()).x;
-                ImGui::TextUnformatted(varNameType.c_str());
-                ImNodes::EndInputAttribute();
-                ImGui::Spacing();
-            }
+            std::stringstream ss;
+            ss << bind.VarName << " (" << bind.VarTypeName << ")";
+            ImNodes::BeginInputAttribute(bind.PinId);
+            const float label_width = ImGui::CalcTextSize(ss.str().c_str()).x;
+            ImGui::TextUnformatted(ss.str().c_str());
+            ImNodes::EndInputAttribute();
+            ImGui::Spacing();
         }
     }
 
@@ -188,10 +180,54 @@ void DrawNode::OnRender()
     ImNodes::PopColorStyle();
 }
 
-void DrawNode::OnLinkCreated(int from, int to)
+
+
+// `from` and `to` are backwards
+// `from` is the pin in this drawNode and `to` is the pin in the linked node
+void DrawNode::OnShaderLinkCreated(int from, int to)
 {
+    if (ShaderPin == from) 
+    {
+        LOG_TRACE("ShaderPin link created");
+
+        size_t shaderIndex = (size_t)GetPinValue(to);
+        auto shader = ShaderManager::Get().GetShader(shaderIndex);
+        auto& rootParVars = shader->GetBindingVars();
+        for (auto& [rootParId, vars] : rootParVars)
+        {
+            for (auto& bindVar : vars)
+            {
+                std::string varNameType = bindVar.VarName + " (" + bindVar.VarTypeName + ")";
+
+                const Node link(NodeType::Link, NOT_LINKED);
+                NodeId pinId = ParentGraph->CreateNode(link);
+                ParentGraph->CreateEdge(Id, pinId);
+                
+                ShaderBindingPin bindPin;
+                bindPin.PinId = pinId;
+                bindPin.VarName = bindVar.VarName;
+                bindPin.VarTypeName = bindVar.VarTypeName;
+                
+                ShaderBindingPins.push_back(bindPin);
+                ShaderBindingPinsMap[bindVar.VarName] = ShaderBindingPins.size()-1;
+            }
+        }
+    }
 }
 
-void DrawNode::OnLinkDeleted(int from, int to)
+void DrawNode::OnShaderLinkDeleted(int from, int to)
 {
+    if (ShaderPin == from)
+    {
+        LOG_TRACE("ShaderPin link deleted");
+
+        for (auto& bind : ShaderBindingPins)
+        {
+            LOG_TRACE("Deleting shader pin nodes {0} {1} {2}", bind.PinId, bind.VarName, bind.VarTypeName);
+            ParentGraph->EraseNode(bind.PinId);
+        }
+
+        ShaderBindingPins.clear();
+        ShaderBindingPinsMap.clear();
+    }
 }

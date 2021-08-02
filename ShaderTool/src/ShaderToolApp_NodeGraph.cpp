@@ -153,13 +153,13 @@ void DebugInfo(ShaderToolApp* app)
 
 				case UiNodeType::Shader:
 				{
-					auto vsNode = static_cast<ShaderNode*>(node);
+					auto shaderNode = static_cast<ShaderNode*>(node);
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("ShaderNode");
-						ImGui::Text("Id:     %i", vsNode->Id);
-						ImGui::Text("Index:  %i", vsNode->Data.shaderIndex);
-						ImGui::Text("Name:   %s", vsNode->Data.shaderName.c_str());
-						ImGui::Text("Path:   %s", vsNode->Data.path.c_str());
+						ImGui::Text("Id:     %i", shaderNode->Id);
+						ImGui::Text("Index:  %i", shaderNode->GetPinValue(shaderNode->Id));
+						ImGui::Text("Name:   %s", shaderNode->Data.shaderName.c_str());
+						ImGui::Text("Path:   %s", shaderNode->Data.path.c_str());
 					});
 				}
 				break;
@@ -349,20 +349,20 @@ void ShaderToolApp::EvaluateGraph()
 		}
 		break;
 
-		case NodeType::RenderTarget:
-		{
-			assert(valueStack.size() == 1ull && "RenderTarget node expects 1 input");
+		//case NodeType::RenderTarget:
+		//{
+		//	assert(valueStack.size() == 1ull && "RenderTarget node expects 1 input");
 
-			const int i = static_cast<int>(valueStack.top());
-			valueStack.pop();
+		//	const int i = static_cast<int>(valueStack.top());
+		//	valueStack.pop();
 
-			// it should receive an index with the texture rendered by draw node
-			if (i > 0)
-				_RenderTargetReady = true;
-			else
-				ClearRenderTexture();
-		}
-		break;
+		//	// it should receive an index with the texture rendered by draw node
+		//	if (i > 0)
+		//		_RenderTargetReady = true;
+		//	else
+		//		ClearRenderTexture();
+		//}
+		//break;
 		
 		case NodeType::Draw:
 		{
@@ -373,15 +373,20 @@ void ShaderToolApp::EvaluateGraph()
 			//	LOG_ERROR("NodeType::Draw {0}", valueStackClone.top());
 			//	valueStackClone.pop();
 			//}
-
-			if (valueStack.size() != 2)
-				LOG_ERROR("Draw node expects 2 inputs but got {0}", valueStack.size());
-
-			// The final output node isn't evaluated in the loop -- instead we just pop
-			// the three values which should be in the stack.
-			assert(valueStack.size() == 2ull && "Draw node expects 2 inputs");
-			
 			auto drawNode = static_cast<DrawNode*>(_UINodeIdMap[id]);
+			size_t numExpectedInputs = drawNode->ShaderBindingPins.size() + (size_t)2u; // bindings + fixed pins
+
+			if (valueStack.size() != numExpectedInputs)
+			{
+				LOG_ERROR("Draw node expects {0} inputs but got {1}", numExpectedInputs, valueStack.size());
+				assert(valueStack.size() == numExpectedInputs && "Invalid number of DrawNode inputs");
+			}
+			
+			for (auto& bind : drawNode->ShaderBindingPins)
+			{
+				drawNode->SetPinValue(bind.PinId, valueStack.top());
+				valueStack.pop();
+			}
 
 			drawNode->SetPinValue(drawNode->ModelPin, valueStack.top());
 			valueStack.pop();
@@ -481,6 +486,8 @@ static int PreviousShaderIndexRT = -1;
 
 void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 {
+	ClearRenderTexture();
+
 	int currentModel = (int)drawNode->GetPinValue(drawNode->ModelPin);
 	if (currentModel == INVALID_INDEX) return;
 
@@ -511,7 +518,7 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 
 	auto& bindVars = ShaderManager::Get().GetShader(currentShaderIndex)->GetBindingVars();
 
-	for (auto& [id, vars] : bindVars)
+	for (auto& [rootParIndex, vars] : bindVars)
 	{
 		for (auto& var : vars)
 		{
@@ -535,7 +542,7 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 				data = &color.x;
 			}
 			
-			_CommandList->SetGraphicsRoot32BitConstants(id, var.VarNum32BitValues, data, var.VarNum32BitValuesOffset);
+			_CommandList->SetGraphicsRoot32BitConstants(rootParIndex, var.VarNum32BitValues, data, var.VarNum32BitValuesOffset);
 		}
 	}
 
@@ -625,10 +632,11 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodes.push_back(std::move(node));
 			}
 
-			if (ImGui::MenuItem("Draw"))
+			if (ImGui::MenuItem("Draw") && _RootNodeId == INVALID_ID)
 			{
 				auto node = std::make_unique<DrawNode>(&_Graph);
 				node->OnCreate();
+				_RootNodeId = node->Id;
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
@@ -652,11 +660,10 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodes.push_back(std::move(node));
 			}
 
-			if (ImGui::MenuItem("Render Target") && _RootNodeId == INVALID_ID)
+			if (ImGui::MenuItem("Render Target") )
 			{
 				auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
 				node->OnCreate();
-				_RootNodeId = node->Id;
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
@@ -761,6 +768,8 @@ void ShaderToolApp::HandleDeletedNodes()
 
 void ShaderToolApp::UpdateNodeGraph()
 {
+	EVENT_MANAGER.NotifyQueuedEvents();
+
 	for (const auto& node : _UINodes)
 		node->OnUpdate(_Timer);
 }

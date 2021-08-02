@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include "windowsx.h"
 #include <string>
+#include <sstream>
 #include <chrono>
 
 #include <wrl.h>

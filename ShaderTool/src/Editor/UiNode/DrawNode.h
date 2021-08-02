@@ -3,17 +3,16 @@
 #include "UiNode.h"
 
 #include <vector>
+#include <unordered_map>
 
 const static int DEFAULT_SHADER_INDEX = 0;
 
-//struct BindingPinNode
-//{
-//    NodeId Id;
-//    std::string Name;
-//    UINT ShaderRegister;
-//    UINT Num32BitValues;
-//};
-
+struct ShaderBindingPin
+{
+    NodeId PinId;
+    std::string VarName;
+    std::string VarTypeName;
+};
 
 struct DrawNode : UiNode
 {
@@ -21,7 +20,9 @@ struct DrawNode : UiNode
     virtual ~DrawNode();
 
     NodeId ModelPin, ShaderPin;
-    std::vector<NodeId> BindingPins;
+    
+    std::vector<ShaderBindingPin> ShaderBindingPins;
+    std::unordered_map<std::string, size_t> ShaderBindingPinsMap;
 
     // TODO: move to Camera node 
     DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
@@ -39,14 +40,12 @@ struct DrawNode : UiNode
     virtual void OnDelete() override;
     virtual void OnRender() override;
 
-    void OnLinkCreated(int from, int to);
-    void OnLinkDeleted(int from, int to);
+    void OnShaderLinkCreated(int from, int to);
+    void OnShaderLinkDeleted(int from, int to);
 
     // TODO: rather useful methods
     // OnLoad()
-    // OnNewLink()
-    // OnLinkDelete()
-
+    
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);

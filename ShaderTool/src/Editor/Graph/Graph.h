@@ -239,10 +239,7 @@ int Graph<NodeT>::InsertEdge(const int id, const int from, const int to)
     assert(_Nodes.contains(to));
     _Edges.insert(id, Edge(id, from, to));
 
-    LinkCreatedEvent e;
-    e.from = from;
-    e.to = to;
-    EVENT_MANAGER.Notify(&e);
+    EVENT_MANAGER.Enqueue(std::make_shared<LinkCreatedEvent>(from, to));
 
     // update neighbor count
     assert(_EdgesFromNode.contains(from));
@@ -277,10 +274,7 @@ void Graph<NodeT>::EraseEdge(const int edge_id)
         neighbors->erase(iter);
     }
 
-    LinkDeletedEvent e;
-    e.from = edge.from;
-    e.to = edge.to;
-    EVENT_MANAGER.Notify(&e);
+    EVENT_MANAGER.Enqueue(std::make_shared<LinkDeletedEvent>(edge.from, edge.to));
     //LOG_TRACE("edge deleted {0} {1} {2}", edge_id, e.from, e.to);
 
     _Edges.erase(edge_id);
