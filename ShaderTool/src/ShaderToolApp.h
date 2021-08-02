@@ -6,6 +6,7 @@
 
 #include "GameTimer.h"
 
+
 #include "Rendering\D3DApp.h"
 #include "Rendering\RenderTexture.h"
 #include "Rendering\Vertex.h"
@@ -88,5 +89,7 @@ private: // Node Graph
 	void HandleDeletedNodes();
 	void BuildRenderTargetRootSignature(const std::string& shaderName);
 	void CreateRenderTargetPSO(int shaderIndex);
+
+
 
 };

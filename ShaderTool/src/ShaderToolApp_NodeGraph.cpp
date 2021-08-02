@@ -11,6 +11,9 @@
 #include "Editor\UiNode\SineNode.h"
 #include "Editor\UiNode\TimeNode.h"
 
+//#include "Events/Event.h"
+//#include "Events/EventManager.h"
+
 #include <iomanip>
 #include <algorithm>
 #include <cassert>
@@ -363,7 +366,6 @@ void ShaderToolApp::EvaluateGraph()
 		
 		case NodeType::Draw:
 		{
-			bool psoHasChanged = false;
 			//LOG_ERROR("------ NodeType::Draw");
 			//auto valueStackClone = valueStack;
 			//while (!valueStackClone.empty())
@@ -704,11 +706,6 @@ void ShaderToolApp::HandleNewLinks()
 				std::swap(start_attr, end_attr);
 			}
 			_Graph.CreateEdge(start_attr, end_attr);
-
-			// TODO: trigger event
-
-
-
 		}
 	}
 }
@@ -717,7 +714,10 @@ void ShaderToolApp::HandleDeletedLinks()
 {
 	int link_id;
 	if (ImNodes::IsLinkDestroyed(&link_id))
+	{
+		LOG_WARN("link destroyed {0}", link_id);
 		_Graph.EraseEdge(link_id);
+	}
 	
 	const int num_selected = ImNodes::NumSelectedLinks();
 	if (num_selected > 0 && ImGui::IsKeyReleased(VK_DELETE))

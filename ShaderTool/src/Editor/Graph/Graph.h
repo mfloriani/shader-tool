@@ -11,7 +11,8 @@
 
 #include "Edge.h"
 #include "IdMap.h"
-
+#include "Events/EventManager.h"
+#include "Events/Event.h"
 
 // directional graph
 template<typename NodeT>
@@ -26,6 +27,7 @@ public:
     const NodeT& GetNode(int node_id) const;
     Span<const int>  GetNeighbors(int node_id) const;
     Span<const Edge> GetEdges() const;
+    Edge GetEdge(int id) const;
     const std::vector<int>& GetNodes() const { return _Nodes.ids(); }
     
     const std::vector<int>& GetEdgesFromNodeIds() const { return _EdgesFromNode.ids(); }
@@ -159,6 +161,17 @@ Span<const typename Edge> Graph<NodeT>::GetEdges() const
 }
 
 template<typename NodeT>
+inline Edge Graph<NodeT>::GetEdge(int id) const
+{
+    auto it = _Edges.find(id);
+    if (it != _Edges.end())
+        return *it;
+
+    LOG_ERROR("Edge {0} NOT FOUND", id);
+    return Edge();
+}
+
+template<typename NodeT>
 size_t Graph<NodeT>::GetNumEdgesFromNode(const int id) const
 {
     auto iter = _EdgesFromNode.find(id);
@@ -226,6 +239,11 @@ int Graph<NodeT>::InsertEdge(const int id, const int from, const int to)
     assert(_Nodes.contains(to));
     _Edges.insert(id, Edge(id, from, to));
 
+    LinkCreatedEvent e;
+    e.from = from;
+    e.to = to;
+    EVENT_MANAGER.Notify(&e);
+
     // update neighbor count
     assert(_EdgesFromNode.contains(from));
     *_EdgesFromNode.find(from) += 1;
@@ -258,6 +276,12 @@ void Graph<NodeT>::EraseEdge(const int edge_id)
         assert(iter != neighbors->end());
         neighbors->erase(iter);
     }
+
+    LinkDeletedEvent e;
+    e.from = edge.from;
+    e.to = edge.to;
+    EVENT_MANAGER.Notify(&e);
+    //LOG_TRACE("edge deleted {0} {1} {2}", edge_id, e.from, e.to);
 
     _Edges.erase(edge_id);
 }

@@ -12,6 +12,8 @@ struct PrimitiveNode : UiNode
     std::vector<const char*>& Primitives;
     int SelectedModel;
 
+    virtual void OnEvent(Event* e) override {}
+
     virtual void OnCreate() override
     {
         const Node output(NodeType::Primitive);

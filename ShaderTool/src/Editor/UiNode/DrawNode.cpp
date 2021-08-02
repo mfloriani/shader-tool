@@ -2,13 +2,45 @@
 #include "DrawNode.h"
 #include "Defines.h"
 #include "Rendering/ShaderManager.h"
+#include "Events/EventManager.h"
+#include "Events/Event.h"
 
 using namespace DirectX;
 
 DrawNode::DrawNode(Graph<Node>* graph)
     : UiNode(graph, UiNodeType::Draw), ModelPin(INVALID_ID), ShaderPin(INVALID_ID)
 {
+    EVENT_MANAGER.Attach(this);
 }
+
+DrawNode::~DrawNode()
+{
+    EVENT_MANAGER.Detach(this);
+}
+
+void DrawNode::OnEvent(Event* e)
+{
+    if (dynamic_cast<LinkCreatedEvent*>(e))
+    {
+        auto lce = dynamic_cast<LinkCreatedEvent*>(e);
+        LOG_TRACE("DrawNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
+
+        if (ShaderPin == lce->from)
+            LOG_TRACE("ShaderPin link created");
+
+    }
+    
+    if (dynamic_cast<LinkDeletedEvent*>(e))
+    {
+        auto lde = dynamic_cast<LinkDeletedEvent*>(e);
+        LOG_TRACE("DrawNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
+
+        if (ShaderPin == lde->from)
+            LOG_TRACE("ShaderPin link deleted");
+    }
+
+}
+
 
 void DrawNode::OnCreate()
 {
@@ -154,4 +186,12 @@ void DrawNode::OnRender()
     ImNodes::PopColorStyle();
     ImNodes::PopColorStyle();
     ImNodes::PopColorStyle();
+}
+
+void DrawNode::OnLinkCreated(int from, int to)
+{
+}
+
+void DrawNode::OnLinkDeleted(int from, int to)
+{
 }

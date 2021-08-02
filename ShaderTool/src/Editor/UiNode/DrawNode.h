@@ -6,18 +6,19 @@
 
 const static int DEFAULT_SHADER_INDEX = 0;
 
-struct BindingPinNode
-{
-    NodeId Id;
-    std::string Name;
-    UINT ShaderRegister;
-    UINT Num32BitValues;
-};
+//struct BindingPinNode
+//{
+//    NodeId Id;
+//    std::string Name;
+//    UINT ShaderRegister;
+//    UINT Num32BitValues;
+//};
 
 
 struct DrawNode : UiNode
 {
     DrawNode(Graph<Node>* graph);
+    virtual ~DrawNode();
 
     NodeId ModelPin, ShaderPin;
     std::vector<NodeId> BindingPins;
@@ -32,13 +33,14 @@ struct DrawNode : UiNode
     //
     DirectX::XMFLOAT4X4 _World;
 
-
+    virtual void OnEvent(Event* e) override;
     virtual void OnCreate() override;
     virtual void OnUpdate(GameTimer& timer) override;
     virtual void OnDelete() override;
     virtual void OnRender() override;
 
-    
+    void OnLinkCreated(int from, int to);
+    void OnLinkDeleted(int from, int to);
 
     // TODO: rather useful methods
     // OnLoad()

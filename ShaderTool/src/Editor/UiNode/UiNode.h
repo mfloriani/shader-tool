@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameTimer.h"
+#include "Patterns/IObserver.h"
 
 #include "Editor\Graph\Graph.h"
 #include "Editor\Graph\Node.h"
@@ -23,21 +24,21 @@ enum class UiNodeType
     Shader,
 };
 
-struct UiNode
+struct UiNode : public IObserver
 {
     explicit UiNode(Graph<Node>* graph, UiNodeType type) : ParentGraph(graph), Type(type), Id(INVALID_ID) {}
     
     virtual ~UiNode()
     {
         LOG_TRACE("~UiNode()");
-        if(ParentGraph)
-            ParentGraph->EraseNode(Id);
+        if(ParentGraph) ParentGraph->EraseNode(Id);
     }
 
     Graph<Node>* ParentGraph;
     UiNodeType Type;
     NodeId Id;
 
+    virtual void OnEvent(Event*) = 0;
     virtual void OnCreate() = 0;
     virtual void OnDelete() = 0;
     virtual void OnUpdate(GameTimer& timer) = 0;

@@ -156,6 +156,10 @@
     </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\Patterns\IObserver.h" />
+    <ClInclude Include="src\Patterns\ISubject.h" />
+    <ClInclude Include="src\Events\Event.h" />
+    <ClInclude Include="src\Events\EventManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -225,6 +229,7 @@
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\Editor\UiNode\DrawNode.cpp" />
+    <ClCompile Include="src\Events\EventManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">

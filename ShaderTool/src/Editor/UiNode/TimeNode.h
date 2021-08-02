@@ -9,6 +9,8 @@ struct TimeNode : UiNode
     {
     }
 
+    virtual void OnEvent(Event* e) override {}
+
     virtual void OnCreate() override
     {
         Id = ParentGraph->CreateNode(Node(NodeType::Time));

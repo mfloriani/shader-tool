@@ -16,6 +16,8 @@ struct ShaderNode : UiNode
         int shaderIndex{ INVALID_INDEX };
     } Data;
 
+    virtual void OnEvent(Event* e) override {}
+
     virtual void OnCreate() override
     {
         const Node op(NodeType::Shader);

@@ -11,6 +11,8 @@ struct SineNode : UiNode
 
     NodeId Input;
 
+    virtual void OnEvent(Event* e) override {}
+
     virtual void OnCreate() override
     {
         const Node value(NodeType::Value, 0.f);

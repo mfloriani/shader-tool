@@ -126,11 +126,15 @@
     <ClInclude Include="src\Editor\UiNode\SineNode.h" />
     <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
     <ClInclude Include="src\Editor\UiNode\UiNode.h" />
+    <ClInclude Include="src\Events\Event.h" />
+    <ClInclude Include="src\Events\EventManager.h" />
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\MagicEnum.h" />
     <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\Patterns\IObserver.h" />
+    <ClInclude Include="src\Patterns\ISubject.h" />
     <ClInclude Include="src\Rendering\D3DApp.h" />
     <ClInclude Include="src\Rendering\D3DUtil.h" />
     <ClInclude Include="src\Rendering\FrameResource.h" />
@@ -180,6 +184,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Editor\UiNode\DrawNode.cpp" />
+    <ClCompile Include="src\Events\EventManager.cpp" />
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\GeometryGenerator.cpp" />
     <ClCompile Include="src\Log.cpp" />
