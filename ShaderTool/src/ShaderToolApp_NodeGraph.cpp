@@ -10,9 +10,7 @@
 #include "Editor\UiNode\ShaderNode.h"
 #include "Editor\UiNode\SineNode.h"
 #include "Editor\UiNode\TimeNode.h"
-
-//#include "Events/Event.h"
-//#include "Events/EventManager.h"
+#include "Editor\UiNode\ColorNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -167,6 +165,17 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Name:   %s", shaderNode->Data.shaderName.c_str());
 						ImGui::Text("Path:   %s", shaderNode->Data.path.c_str());
 					});
+				}
+				break;
+
+				case UiNodeType::Color:
+				{
+					auto colorNode = static_cast<ColorNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("ColorNode");
+						ImGui::Text("Id:     %i", colorNode->Id);
+						ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color.x, colorNode->Color.y, colorNode->Color.z);
+						});
 				}
 				break;
 
@@ -389,10 +398,13 @@ void ShaderToolApp::EvaluateGraph()
 				assert(valueStack.size() == numExpectedInputs && "Invalid number of DrawNode inputs");
 			}
 			
-			for (auto& bind : drawNode->ShaderBindingPins)
+			auto it = drawNode->ShaderBindingPins.crbegin();
+			//for (auto& bind : drawNode->ShaderBindingPins)
+			while(it != drawNode->ShaderBindingPins.crend())
 			{
-				drawNode->SetPinValue(bind.PinId, valueStack.top());
+				drawNode->SetPinValue(it->PinId, valueStack.top());
 				valueStack.pop();
+				++it;
 			}
 
 			drawNode->SetPinValue(drawNode->ModelPin, valueStack.top());
@@ -415,6 +427,12 @@ void ShaderToolApp::EvaluateGraph()
 		break;
 
 		case NodeType::Shader:
+		{
+			valueStack.push(node.Value);
+		}
+		break;
+
+		case NodeType::Color:
 		{
 			valueStack.push(node.Value);
 		}
@@ -693,6 +711,15 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
+
+			if (ImGui::MenuItem("Color"))
+			{
+				auto node = std::make_unique<ColorNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
 			
 			ImGui::EndPopup();
 		}
@@ -943,6 +970,14 @@ void ShaderToolApp::Load()
 		case UiNodeType::Shader:
 		{
 			auto node = std::make_unique<ShaderNode>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Color:
+		{
+			auto node = std::make_unique<ColorNode>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));

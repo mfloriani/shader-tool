@@ -22,6 +22,7 @@ enum class UiNodeType
     RenderTarget,
     Primitive,
     Shader,
+    Color
 };
 
 struct UiNode : public IObserver
