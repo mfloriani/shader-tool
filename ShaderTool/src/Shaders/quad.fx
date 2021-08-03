@@ -9,7 +9,7 @@ cbuffer cbPerFrame : register(b1)
     float4x4 Proj;
 }
 
-struct VSInput
+struct VS_DATA
 {
     float3 Pos  : POSITION;
     float3 Norm : NORMAL;
@@ -17,7 +17,7 @@ struct VSInput
     float2 TexC : TEXCOORD;
 };
 
-struct VSOutput
+struct PS_DATA
 {
     float4 PosH : SV_POSITION;
     float3 Norm : NORMAL;
@@ -25,9 +25,9 @@ struct VSOutput
     float2 TexC : TEXCOORD;
 };
 
-VSOutput main(VSInput vIn)
+PS_DATA VS(VS_DATA vIn)
 {
-    VSOutput vOut;
+    PS_DATA vOut;
 #if 1
     float4 posW = mul(float4(vIn.Pos, 1.0), World);
     vOut.PosH = mul(posW, View);
@@ -41,4 +41,13 @@ VSOutput main(VSInput vIn)
     vOut.TexC = vIn.TexC;
     
     return vOut;
+}
+
+
+Texture2D renderTex : register(t0);
+SamplerState samPointWrap : register(s0);
+
+float4 PS(PS_DATA pIn) : SV_TARGET
+{
+    return renderTex.Sample(samPointWrap, pIn.TexC);
 }

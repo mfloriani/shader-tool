@@ -32,7 +32,7 @@ D3DApp::D3DApp(HINSTANCE hInstance) : _Hinstance(hInstance)
 
 D3DApp::~D3DApp()
 {
-    LOG_TRACE("D3DApp::~D3DApp()");
+    //LOG_TRACE("D3DApp::~D3DApp()");
     FlushCommandQueue();
     
     ImNodes::DestroyContext();
@@ -499,7 +499,7 @@ void D3DApp::OnResize(uint32_t width, uint32_t height)
 
 void D3DApp::RenderUI()
 {
-    ImGui::Render();
+    ImGui::OnRender();
 
     ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
     _CommandList->SetDescriptorHeaps(_countof(descHeapList), descHeapList);

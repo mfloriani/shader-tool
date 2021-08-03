@@ -10,20 +10,18 @@
 #include <wrl.h>
 
 #include "UploadBuffer.h"
+#include "PipelineStateObject.h"
 
-struct ObjectConstants
-{
-    DirectX::XMFLOAT4X4 World{ D3DUtil::Identity4x4() };
-    DirectX::XMFLOAT3 Color{ 0.f, 0.f, 0.f };
-};
+//struct ObjectConstants
+//{
+//    DirectX::XMFLOAT4X4 World{ D3DUtil::Identity4x4() };
+//};
 
-struct FrameConstants
-{
-    DirectX::XMFLOAT4X4 View{ D3DUtil::Identity4x4() };
-    DirectX::XMFLOAT4X4 Proj{ D3DUtil::Identity4x4() };
+//struct FrameConstants
+//{
+//    DirectX::XMFLOAT4X4 View{ D3DUtil::Identity4x4() };
+//    DirectX::XMFLOAT4X4 Proj{ D3DUtil::Identity4x4() };
     
-    DirectX::XMFLOAT4X4 RTProj{ D3DUtil::Identity4x4() };
-
     //DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
     //DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();
     //DirectX::XMFLOAT4X4 Proj = MathHelper::Identity4x4();
@@ -38,7 +36,7 @@ struct FrameConstants
     //float FarZ = 0.0f;
     //float TotalTime = 0.0f;
     //float DeltaTime = 0.0f;
-};
+//};
 
 // Stores the resources needed for the CPU to build the command lists for a frame.  
 struct FrameResource
@@ -54,8 +52,10 @@ struct FrameResource
 
     // We cannot update a cbuffer until the GPU is done processing the commands
     // that reference it.  So each frame needs their own cbuffers.
-    std::unique_ptr<UploadBuffer<FrameConstants>> FrameCB = nullptr;
-    std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
+    //std::unique_ptr<UploadBuffer<FrameConstants>> FrameCB = nullptr;
+    //std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
+
+    std::shared_ptr<PipelineStateObject> RenderTargetPSO;
 
     // Fence value to mark commands up to this fence point.  This lets us
     // check if these frame resources are still in use by the GPU.

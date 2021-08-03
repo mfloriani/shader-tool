@@ -14,8 +14,14 @@
 constexpr uint32_t INIT_CLIENT_WIDTH = 1366;
 constexpr uint32_t INIT_CLIENT_HEIGHT = 768;
 
+constexpr uint32_t RENDER_TARGET_WIDTH = 1024;
+constexpr uint32_t RENDER_TARGET_HEIGHT = 1024;
+
 constexpr int NUM_BACK_BUFFERS = 3;
 constexpr int NUM_FRAMES = 3;
+
+constexpr char* BACKBUFFER_VS = "backbuffer_vs.cso";
+constexpr char* DEFAULT_SHADER = "default";
 
 #if defined(min)
 #undef min

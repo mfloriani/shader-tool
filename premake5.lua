@@ -8,7 +8,7 @@ workspace "ShaderTool"
 		"Release",
 	}
 
-outputdir = "%{cfg.buildcfg}-%{cfg.architecture}"
+outputdir = "%{cfg.buildcfg}-%{cfg.architecture}/%{prj.name}"
 
 project "ShaderTool"
 	location "ShaderTool"
@@ -16,10 +16,10 @@ project "ShaderTool"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "on"
-
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-	debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+		
+	targetdir ("bin/" .. outputdir)
+	objdir ("bin-int/" .. outputdir)
+	debugdir ("bin/" .. outputdir)
 
 	pchheader "pch.h"
 	pchsource "%{prj.name}/src/pch.cpp"
@@ -29,6 +29,8 @@ project "ShaderTool"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.hlsl",
+		"%{prj.name}/src/**.fx",
+		"%{prj.name}/src/**.c",
 	}
 
 	includedirs
@@ -49,7 +51,7 @@ project "ShaderTool"
 		"dxguid.lib",
 		"D3DCompiler.lib"
 	}
-
+	
 	filter "system:windows"
 		staticruntime "on"
 		systemversion "latest"
@@ -57,6 +59,13 @@ project "ShaderTool"
 		defines
 		{
 			
+		}
+
+		--prebuildcommands
+		postbuildcommands
+		{
+			--("{MKDIR} ../bin/" ..outputdir.. "/Sandbox"),
+			--("{COPY} src/Shaders/*.fx %{cfg.targetdir}")
 		}
 
 	filter "configurations:Debug"
@@ -78,17 +87,27 @@ project "ShaderTool"
 	filter 'files:**/ImGui/**.cpp'
 		flags  { 'NoPCH' }
 	
+	filter 'files:**/NFD/**.c'
+		flags  { 'NoPCH' }
+
+	filter 'files:**/NFD/**.cpp'
+		flags  { 'NoPCH' }
+	
 	filter { "files:**.hlsl" }
 		flags "ExcludeFromBuild"
 		shadermodel "5.0"
-
+	
 	filter { "files:**_vs.hlsl" }
 		removeflags "ExcludeFromBuild"
 		shadertype "Vertex"
-		-- shaderentry "ForVertex"
 
 	 filter { "files:**_ps.hlsl" }
 		removeflags "ExcludeFromBuild"
 		shadertype "Pixel"
-		-- shaderentry "ForPixel"
-		
+	
+	-- To make sure the fx files are up to date in the targetdir
+	filter 'files:**.fx'
+	   buildmessage 'Copying %{file.relpath}'
+	   buildcommands { '{COPY} %{file.relpath} %{cfg.targetdir}' }
+	   buildoutputs '%{cfg.targetdir}'
+	   

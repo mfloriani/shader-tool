@@ -5,19 +5,26 @@
 #include <string>
 
 #include "GameTimer.h"
-#include "Entity.h"
+
+
 #include "Rendering\D3DApp.h"
 #include "Rendering\RenderTexture.h"
 #include "Rendering\Vertex.h"
 #include "Rendering\Mesh.h"
-#include "Editor\Node.h"
-#include "Editor\Graph.h"
+#include "Rendering\ShaderManager.h"
+#include "Rendering\PipelineStateObject.h"
+
+#include "Editor\Graph\Node.h"
+#include "Editor\UiNode\UiNode.h"
+#include "Editor\Graph\Graph.h"
 
 struct Primitive
 {
 	uint16_t Id;
 	std::string Name;
 };
+
+struct DrawNode;
 
 class ShaderToolApp : public D3DApp
 {
@@ -30,9 +37,7 @@ public:
 	bool Init();
 	void Run();
 	void RenderUIDockSpace();
-	void UpdateCamera();
-	void UpdatePerFrameCB();
-	void UpdatePerObjectCB();
+	void UpdateNodeGraph();
 	void RenderNodeGraph();
 
 	virtual void OnUpdate() override;
@@ -43,51 +48,48 @@ public:
 	
 	void SwapFrameResource();
 	void CreateDescriptorHeaps();
-	void BuildRootSignature();
-	void BuildShadersAndInputLayout();
-	void BuildPSO();
+	void BuildBackBufferPSO();
 	void LoadPrimitiveModels();
 	
 	const GameTimer& GetTimer() const { return _Timer; }
+	const std::vector<std::unique_ptr<UiNode>>& GetUiNodes() const { return _UINodes; }
+	const Graph<Node>& GetGraph() const { return _Graph; }
+	UiNode* GetUiNode(NodeId id) { return _UINodeIdMap[id]; }
 
 private:
-	// TODO: Camera stuff
-	DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4X4 _View = D3DUtil::Identity4x4();
-	DirectX::XMFLOAT4X4 _Proj = D3DUtil::Identity4x4();
-	DirectX::XMFLOAT4X4 _RTProj = D3DUtil::Identity4x4();
-	float _Theta = 1.5f * DirectX::XM_PI;
-	float _Phi = DirectX::XM_PIDIV2 - 0.1f;
-	float _Radius = 50.0f;
-	//
-
-	FrameConstants _FrameCB;
+	//FrameConstants _FrameCB;
 	GameTimer _Timer;
 	bool _IsRunning{ true };
 
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RootSignature{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> _BackBufferPSO;
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> _BackBufferRootSignature{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> _RenderTargetRootSignature{ nullptr };
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
-	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> _Shaders;
-	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> _PSOs;
+	std::shared_ptr<PipelineStateObject> _RenderTargetPSO;
 	
-private: // Node Graph
-	Graph<Node>         _Graph;
-	std::vector<UiNode> _UINodes;
-	int                 _RootNodeId;
-	Entity              _Entity;
-
-	std::vector<const char*> _Primitives;
-
-	// TODO: at the moment only 1 render target supported
-	std::unique_ptr<RenderTexture> _RenderTarget; 
+private: // Node Graph	
 	bool _RenderTargetReady{ false };
+	std::unique_ptr<RenderTexture> _RenderTarget;  // TODO: at the moment only 1 render target supported
+	std::vector<const char*> _Primitives;
+	std::vector<std::unique_ptr<UiNode>> _UINodes;
+	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
+	Graph<Node> _Graph;
+	int _RootNodeId;
 	
 	void InitNodeGraph();
 	void Reset();
 	void Save();
 	void Load();
 	void EvaluateGraph();
-	void RenderToTexture();
+	void RenderToTexture(DrawNode* drawNode);
 	void ClearRenderTexture();
+	void HandleNewNodes();
+	void HandleNewLinks();
+	void HandleDeletedLinks();
+	void HandleDeletedNodes();
+	void BuildRenderTargetRootSignature(const std::string& shaderName);
+	void CreateRenderTargetPSO(int shaderIndex);
+
+
 
 };

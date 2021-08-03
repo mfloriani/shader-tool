@@ -13,7 +13,7 @@ ShaderToolApp::ShaderToolApp(HINSTANCE hInstance) : D3DApp(hInstance), _RootNode
 
 ShaderToolApp::~ShaderToolApp()
 {
-	LOG_TRACE("ShaderToolApp::~ShaderToolApp()");
+	//LOG_TRACE("ShaderToolApp::~ShaderToolApp()");
 	FlushCommandQueue();
 }
 
@@ -24,7 +24,7 @@ void ShaderToolApp::OnKeyDown(WPARAM key)
 	case VK_ESCAPE:
 	{
 		LOG_TRACE("ESC pressed");
-		PostQuitMessage(0);
+		//PostQuitMessage(0);
 		break;
 	}
 	default:
@@ -74,125 +74,27 @@ void ShaderToolApp::Run()
 void ShaderToolApp::OnResize(uint32_t width, uint32_t height)
 {
 	D3DApp::OnResize(width, height);
-
-	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
-	XMStoreFloat4x4(&_Proj, P);
-
-	// TODO: move this to the resize event of the render target node 
-	//if(_RenderTarget)
-	//	_RenderTarget->OnResize(width, height);
 }
-
-void ShaderToolApp::UpdateCamera()
-{
-	// Convert Spherical to Cartesian coordinates.
-	_EyePos.x = _Radius * sinf(_Phi) * cosf(_Theta);
-	_EyePos.z = _Radius * sinf(_Phi) * sinf(_Theta);
-	_EyePos.y = _Radius * cosf(_Phi);
-
-	// Build the view matrix.
-	XMVECTOR pos = XMVectorSet(_EyePos.x, _EyePos.y, _EyePos.z, 1.0f);
-	XMVECTOR target = XMVectorZero();
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-	XMStoreFloat4x4(&_View, view);
-}
-
-void ShaderToolApp::UpdatePerFrameCB()
-{
-	XMMATRIX view = XMLoadFloat4x4(&_View);
-	XMMATRIX proj = XMLoadFloat4x4(&_Proj);
-	XMMATRIX rtProj = XMLoadFloat4x4(&_RTProj);
-
-	//XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-	//XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
-	//XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
-	//XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
-
-	XMStoreFloat4x4(&_FrameCB.View, XMMatrixTranspose(view));
-	//XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
-	XMStoreFloat4x4(&_FrameCB.Proj, XMMatrixTranspose(proj));
-	XMStoreFloat4x4(&_FrameCB.RTProj, XMMatrixTranspose(rtProj));
-	//XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
-	//XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	//XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	//mMainPassCB.EyePosW = mEyePos;
-	//mMainPassCB.RenderTargetSize = XMFLOAT2((float)mClientWidth, (float)mClientHeight);
-	//mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
-	//mMainPassCB.NearZ = 1.0f;
-	//mMainPassCB.FarZ = 1000.0f;
-	//mMainPassCB.TotalTime = gt.TotalTime();
-	//mMainPassCB.DeltaTime = gt.DeltaTime();
-
-	auto currPassCB = _CurrFrameResource->FrameCB.get();
-	currPassCB->CopyData(0, _FrameCB);
-}
-
-void ShaderToolApp::UpdatePerObjectCB()
-{
-	auto currObjectCB = _CurrFrameResource->ObjectCB.get();
-	XMMATRIX world = XMMatrixIdentity();
-
-	// BOX ROTATION
-	{
-		_Entity.Rotation = { 0.f, _Timer.TotalTime(), 0.f };
-		auto rotation = XMMatrixRotationY(_Entity.Rotation.y);
-		auto scale = XMMatrixScaling(_Entity.Scale.x, _Entity.Scale.y, _Entity.Scale.z);
-		world = XMMatrixMultiply(scale, rotation);
-
-		ObjectConstants objConstants;
-		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-		
-		objConstants.Color = _Entity.Color;
-
-		int objCBIndex = _Entity.Id; // TODO: handle multiple objects
-		currObjectCB->CopyData(objCBIndex, objConstants);
-	}
-
-#if 0
-	// QUAD
-	{
-		//world = XMMatrixIdentity();
-		FLOAT size = 10.f;
-		world = XMMatrixScaling(1.f * size, 1.f * size, 1.f * size);
-	
-		ObjectConstants objConstants;
-		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-
-		int objCBIndex = 1;
-		currObjectCB->CopyData(objCBIndex, objConstants);
-	}
-#endif
-}
-
-
 
 void ShaderToolApp::OnUpdate()
 {
 	_Timer.Tick();
-	UpdateCamera();
 	SwapFrameResource();
-	UpdatePerObjectCB();
-	UpdatePerFrameCB();
+	UpdateNodeGraph();
 }
 
 void ShaderToolApp::OnRender()
 {
-	// CLEAR
+	// Reset command list
 	auto backBuffer = _BackBuffers[_CurrentBackBufferIndex];
 	auto commandAllocator = _CurrFrameResource->CmdListAlloc;
 	commandAllocator->Reset();
-	
 	_CommandList->Reset(commandAllocator.Get(), nullptr);
-	_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
+	
+	// Traverse the graph and evaluate the node values (Render to Texture, etc)
 
-	auto frameCB = _CurrFrameResource->FrameCB->Resource();
-	_CommandList->SetGraphicsRootConstantBufferView(1, frameCB->GetGPUVirtualAddress());
-	
 	EvaluateGraph();
-	
+
 	// Render to back buffer
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -224,45 +126,13 @@ void ShaderToolApp::OnRender()
 	);
 
 	_CommandList->OMSetRenderTargets(1, &rtv, true, &dsv);
-	//_CommandList->SetGraphicsRootSignature(_RootSignature.Get());
-	_CommandList->SetPipelineState(_PSOs["back_buffer"].Get());
+	_CommandList->SetGraphicsRootSignature(_BackBufferRootSignature.Get());
+	_CommandList->SetPipelineState(_BackBufferPSO.Get());
 
-#if 0 // draw to backbuffer
-	ID3D12DescriptorHeap* const descHeapList[] = { _ImGuiSrvDescriptorHeap.Get() };
-	_CommandList->SetDescriptorHeaps(_countof(descHeapList), descHeapList);
-	_CommandList->SetGraphicsRootDescriptorTable(2, _RenderTexture->SRV());
-	
-	// QUAD
-	{
-		auto& quad = _Meshes["quad_geo"]; 
-
-		_CommandList->IASetVertexBuffers(0, 1, &quad->VertexBufferView());
-		_CommandList->IASetIndexBuffer(&quad->IndexBufferView());
-		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
-
-		UINT objCBIndex = 1;
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-		objCBAddress += objCBIndex * objCBByteSize;
-
-		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-		_CommandList->DrawIndexedInstanced(
-			quad->DrawArgs["quad"].IndexCount,
-			1,
-			quad->DrawArgs["quad"].StartIndexLocation,
-			quad->DrawArgs["quad"].BaseVertexLocation,
-			0);
-	}
-#endif
-
-#if 1
 	NewUIFrame();
 	RenderUIDockSpace();
 	RenderNodeGraph();
 	RenderUI();
-#endif
 
 	// PRESENT
 	{
@@ -320,7 +190,7 @@ void ShaderToolApp::RenderUIDockSpace()
 	static bool docking_opt_padding = false;
 	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	ImGuiWindowFlags overlay_window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -328,11 +198,11 @@ void ShaderToolApp::RenderUIDockSpace()
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+	overlay_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	overlay_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f)); // no padding
-	ImGui::Begin("DockSpace", &docking_open, window_flags);
+	ImGui::Begin("DockSpace", &docking_open, overlay_window_flags);
 	ImGui::PopStyleVar();
 	ImGui::PopStyleVar(2); // fullscreen related
 
@@ -347,98 +217,19 @@ void ShaderToolApp::RenderUIDockSpace()
 		LOG_ERROR("ImGui Docking is disabled");
 	}
 
-	//if (ImGui::BeginMenuBar())
-	//{
-	//	if (ImGui::BeginMenu("Options"))
-	//	{
-			// Disabling fullscreen would allow the window to be moved to the front of other windows,
-			// which we can't undo at the moment without finer window depth/z control.
-			//ImGui::MenuItem("Fullscreen", NULL, &docking_opt_fullscreen);
-			//ImGui::MenuItem("Padding", NULL, &docking_opt_padding);
-			//ImGui::Separator();
-
-			//if (ImGui::MenuItem("Flag: NoSplit", "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoSplit; }
-			//if (ImGui::MenuItem("Flag: NoResize", "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoResize; }
-			//if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode; }
-			//if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0)) { dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar; }
-			//if (ImGui::MenuItem("Flag: PassthruCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0, docking_opt_fullscreen)) { dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
-			//ImGui::Separator();
-
-			//if (ImGui::MenuItem("Close", NULL, false, docking_open != NULL))
-			//	docking_open = false;
-	//		ImGui::EndMenu();
-	//	}
-	//	ImGui::EndMenuBar();
-	//}
-
+	if (ImGui::BeginMenuBar())
+	{
+		if (ImGui::BeginMenu("Options"))
+		{
+			if (ImGui::MenuItem("New", NULL, false, docking_open != NULL)) LOG_WARN("New NOT IMPLEMENTED");
+			if (ImGui::MenuItem("Save", NULL, false, docking_open != NULL)) LOG_WARN("Save NOT IMPLEMENTED");
+			if (ImGui::MenuItem("Load", NULL, false, docking_open != NULL)) LOG_WARN("Load NOT IMPLEMENTED");
+			if (ImGui::MenuItem("Close", NULL, false, docking_open != NULL)) LOG_WARN("Close NOT IMPLEMENTED");
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
 
 	ImGui::End();
 }
 
-void ShaderToolApp::RenderToTexture()
-{
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
-	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
-	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
-	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
-	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
-
-	// BOX
-	{
-		_CommandList->IASetVertexBuffers(0, 1, &_Entity.Model.VertexBufferView);
-		_CommandList->IASetIndexBuffer(&_Entity.Model.IndexBufferView);
-		_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-		auto objectCB = _CurrFrameResource->ObjectCB->Resource();
-
-		UINT objCBIndex = _Entity.Id; // TODO: check this
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-		objCBAddress += objCBIndex * objCBByteSize;
-
-		_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-		_CommandList->DrawIndexedInstanced(
-			_Entity.Model.IndexCount,
-			1,
-			_Entity.Model.StartIndexLocation,
-			_Entity.Model.BaseVertexLocation,
-			0);
-	}
-
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_GENERIC_READ));
-}
-
-void ShaderToolApp::ClearRenderTexture()
-{
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	_CommandList->SetPipelineState(_PSOs["render_target"].Get());
-	_CommandList->RSSetViewports(1, &_RenderTarget->GetViewPort());
-	_CommandList->RSSetScissorRects(1, &_RenderTarget->GetScissorRect());
-	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
-	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
-
-	_CommandList->ResourceBarrier(
-		1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(
-			_RenderTarget->GetResource(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_GENERIC_READ));
-}
