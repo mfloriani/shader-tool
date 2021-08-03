@@ -168,6 +168,17 @@ void DebugInfo(ShaderToolApp* app)
 				}
 				break;
 
+				case UiNodeType::Color:
+				{
+					auto colorNode = static_cast<ColorNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("ColorNode");
+						ImGui::Text("Id:     %i", colorNode->Id);
+						ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color.x, colorNode->Color.y, colorNode->Color.z);
+						});
+				}
+				break;
+
 				default:
 					break;
 				}
@@ -387,10 +398,13 @@ void ShaderToolApp::EvaluateGraph()
 				assert(valueStack.size() == numExpectedInputs && "Invalid number of DrawNode inputs");
 			}
 			
-			for (auto& bind : drawNode->ShaderBindingPins)
+			auto it = drawNode->ShaderBindingPins.crbegin();
+			//for (auto& bind : drawNode->ShaderBindingPins)
+			while(it != drawNode->ShaderBindingPins.crend())
 			{
-				drawNode->SetPinValue(bind.PinId, valueStack.top());
+				drawNode->SetPinValue(it->PinId, valueStack.top());
 				valueStack.pop();
+				++it;
 			}
 
 			drawNode->SetPinValue(drawNode->ModelPin, valueStack.top());

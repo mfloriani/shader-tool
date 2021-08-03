@@ -23,7 +23,7 @@ struct ColorNode : UiNode
 
     virtual void OnUpdate(GameTimer& timer) override
     {
-        
+        SetPinValue(Id, 6.f);
     }
 
     virtual void OnDelete() override
@@ -71,7 +71,7 @@ struct ColorNode : UiNode
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        Type = UiNodeType::Shader;
+        Type = UiNodeType::Color;
         in >> Id >> Color.x >> Color.y >> Color.z >> Color.w;
         return in;
     }
