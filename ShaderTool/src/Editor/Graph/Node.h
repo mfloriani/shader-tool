@@ -18,6 +18,7 @@ enum class NodeType
     RenderTarget,
     Primitive,
     Shader,
+    Color
 };
 
 using NodeId = int;

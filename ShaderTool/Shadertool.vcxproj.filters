@@ -160,6 +160,7 @@
     <ClInclude Include="src\Patterns\ISubject.h" />
     <ClInclude Include="src\Events\Event.h" />
     <ClInclude Include="src\Events\EventManager.h" />
+    <ClInclude Include="src\Editor\UiNode\ColorNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />

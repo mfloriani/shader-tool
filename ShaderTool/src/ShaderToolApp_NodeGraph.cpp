@@ -10,9 +10,7 @@
 #include "Editor\UiNode\ShaderNode.h"
 #include "Editor\UiNode\SineNode.h"
 #include "Editor\UiNode\TimeNode.h"
-
-//#include "Events/Event.h"
-//#include "Events/EventManager.h"
+#include "Editor\UiNode\ColorNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -419,6 +417,12 @@ void ShaderToolApp::EvaluateGraph()
 			valueStack.push(node.Value);
 		}
 		break;
+
+		case NodeType::Color:
+		{
+			valueStack.push(node.Value);
+		}
+		break;
 		
 		default:
 			LOG_WARN("NodeType {0} not handled", node.Type);
@@ -693,6 +697,15 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
+
+			if (ImGui::MenuItem("Color"))
+			{
+				auto node = std::make_unique<ColorNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
 			
 			ImGui::EndPopup();
 		}
@@ -943,6 +956,14 @@ void ShaderToolApp::Load()
 		case UiNodeType::Shader:
 		{
 			auto node = std::make_unique<ShaderNode>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Color:
+		{
+			auto node = std::make_unique<ColorNode>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
