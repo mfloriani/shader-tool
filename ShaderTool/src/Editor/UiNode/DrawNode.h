@@ -50,13 +50,29 @@ struct DrawNode : UiNode
     {
         UiNode::Serialize(out);
         out << " " << ModelPin << " " << ShaderPin;
+        out << " " << ShaderBindingPins.size();
+        for (auto& bind : ShaderBindingPins)
+            out << " " << bind.PinId << " " << bind.VarName << " " << bind.VarTypeName;
+
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Draw;
-        in >> Id >> ModelPin >> ShaderPin;
+        size_t numShaderBindings;
+        in >> Id >> ModelPin >> ShaderPin >> numShaderBindings;
+        if (numShaderBindings > 0)
+        {
+            ShaderBindingPins.reserve(numShaderBindings);
+            for (int i = 0; i < numShaderBindings; ++i)
+            {
+                ShaderBindingPin pin;
+                in >> pin.PinId >> pin.VarName >> pin.VarTypeName;
+                ShaderBindingPins.push_back(pin);
+                ShaderBindingPinsMap[pin.VarName] = ShaderBindingPins.size() - 1;
+            }
+        }
         return in;
     }
 

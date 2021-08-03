@@ -20,6 +20,7 @@ public:
 
 	void Enqueue(std::shared_ptr<Event> e);
 	void NotifyQueuedEvents();
+	void Enable(bool enabled) { _IsEnabled = enabled; }
 
 private:
 	EventManager() = default;
@@ -27,6 +28,7 @@ private:
 	virtual void Notify(Event* e) override;
 
 private:
+	bool _IsEnabled{ true };
 	std::vector<IObserver*> _Observers;
 	std::queue<std::shared_ptr<Event>> _EventQueue;
 };

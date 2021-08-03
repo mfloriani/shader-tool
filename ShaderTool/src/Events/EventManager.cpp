@@ -26,7 +26,7 @@ void EventManager::Detach(IObserver* observer)
 }
 
 void EventManager::Notify(Event* e)
-{	
+{
 	for (auto observer : _Observers)
 	{
 		observer->OnEvent(e);
@@ -35,7 +35,8 @@ void EventManager::Notify(Event* e)
 
 void EventManager::Enqueue(std::shared_ptr<Event> e)
 {
-	_EventQueue.push(e);
+	if(_IsEnabled)
+		_EventQueue.push(e);
 }
 
 void EventManager::NotifyQueuedEvents()

@@ -135,6 +135,12 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:      %i", drawNode->Id);
 						ImGui::Text("Shader:  %i", (int)drawNode->GetPinValue(drawNode->ShaderPin));
 						ImGui::Text("Model:   %i", (int)drawNode->GetPinValue(drawNode->ModelPin));
+
+						for (auto& bind : drawNode->ShaderBindingPins)
+						{
+							ImGui::Text("%s:   %i", bind.VarName.c_str(), (int)drawNode->GetPinValue(bind.PinId));
+						}
+
 						ImGui::Text("Output:  %i", (int)drawNode->GetPinValue(drawNode->Id));
 						});
 				}
@@ -349,6 +355,7 @@ void ShaderToolApp::EvaluateGraph()
 		}
 		break;
 
+		// RenderTarget is not part of the graph search anymore... the root is the draw node now
 		//case NodeType::RenderTarget:
 		//{
 		//	assert(valueStack.size() == 1ull && "RenderTarget node expects 1 input");
@@ -840,6 +847,8 @@ void ShaderToolApp::Save()
 
 void ShaderToolApp::Load()
 {
+	EVENT_MANAGER.Enable(false); // TODO: awful hack to avoid duplication :/
+	
 	//LOG_TRACE("###################");
 	//LOG_TRACE("Loading node graph");
 
@@ -947,6 +956,8 @@ void ShaderToolApp::Load()
 	}
 
 	fin.close();
+
+	EVENT_MANAGER.Enable(true);
 }
 
 void ShaderToolApp::Reset()
