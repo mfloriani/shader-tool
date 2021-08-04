@@ -134,9 +134,9 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Shader:  %i", (int)drawNode->GetPinValue(drawNode->ShaderPin));
 						ImGui::Text("Model:   %i", (int)drawNode->GetPinValue(drawNode->ModelPin));
 
-						for (auto& bind : drawNode->ShaderBindingPins)
+						for (auto& bindPin : drawNode->ShaderBindingPins)
 						{
-							ImGui::Text("%s:   %i", bind.VarName.c_str(), (int)drawNode->GetPinValue(bind.PinId));
+							ImGui::Text("%s:   %i", bindPin.Bind.VarName.c_str(), (int)drawNode->GetPinValue(bindPin.PinId));
 						}
 
 						ImGui::Text("Output:  %i", (int)drawNode->GetPinValue(drawNode->Id));
@@ -174,7 +174,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("ColorNode");
 						ImGui::Text("Id:     %i", colorNode->Id);
-						ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color.x, colorNode->Color.y, colorNode->Color.z);
+						ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color->value.x, colorNode->Color->value.y, colorNode->Color->value.z);
 						});
 				}
 				break;
@@ -402,8 +402,43 @@ void ShaderToolApp::EvaluateGraph()
 			//for (auto& bind : drawNode->ShaderBindingPins)
 			while(it != drawNode->ShaderBindingPins.crend())
 			{
-				drawNode->SetPinValue(it->PinId, valueStack.top());
+				float pinValue = valueStack.top();
 				valueStack.pop();
+
+				size_t index = drawNode->ShaderBindingPinIdMap[it->PinId];
+				auto& bindPin = drawNode->ShaderBindingPins[index];
+
+				// TODO: TEMPORARY!!! Only for testing. It should be properly managed
+				if (it->Bind.VarName == "World")
+				{
+					bindPin.Data = &drawNode->_World._11;
+				}
+				else if (it->Bind.VarName == "View")
+				{
+					bindPin.Data = &drawNode->_View._11;
+				}
+				else if (it->Bind.VarName == "Proj")
+				{
+					bindPin.Data = &drawNode->_Proj._11;
+				}
+				else if (it->Bind.VarName == "Color")
+				{
+					
+					if (_Graph.GetNumEdgesFromNode(it->PinId) == 0ull)
+					{
+						XMFLOAT3 color(0.f, 0.f, 0.f);
+						bindPin.Data = &color.x;
+					}
+					else
+					{
+						auto colorValue = static_cast<NodeFloat3*>(drawNode->ParentGraph->GetNodeValue((int)pinValue).get());
+						bindPin.Data = &colorValue->value.x;
+					}
+				}
+
+				//drawNode->SetPinValue(it->PinId, valueStack.top());
+
+				
 				++it;
 			}
 
@@ -434,7 +469,7 @@ void ShaderToolApp::EvaluateGraph()
 
 		case NodeType::Color:
 		{
-			valueStack.push(node.Value);
+			valueStack.push((float)id); // pass forward the id of the color node output
 		}
 		break;
 		
@@ -541,35 +576,11 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 	_CommandList->ClearRenderTargetView(_RenderTarget->RTV(), _RenderTarget->GetClearColor(), 0, nullptr);
 	_CommandList->OMSetRenderTargets(1, &_RenderTarget->RTV(), true, nullptr);
 
-	auto& bindVars = ShaderManager::Get().GetShader(currentShaderIndex)->GetBindingVars();
-
-	for (auto& [rootParIndex, vars] : bindVars)
+	for (auto& var : drawNode->ShaderBindingPins)
 	{
-		for (auto& var : vars)
-		{
-			float* data = nullptr;
-			// TODO: TEMPORARY!!! Only for testing. It should be properly managed
-			if (var.VarName == "World")
-			{
-				data = &drawNode->_World._11;
-			}
-			else if (var.VarName == "View")
-			{
-				data = &drawNode->_View._11;
-			}
-			else if (var.VarName == "Proj")
-			{
-				data = &drawNode->_Proj._11;
-			}
-			else if (var.VarName == "Color")
-			{
-				XMFLOAT3 color(1.f, 1.f, 0.f);
-				data = &color.x;
-			}
-			
-			_CommandList->SetGraphicsRoot32BitConstants(rootParIndex, var.VarNum32BitValues, data, var.VarNum32BitValuesOffset);
-		}
+		_CommandList->SetGraphicsRoot32BitConstants(var.Bind.RootParameterIndex, var.Bind.VarNum32BitValues, var.Data, var.Bind.VarNum32BitValuesOffset);
 	}
+	
 
 	// BOX
 	{

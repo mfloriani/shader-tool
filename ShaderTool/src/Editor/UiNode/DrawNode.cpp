@@ -7,7 +7,7 @@
 
 using namespace DirectX;
 
-DrawNode::DrawNode(Graph<Node>* graph)
+DrawNode::DrawNode(Graph* graph)
     : UiNode(graph, UiNodeType::Draw), ModelPin(INVALID_ID), ShaderPin(INVALID_ID)
 {
     EVENT_MANAGER.Attach(this);
@@ -150,11 +150,11 @@ void DrawNode::OnRender()
     
     if ((int)GetPinValue(ShaderPin) != NOT_LINKED)
     {
-        for (auto& bind : ShaderBindingPins)
+        for (auto& pin : ShaderBindingPins)
         {
             std::stringstream ss;
-            ss << bind.VarName << " (" << bind.VarTypeName << ")";
-            ImNodes::BeginInputAttribute(bind.PinId);
+            ss << pin.Bind.VarName << " (" << pin.Bind.VarTypeName << ")";
+            ImNodes::BeginInputAttribute(pin.PinId);
             const float label_width = ImGui::CalcTextSize(ss.str().c_str()).x;
             ImGui::TextUnformatted(ss.str().c_str());
             ImNodes::EndInputAttribute();
@@ -192,25 +192,22 @@ void DrawNode::OnShaderLinkCreated(int from, int to)
 
         size_t shaderIndex = (size_t)GetPinValue(to);
         auto shader = ShaderManager::Get().GetShader(shaderIndex);
-        auto& rootParVars = shader->GetBindingVars();
-        for (auto& [rootParId, vars] : rootParVars)
+        for (auto& var : shader->GetBindingVars())
         {
-            for (auto& bindVar : vars)
-            {
-                std::string varNameType = bindVar.VarName + " (" + bindVar.VarTypeName + ")";
+            std::string varNameType = var.VarName + " (" + var.VarTypeName + ")";
 
-                const Node link(NodeType::Link, NOT_LINKED);
-                NodeId pinId = ParentGraph->CreateNode(link);
-                ParentGraph->CreateEdge(Id, pinId);
-                
-                ShaderBindingPin bindPin;
-                bindPin.PinId = pinId;
-                bindPin.VarName = bindVar.VarName;
-                bindPin.VarTypeName = bindVar.VarTypeName;
-                
-                ShaderBindingPins.push_back(bindPin);
-                ShaderBindingPinsMap[bindVar.VarName] = ShaderBindingPins.size()-1;
-            }
+            const Node link(NodeType::Link, NOT_LINKED);
+            NodeId pinId = ParentGraph->CreateNode(link);
+            ParentGraph->CreateEdge(Id, pinId);
+            
+            ShaderBindingPin bindPin;
+            bindPin.PinId = pinId;
+            bindPin.Bind = var;
+            bindPin.Data = nullptr;
+            
+            ShaderBindingPins.push_back(bindPin);
+            ShaderBindingPinNameMap[var.VarName] = ShaderBindingPins.size()-1;
+            ShaderBindingPinIdMap[pinId] = ShaderBindingPins.size()-1;
         }
     }
 }
@@ -221,13 +218,14 @@ void DrawNode::OnShaderLinkDeleted(int from, int to)
     {
         LOG_TRACE("ShaderPin link deleted");
 
-        for (auto& bind : ShaderBindingPins)
+        for (auto& bindPin : ShaderBindingPins)
         {
-            LOG_TRACE("Deleting shader pin nodes {0} {1} {2}", bind.PinId, bind.VarName, bind.VarTypeName);
-            ParentGraph->EraseNode(bind.PinId);
+            LOG_TRACE("Deleting shader pin nodes {0} {1} {2}", bindPin.PinId, bindPin.Bind.VarName, bindPin.Bind.VarTypeName);
+            ParentGraph->EraseNode(bindPin.PinId);
         }
 
         ShaderBindingPins.clear();
-        ShaderBindingPinsMap.clear();
+        ShaderBindingPinNameMap.clear();
+        ShaderBindingPinIdMap.clear();
     }
 }

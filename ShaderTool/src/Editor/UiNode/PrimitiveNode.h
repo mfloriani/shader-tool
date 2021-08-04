@@ -4,7 +4,7 @@
 
 struct PrimitiveNode : UiNode
 {
-    explicit PrimitiveNode(Graph<Node>* graph, std::vector<const char*>& primitives)
+    explicit PrimitiveNode(Graph* graph, std::vector<const char*>& primitives)
         : UiNode(graph, UiNodeType::Primitive), Primitives(primitives), SelectedModel(0)
     {
     }

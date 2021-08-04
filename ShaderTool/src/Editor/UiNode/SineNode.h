@@ -4,7 +4,7 @@
 
 struct SineNode : UiNode
 {
-    explicit SineNode(Graph<Node>* graph)
+    explicit SineNode(Graph* graph)
         : UiNode(graph, UiNodeType::Sine), Input(INVALID_ID)
     {
     }

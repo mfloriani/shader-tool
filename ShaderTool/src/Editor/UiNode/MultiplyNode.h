@@ -4,7 +4,7 @@
 
 struct MultiplyNode : UiNode
 {
-    explicit MultiplyNode(Graph<Node>* graph)
+    explicit MultiplyNode(Graph* graph)
         : UiNode(graph, UiNodeType::Multiply), Left(INVALID_ID), Right(INVALID_ID)
     {
     }

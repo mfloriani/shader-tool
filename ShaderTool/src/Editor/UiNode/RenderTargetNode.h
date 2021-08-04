@@ -4,7 +4,7 @@
 
 struct RenderTargetNode : UiNode
 {
-    explicit RenderTargetNode(Graph<Node>* graph, RenderTexture* renderTexture)
+    explicit RenderTargetNode(Graph* graph, RenderTexture* renderTexture)
         : UiNode(graph, UiNodeType::RenderTarget), RenderTex(renderTexture), Input(INVALID_ID), IsLinkedToDrawNode(false)
     {
         EVENT_MANAGER.Attach(this);

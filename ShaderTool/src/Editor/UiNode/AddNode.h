@@ -4,7 +4,7 @@
 
 struct AddNode : UiNode
 {
-    explicit AddNode(Graph<Node>* graph)
+    explicit AddNode(Graph* graph)
         : UiNode(graph, UiNodeType::Add), Left(INVALID_ID), Right(INVALID_ID)
     {
     }

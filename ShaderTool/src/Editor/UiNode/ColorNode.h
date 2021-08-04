@@ -4,26 +4,33 @@
 
 struct ColorNode : UiNode
 {
-    explicit ColorNode(Graph<Node>* graph)
+private:
+    ImVec4 TempColor;
+
+public:
+    explicit ColorNode(Graph* graph)
         : UiNode(graph, UiNodeType::Color)
     {
+        Color = std::make_shared<NodeFloat3>(0.f);
     }
 
-    ImVec4 Color;
-
+    std::shared_ptr<NodeFloat3> Color;
+    
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
         const Node op(NodeType::Color);
         Id = ParentGraph->CreateNode(op);
-
-        
+        ParentGraph->StoreNodeValue(Id, Color);
     }
 
     virtual void OnUpdate(GameTimer& timer) override
     {
-        SetPinValue(Id, 6.f);
+        //SetPinValue(Id, 6.f);
+        Color->value.x = TempColor.x;
+        Color->value.y = TempColor.y;
+        Color->value.z = TempColor.z;
     }
 
     virtual void OnDelete() override
@@ -42,14 +49,14 @@ struct ColorNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         ImGui::Indent(15);
-        if (ImGui::ColorButton("##3c", Color, ImGuiColorEditFlags_NoBorder, ImVec2(80, 80)))
+        if (ImGui::ColorButton("##3c", TempColor, ImGuiColorEditFlags_NoBorder, ImVec2(80, 80)))
         {
             ImGui::OpenPopup("mypicker");
         }
 
         if (ImGui::BeginPopup("mypicker"))
         {
-            ImGui::ColorPicker4("##picker", (float*)&Color, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_PickerHueWheel);
+            ImGui::ColorPicker4("##picker", (float*)&TempColor, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_PickerHueWheel);
             ImGui::EndPopup();
         }
 
@@ -65,14 +72,14 @@ struct ColorNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Color.x << " " << Color.y << " " << Color.z << " " << Color.w;
+        out << " " << Color->value.x << " " << Color->value.y << " " << Color->value.z;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Color;
-        in >> Id >> Color.x >> Color.y >> Color.z >> Color.w;
+        in >> Id >> TempColor.x >> TempColor.y >> TempColor.z;
         return in;
     }
 

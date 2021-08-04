@@ -52,7 +52,7 @@ void Shader::BuildRootParameters()
 	auto& bindings = _Reflection->GetInputBinds();
 	
 	_RootParameters.resize(bindings.size());
-	UINT rootParameterId = 0;
+	UINT rootParameterIndex = 0;
 
 	for (auto& bind : bindings)
 	{
@@ -80,6 +80,7 @@ void Shader::BuildRootParameters()
 					LOG_TRACE("  var {0} {1} {2}", var.Name, var.Type.Name, num32BitValues);
 
 					ShaderBind shaderBind;
+					shaderBind.RootParameterIndex = rootParameterIndex;
 					shaderBind.BindPoint = bind.BindPoint;
 					shaderBind.BindType = bind.Type;
 					shaderBind.BindTypeName = magic_enum::enum_name(bind.Type);
@@ -90,7 +91,7 @@ void Shader::BuildRootParameters()
 					shaderBind.VarNum32BitValues = num32BitValues;
 					shaderBind.VarNum32BitValuesOffset = num32BitValuesOffset;
 
-					_BindingVarsMap[rootParameterId].push_back(shaderBind);
+					_BindingVarsMap.push_back(shaderBind);
 
 					num32BitValuesOffset += num32BitValues;
 					num32BitValuesTotal += num32BitValues;
@@ -101,8 +102,8 @@ void Shader::BuildRootParameters()
 				LOG_WARN("Variables NOT FOUND for Constant Buffer {0} ", bind.Name);
 			}
 
-			LOG_TRACE("RootParameters[{0}].InitAsConstants({1}, {2})", rootParameterId, num32BitValuesTotal, bind.BindPoint);
-			_RootParameters[rootParameterId].InitAsConstants(num32BitValuesTotal, bind.BindPoint);
+			LOG_TRACE("RootParameters[{0}].InitAsConstants({1}, {2})", rootParameterIndex, num32BitValuesTotal, bind.BindPoint);
+			_RootParameters[rootParameterIndex].InitAsConstants(num32BitValuesTotal, bind.BindPoint);
 		}
 		break;
 
@@ -116,6 +117,6 @@ void Shader::BuildRootParameters()
 			break;
 		}
 
-		++rootParameterId;
+		++rootParameterIndex;
 	}
 }

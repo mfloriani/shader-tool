@@ -4,7 +4,7 @@
 
 struct TimeNode : UiNode
 {
-    explicit TimeNode(Graph<Node>* graph)
+    explicit TimeNode(Graph* graph)
         : UiNode(graph, UiNodeType::Time)
     {
     }

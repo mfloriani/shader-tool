@@ -4,7 +4,7 @@
 
 struct ShaderNode : UiNode
 {
-    explicit ShaderNode(Graph<Node>* graph)
+    explicit ShaderNode(Graph* graph)
         : UiNode(graph, UiNodeType::Shader)
     {
     }

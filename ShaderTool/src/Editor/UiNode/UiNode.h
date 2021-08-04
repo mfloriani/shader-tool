@@ -27,7 +27,7 @@ enum class UiNodeType
 
 struct UiNode : public IObserver
 {
-    explicit UiNode(Graph<Node>* graph, UiNodeType type) : ParentGraph(graph), Type(type), Id(INVALID_ID) {}
+    explicit UiNode(Graph* graph, UiNodeType type) : ParentGraph(graph), Type(type), Id(INVALID_ID) {}
     
     virtual ~UiNode()
     {
@@ -35,7 +35,7 @@ struct UiNode : public IObserver
         if(ParentGraph) ParentGraph->EraseNode(Id);
     }
 
-    Graph<Node>* ParentGraph;
+    Graph* ParentGraph;
     UiNodeType Type;
     NodeId Id;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UiNode.h"
+#include "Rendering/Shader.h"
 
 #include <vector>
 #include <unordered_map>
@@ -10,19 +11,20 @@ const static int DEFAULT_SHADER_INDEX = 0;
 struct ShaderBindingPin
 {
     NodeId PinId;
-    std::string VarName;
-    std::string VarTypeName;
+    ShaderBind Bind;
+    void* Data;
 };
 
 struct DrawNode : UiNode
 {
-    DrawNode(Graph<Node>* graph);
+    DrawNode(Graph* graph);
     virtual ~DrawNode();
 
     NodeId ModelPin, ShaderPin;
     
     std::vector<ShaderBindingPin> ShaderBindingPins;
-    std::unordered_map<std::string, size_t> ShaderBindingPinsMap;
+    std::unordered_map<std::string, size_t> ShaderBindingPinNameMap;
+    std::unordered_map<NodeId, size_t> ShaderBindingPinIdMap;
 
     // TODO: move to Camera node 
     DirectX::XMFLOAT3 _EyePos = { 0.0f, 0.0f, 0.0f };
@@ -51,8 +53,8 @@ struct DrawNode : UiNode
         UiNode::Serialize(out);
         out << " " << ModelPin << " " << ShaderPin;
         out << " " << ShaderBindingPins.size();
-        for (auto& bind : ShaderBindingPins)
-            out << " " << bind.PinId << " " << bind.VarName << " " << bind.VarTypeName;
+        for (auto& bindPin : ShaderBindingPins)
+            out << " " << bindPin.PinId << " " << bindPin.Bind.VarName << " " << bindPin.Bind.VarTypeName;
 
         return out;
     }
@@ -68,9 +70,9 @@ struct DrawNode : UiNode
             for (int i = 0; i < numShaderBindings; ++i)
             {
                 ShaderBindingPin pin;
-                in >> pin.PinId >> pin.VarName >> pin.VarTypeName;
+                in >> pin.PinId >> pin.Bind.VarName >> pin.Bind.VarTypeName;
                 ShaderBindingPins.push_back(pin);
-                ShaderBindingPinsMap[pin.VarName] = ShaderBindingPins.size() - 1;
+                ShaderBindingPinNameMap[pin.Bind.VarName] = ShaderBindingPins.size() - 1;
             }
         }
         return in;

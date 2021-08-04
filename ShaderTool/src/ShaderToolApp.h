@@ -53,7 +53,7 @@ public:
 	
 	const GameTimer& GetTimer() const { return _Timer; }
 	const std::vector<std::unique_ptr<UiNode>>& GetUiNodes() const { return _UINodes; }
-	const Graph<Node>& GetGraph() const { return _Graph; }
+	const Graph& GetGraph() const { return _Graph; }
 	UiNode* GetUiNode(NodeId id) { return _UINodeIdMap[id]; }
 
 private:
@@ -73,7 +73,7 @@ private: // Node Graph
 	std::vector<const char*> _Primitives;
 	std::vector<std::unique_ptr<UiNode>> _UINodes;
 	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
-	Graph<Node> _Graph;
+	Graph _Graph;
 	int _RootNodeId;
 	
 	void InitNodeGraph();
