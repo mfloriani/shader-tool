@@ -19,11 +19,11 @@ enum class NodeType
     RenderTarget,
     Primitive,
     Shader,
-    Color
+    Color,
+    Camera
 };
 
 using NodeId = int;
-
 
 struct Node
 {
@@ -54,6 +54,10 @@ struct Node
 
 struct NodeValue
 {
+    //union
+    //{
+    //    float
+    //};
 };
 
 struct NodeFloat : public NodeValue

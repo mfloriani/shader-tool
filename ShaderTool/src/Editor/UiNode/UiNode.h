@@ -13,7 +13,6 @@
 
 enum class UiNodeType
 {
-    None,
     Add,
     Multiply,
     Draw,
@@ -22,7 +21,8 @@ enum class UiNodeType
     RenderTarget,
     Primitive,
     Shader,
-    Color
+    Color,
+    Camera
 };
 
 struct UiNode : public IObserver

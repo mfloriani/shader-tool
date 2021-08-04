@@ -11,6 +11,7 @@
 #include "Editor\UiNode\SineNode.h"
 #include "Editor\UiNode\TimeNode.h"
 #include "Editor\UiNode\ColorNode.h"
+#include "Editor\UiNode\CameraNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -175,6 +176,17 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("ColorNode");
 						ImGui::Text("Id:     %i", colorNode->Id);
 						ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color->value.x, colorNode->Color->value.y, colorNode->Color->value.z);
+						});
+				}
+				break;
+
+				case UiNodeType::Camera:
+				{
+					auto uinode = static_cast<CameraNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("ColorNode");
+						ImGui::Text("Id:     %i", uinode->Id);
+						//ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color->value.x, colorNode->Color->value.y, colorNode->Color->value.z);
 						});
 				}
 				break;
@@ -409,6 +421,7 @@ void ShaderToolApp::EvaluateGraph()
 				auto& bindPin = drawNode->ShaderBindingPins[index];
 
 				// TODO: TEMPORARY!!! Only for testing. It should be properly managed
+				
 				if (it->Bind.VarName == "World")
 				{
 					bindPin.Data = &drawNode->_World._11;
@@ -731,6 +744,15 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
+
+			if (ImGui::MenuItem("Camera"))
+			{
+				auto node = std::make_unique<CameraNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
 			
 			ImGui::EndPopup();
 		}
@@ -994,7 +1016,14 @@ void ShaderToolApp::Load()
 			_UINodes.push_back(std::move(node));
 		}
 		break;
-		
+		case UiNodeType::Camera:
+		{
+			auto node = std::make_unique<CameraNode>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
 		default:
 			LOG_WARN("Failed to load Unknown UI node type {0}", nodeType);
 			break;
