@@ -8,34 +8,47 @@ private:
     ImVec4 TempColor;
 
 public:
+    NodeId OutputPin;
+    std::shared_ptr<NodeValue<DirectX::XMFLOAT3>> OutputNodeValue;
+
+public:
     explicit ColorNode(Graph* graph)
         : UiNode(graph, UiNodeType::Color)
     {
-        Color = std::make_shared<NodeFloat3>(0.f);
+        OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
+        OutputNodeValue->TypeName = "float3";
+        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        OutputNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
     }
 
-    std::shared_ptr<NodeFloat3> Color;
-    
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
-        const Node op(NodeType::Color);
-        Id = ParentGraph->CreateNode(op);
-        ParentGraph->StoreNodeValue(Id, Color);
+        const Node idNode(NodeType::Color, NodeDirection::None);
+        Id = ParentGraph->CreateNode(idNode);
+
+        const Node colorNodeOut(NodeType::Float3, NodeDirection::Out);
+        OutputPin = ParentGraph->CreateNode(colorNodeOut);
+
+        ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
+
+        StoreNodeValuePtr<DirectX::XMFLOAT3>(OutputPin, OutputNodeValue);
     }
 
-    virtual void OnUpdate(GameTimer& timer) override
+    virtual void OnLoad() override
     {
-        //SetPinValue(Id, 6.f);
-        Color->value.x = TempColor.x;
-        Color->value.y = TempColor.y;
-        Color->value.z = TempColor.z;
+        StoreNodeValuePtr<DirectX::XMFLOAT3>(OutputPin, OutputNodeValue);
+    }
+
+    virtual void OnEval() override
+    {
+        OutputNodeValue->Data = DirectX::XMFLOAT3(TempColor.x, TempColor.y, TempColor.z);
     }
 
     virtual void OnDelete() override
     {
-
+        ParentGraph->EraseNode(OutputPin);
     }
 
     virtual void OnRender() override
@@ -60,7 +73,7 @@ public:
             ImGui::EndPopup();
         }
 
-        ImNodes::BeginOutputAttribute(Id);
+        ImNodes::BeginOutputAttribute(OutputPin);
         const float label_width = ImGui::CalcTextSize("output").x;
         ImGui::Indent(node_width - label_width);
         ImGui::TextUnformatted("output");
@@ -72,14 +85,15 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Color->value.x << " " << Color->value.y << " " << Color->value.z;
+        out << " " << OutputPin << " " << OutputNodeValue->Data.x << " " << OutputNodeValue->Data.y << " " << OutputNodeValue->Data.z;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Color;
-        in >> Id >> TempColor.x >> TempColor.y >> TempColor.z;
+        in >> Id >> OutputPin >> OutputNodeValue->Data.x >> OutputNodeValue->Data.y >> OutputNodeValue->Data.z;
+        OnLoad();
         return in;
     }
 

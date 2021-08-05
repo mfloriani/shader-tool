@@ -4,25 +4,53 @@
 
 struct TimeNode : UiNode
 {
+private:
+    GameTimer _Timer;
+
+public:
+    NodeId OutputPin;
+    std::shared_ptr<NodeValue<float>> OutputNodeValue;
+
+public:
     explicit TimeNode(Graph* graph)
-        : UiNode(graph, UiNodeType::Time)
+        : UiNode(graph, UiNodeType::Time), OutputPin(INVALID_ID)
     {
+        OutputNodeValue = std::make_shared<NodeValue<float>>();
+        OutputNodeValue->TypeName = "float";
+        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        OutputNodeValue->Data = 0.f;
+
+        _Timer.Start();
     }
 
     virtual void OnEvent(Event* e) override {}
-
+        
     virtual void OnCreate() override
     {
-        Id = ParentGraph->CreateNode(Node(NodeType::Time));
+        const Node idNode(NodeType::Time, NodeDirection::None);
+        Id = ParentGraph->CreateNode(idNode);
+
+        const Node outputNode(NodeType::Float, NodeDirection::Out);
+        OutputPin = ParentGraph->CreateNode(outputNode);
+
+        ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
+
+        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+    }
+
+    virtual void OnLoad() override
+    {
+        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
     }
 
     virtual void OnDelete() override
     {
+        ParentGraph->EraseNode(OutputPin);
     }
-
-    virtual void OnUpdate(GameTimer& timer) override
+        
+    virtual void OnEval() override
     {
-        ParentGraph->GetNode(Id).Value = timer.TotalTime();
+        OutputNodeValue->Data = _Timer.TotalTime();
     }
 
     virtual void OnRender() override
@@ -33,7 +61,7 @@ struct TimeNode : UiNode
         ImGui::TextUnformatted("TIME");
         ImNodes::EndNodeTitleBar();
 
-        ImNodes::BeginOutputAttribute(Id);
+        ImNodes::BeginOutputAttribute(OutputPin);
         ImGui::Text("output");
         ImNodes::EndOutputAttribute();
 
@@ -43,13 +71,14 @@ struct TimeNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Time;
-        in >> Id;
+        in >> Id >> OutputPin;
         return in;
     }
 

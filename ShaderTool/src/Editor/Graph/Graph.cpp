@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Graph.h"
 
+using namespace DirectX;
+
 void Graph::Reset()
 {
     _CurrentId = 0;
@@ -8,7 +10,14 @@ void Graph::Reset()
     _EdgesFromNode.clear();
     _Neighbors.clear();
     _Edges.clear();
-    _NodeValues.clear();
+    
+    // TODO: figure out how to handle this in a proper way
+    GraphNodeValues<int>::Get().Reset();
+    GraphNodeValues<float>::Get().Reset();
+    GraphNodeValues<XMFLOAT2>::Get().Reset();
+    GraphNodeValues<XMFLOAT3>::Get().Reset();
+    GraphNodeValues<XMFLOAT4>::Get().Reset();
+    GraphNodeValues<XMFLOAT4X4>::Get().Reset();
 }
 
 
@@ -95,20 +104,22 @@ void Graph::EraseNode(const int id)
     _Neighbors.erase(id);
 }
 
-int Graph::CreateEdge(const int from, const int to)
+int Graph::CreateEdge(int from, int to, const EdgeType type)
 {
     const int id = _CurrentId++;
-    return InsertEdge(id, from, to);
+    return InsertEdge(id, from, to, type);
 }
 
-int Graph::InsertEdge(const int id, const int from, const int to)
+int Graph::InsertEdge(int id, int from, int to, const EdgeType type)
 {
     assert(!_Edges.contains(id));
     assert(_Nodes.contains(from));
     assert(_Nodes.contains(to));
-    _Edges.insert(id, Edge(id, from, to));
+    _Edges.insert(id, Edge(id, from, to, type));
 
-    EVENT_MANAGER.Enqueue(std::make_shared<LinkCreatedEvent>(from, to));
+    //only interested in links between UiNodes
+    if(type == EdgeType::External) 
+        EVENT_MANAGER.Enqueue(std::make_shared<LinkCreatedEvent>(from, to));
 
     // update neighbor count
     assert(_EdgesFromNode.contains(from));

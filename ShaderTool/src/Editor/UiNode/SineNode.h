@@ -4,35 +4,64 @@
 
 struct SineNode : UiNode
 {
-    explicit SineNode(Graph* graph)
-        : UiNode(graph, UiNodeType::Sine), Input(INVALID_ID)
-    {
-    }
+private:
 
-    NodeId Input;
+public:
+    NodeId InputPin, OutputPin;
+    std::shared_ptr<NodeValue<float>> InputNodeValue;
+    std::shared_ptr<NodeValue<float>> OutputNodeValue;
+
+public:
+    explicit SineNode(Graph* graph)
+        : UiNode(graph, UiNodeType::Sine), InputPin(INVALID_ID), OutputPin(INVALID_ID)
+    {
+        InputNodeValue = std::make_shared<NodeValue<float>>();
+        InputNodeValue->TypeName = "float";
+        InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
+        InputNodeValue->Data = 0.f;
+
+        OutputNodeValue = std::make_shared<NodeValue<float>>();
+        OutputNodeValue->TypeName = "float";
+        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        OutputNodeValue->Data = 0.f;
+    }
 
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
-        const Node value(NodeType::Value, 0.f);
-        const Node op(NodeType::Sine);
+        const Node idNode(NodeType::Sine, NodeDirection::None);
+        Id = ParentGraph->CreateNode(idNode);
 
-        Input = ParentGraph->CreateNode(value);
-        Id = ParentGraph->CreateNode(op);
+        const Node inputNode(NodeType::Float, NodeDirection::In);
+        InputPin = ParentGraph->CreateNode(inputNode);
 
-        ParentGraph->CreateEdge(Id, Input);
+        const Node outputNode(NodeType::Float, NodeDirection::Out);
+        OutputPin = ParentGraph->CreateNode(outputNode);
+
+        ParentGraph->CreateEdge(Id, InputPin, EdgeType::Internal);
+        ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
+
+        StoreNodeValuePtr<float>(InputPin, InputNodeValue);
+        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
     }
 
-    virtual void OnUpdate(GameTimer& timer) override
+    virtual void OnLoad() override
     {
-        //float input = ParentGraph->GetNode(Input).Value;
-        //ParentGraph->GetNode(Id).Value = std::abs(std::sin(input));
+        StoreNodeValuePtr<float>(InputPin, InputNodeValue);
+        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+    }
+
+    
+    virtual void OnEval() override
+    {
+        OutputNodeValue->Data = std::abs(std::sin( InputNodeValue->Data ));
     }
 
     virtual void OnDelete() override
     {
-        ParentGraph->EraseNode(Input);
+        ParentGraph->EraseNode(InputPin);
+        ParentGraph->EraseNode(OutputPin);
     }
 
     virtual void OnRender() override
@@ -45,23 +74,16 @@ struct SineNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         {
-            ImNodes::BeginInputAttribute(Input);
-            const float label_width = ImGui::CalcTextSize("number").x;
-            ImGui::TextUnformatted("number");
-            if (ParentGraph->GetNumEdgesFromNode(Input) == 0ull)
-            {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &ParentGraph->GetNode(Input).Value, 0.01f, 0.f, 1.0f);
-                ImGui::PopItemWidth();
-            }
+            ImNodes::BeginInputAttribute(InputPin);
+            const float label_width = ImGui::CalcTextSize("input").x;
+            ImGui::TextUnformatted("input");
             ImNodes::EndInputAttribute();
         }
 
         ImGui::Spacing();
 
         {
-            ImNodes::BeginOutputAttribute(Id);
+            ImNodes::BeginOutputAttribute(OutputPin);
             const float label_width = ImGui::CalcTextSize("output").x;
             ImGui::Indent(node_width - label_width);
             ImGui::TextUnformatted("output");
@@ -74,14 +96,15 @@ struct SineNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Input;
+        out << " " << InputPin << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Sine;
-        in >> Id >> Input;
+        in >> Id >> InputPin >> OutputPin;
+        OnLoad();
         return in;
     }
 

@@ -84,9 +84,22 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("AddNode");
 						ImGui::Text("Id:      %i", addNode->Id);
-						ImGui::Text("Left:    %.5f", addNode->Left);
-						ImGui::Text("Right:   %.5f", addNode->Right);
-						ImGui::Text("Output:  %.5f", addNode->GetPinValue(addNode->Id));
+						ImGui::Text("Left:    %i %.3f", addNode->LeftPin, addNode->LeftNodeValue->Data);
+						ImGui::Text("Right:   %i %.3f", addNode->RightPin, addNode->RightNodeValue->Data);
+						ImGui::Text("Output:  %i %.3f", addNode->OutputPin, addNode->OutputNodeValue->Data);
+						});
+				}
+				break;
+
+				case UiNodeType::Multiply:
+				{
+					auto multNode = static_cast<MultiplyNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("MultiplyNode");
+						ImGui::Text("Id:      %i", multNode->Id);
+						ImGui::Text("Left:    %i %.3f", multNode->LeftPin, multNode->LeftNodeValue->Data);
+						ImGui::Text("Right:   %i %.3f", multNode->RightPin, multNode->RightNodeValue->Data);
+						ImGui::Text("Output:  %i %.3f", multNode->OutputPin, multNode->OutputNodeValue->Data);
 						});
 				}
 				break;
@@ -97,7 +110,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("TimeNode");
 						ImGui::Text("Id:      %i", timeNode->Id);
-						ImGui::Text("Time:    %.5f", timeNode->GetPinValue(timeNode->Id));
+						ImGui::Text("Output:  %i %.5f", timeNode->OutputPin, timeNode->OutputNodeValue->Data);
 					});
 				}
 				break;
@@ -108,23 +121,13 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("SineNode");
 						ImGui::Text("Id:      %i", sineNode->Id);
-						ImGui::Text("Sine:    %.5f", sineNode->GetPinValue(sineNode->Id));
+						ImGui::Text("Input:   %i %.5f", sineNode->InputPin, sineNode->InputNodeValue->Data);
+						ImGui::Text("Output:  %i %.5f", sineNode->OutputPin, sineNode->OutputNodeValue->Data);
 					});
 				}
 				break;
 
-				case UiNodeType::Multiply:
-				{
-					auto multNode = static_cast<MultiplyNode*>(node);
-					ShowHoverDebugInfo([&]() {
-						ImGui::Text("MultiplyNode");
-						ImGui::Text("Id:      %i", multNode->Id);
-						ImGui::Text("Left:    %.5f", multNode->Left);
-						ImGui::Text("Right:   %.5f", multNode->Right);
-						ImGui::Text("Output:  %.5f", multNode->GetPinValue(multNode->Id));
-					});
-				}
-				break;
+				
 
 				case UiNodeType::Draw:
 				{
@@ -132,15 +135,39 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("DrawNode");
 						ImGui::Text("Id:      %i", drawNode->Id);
-						ImGui::Text("Shader:  %i", (int)drawNode->GetPinValue(drawNode->ShaderPin));
-						ImGui::Text("Model:   %i", (int)drawNode->GetPinValue(drawNode->ModelPin));
+						ImGui::Text("Shader:  %i %i", drawNode->ShaderPin, drawNode->ShaderNodeValue->Data);
+						ImGui::Text("Model:   %i %i", drawNode->ModelPin, drawNode->ModelNodeValue->Data);
 
 						for (auto& bindPin : drawNode->ShaderBindingPins)
 						{
-							ImGui::Text("%s:   %i", bindPin.Bind.VarName.c_str(), (int)drawNode->GetPinValue(bindPin.PinId));
+							if(bindPin.Bind.VarTypeName == "float4x4")
+								ImGui::Text("%s:   %i", bindPin.Bind.VarName.c_str(), bindPin.PinId);
+							else if (bindPin.Bind.VarTypeName == "float4")
+							{
+								auto float4Data = drawNode->GetNodeValuePtr<XMFLOAT4>(bindPin.PinId)->Data;
+								float x = float4Data.x, y = float4Data.y, z = float4Data.z, w = float4Data.w;
+								ImGui::Text("%s:   %i %.3f %.3f %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y, z, w);
+							}
+							else if (bindPin.Bind.VarTypeName == "float3")
+							{
+								auto float3Data = drawNode->GetNodeValuePtr<XMFLOAT3>(bindPin.PinId)->Data;
+								float x = float3Data.x, y = float3Data.y, z = float3Data.z;
+								ImGui::Text("%s:   %i %.3f %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y, z);
+							}
+							else if (bindPin.Bind.VarTypeName == "float2")
+							{
+								auto float2Data = drawNode->GetNodeValuePtr<XMFLOAT2>(bindPin.PinId)->Data;
+								float x = float2Data.x, y = float2Data.y;
+								ImGui::Text("%s:   %i %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y);
+							}
+							else if (bindPin.Bind.VarTypeName == "float")
+								ImGui::Text("%s:   %i %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, drawNode->GetNodeValuePtr<float>(bindPin.PinId)->Data);
+							else if (bindPin.Bind.VarTypeName == "int")
+								ImGui::Text("%s:   %i %i", bindPin.Bind.VarName.c_str(), bindPin.PinId, drawNode->GetNodeValuePtr<int>(bindPin.PinId)->Data);
 						}
 
-						ImGui::Text("Output:  %i", (int)drawNode->GetPinValue(drawNode->Id));
+						ImGui::Text("Output:  %i %i", drawNode->OutputPin, drawNode->OutputNodeValue->Data);
+
 						});
 				}
 				break;
@@ -150,8 +177,8 @@ void DebugInfo(ShaderToolApp* app)
 					auto primNode = static_cast<PrimitiveNode*>(node);
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("PrimitiveNode");
-						ImGui::Text("Id:            %i", primNode->Id);
-						ImGui::Text("SelectedModel: %i", (int)primNode->GetPinValue(primNode->Id));
+						ImGui::Text("Id:    %i", primNode->Id);
+						ImGui::Text("Model: %i %i", primNode->OutputPin, primNode->OutputNodeValue->Data);
 					});
 				}
 				break;
@@ -162,9 +189,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("ShaderNode");
 						ImGui::Text("Id:     %i", shaderNode->Id);
-						ImGui::Text("Index:  %i", shaderNode->GetPinValue(shaderNode->Id));
-						ImGui::Text("Name:   %s", shaderNode->Data.shaderName.c_str());
-						ImGui::Text("Path:   %s", shaderNode->Data.path.c_str());
+						ImGui::Text("Name:   %s", shaderNode->GetName().c_str());
+						ImGui::Text("Path:   %s", shaderNode->GetPath().c_str());
+						ImGui::Text("Output: %i %i", shaderNode->OutputPin, shaderNode->OutputNodeValue->Data);
 					});
 				}
 				break;
@@ -172,10 +199,12 @@ void DebugInfo(ShaderToolApp* app)
 				case UiNodeType::Color:
 				{
 					auto colorNode = static_cast<ColorNode*>(node);
+					auto float3Value = colorNode->GetNodeValuePtr<XMFLOAT3>(colorNode->OutputPin)->Data;
+					float x = float3Value.x, y = float3Value.y, z = float3Value.z;
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("ColorNode");
 						ImGui::Text("Id:     %i", colorNode->Id);
-						ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color->value.x, colorNode->Color->value.y, colorNode->Color->value.z);
+						ImGui::Text("Color:  %i %.3f %.3f %.3f", colorNode->OutputPin, x, y, z);
 						});
 				}
 				break;
@@ -185,8 +214,9 @@ void DebugInfo(ShaderToolApp* app)
 					auto uinode = static_cast<CameraNode*>(node);
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("ColorNode");
-						ImGui::Text("Id:     %i", uinode->Id);
-						//ImGui::Text("Color:  %.3f %.3f %.3f", colorNode->Color->value.x, colorNode->Color->value.y, colorNode->Color->value.z);
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("View:       %i", uinode->ViewPin);
+						ImGui::Text("Projection: %i", uinode->ProjectionPin);
 						});
 				}
 				break;
@@ -243,7 +273,7 @@ void DebugInfo(ShaderToolApp* app)
 
 			ImGui::Begin("DFS Debug", &showDfsDebug, overlay_window_flags);
 			ImGui::Text("Id: %i |", id); ImGui::SameLine();
-			ImGui::Text("Val: %.5f |", node.Value); ImGui::SameLine();
+			//ImGui::Text("Val: %.5f |", node.Value); ImGui::SameLine();
 			ImGui::Text("Type: %i |", node.Type); ImGui::SameLine();
 			ImGui::Text("TName: %s |", node.TypeName.c_str());
 			ImGui::End();
@@ -319,7 +349,7 @@ void ShaderToolApp::EvaluateGraph()
 	postOrderClone = postorder;
 	//LOG_TRACE("##############################");
 
-	std::stack<float> valueStack;
+	//std::stack<float> valueStack;
 	while (!postorder.empty())
 	{
 		const int id = postorder.top();
@@ -328,164 +358,80 @@ void ShaderToolApp::EvaluateGraph()
 
 		switch (node.Type)
 		{
-		case NodeType::Value:
-		case NodeType::Link:
+		case NodeType::Float:
+		case NodeType::Float2:
+		case NodeType::Float3:
+		case NodeType::Float4:
+		case NodeType::Float4x4:
+		case NodeType::Int:
 		{
-			// If the edge does not have an edge connecting to another node, then just use the value
-			// at this node. It means the node's input pin has not been connected to anything and
-			// the value comes from the node's UI.
-			if (_Graph.GetNumEdgesFromNode(id) == 0ull)
-				valueStack.push(node.Value);
+			// nothing happen at the moment
 		}
 		break;
 
 		case NodeType::Add:
 		{
-			const float rhs = valueStack.top();
-			valueStack.pop();
-			const float lhs = valueStack.top();
-			valueStack.pop();
-			node.Value = lhs + rhs;
-			valueStack.push(node.Value);
+			static_cast<AddNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
 		case NodeType::Multiply:
 		{
-			const float rhs = valueStack.top();
-			valueStack.pop();
-			const float lhs = valueStack.top();
-			valueStack.pop();
-			node.Value = rhs * lhs;
-			valueStack.push(node.Value);
+			static_cast<MultiplyNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
 		case NodeType::Sine:
 		{
-			const float input = valueStack.top();
-			valueStack.pop();
-			node.Value = std::abs(std::sin(input));
-			valueStack.push(node.Value);
+			static_cast<SineNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
 		case NodeType::Time:
 		{
-			valueStack.push(node.Value);
+			static_cast<TimeNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
-
-		// RenderTarget is not part of the graph search anymore... the root is the draw node now
-		//case NodeType::RenderTarget:
-		//{
-		//	assert(valueStack.size() == 1ull && "RenderTarget node expects 1 input");
-
-		//	const int i = static_cast<int>(valueStack.top());
-		//	valueStack.pop();
-
-		//	// it should receive an index with the texture rendered by draw node
-		//	if (i > 0)
-		//		_RenderTargetReady = true;
-		//	else
-		//		ClearRenderTexture();
-		//}
-		//break;
+		
+		case NodeType::RenderTarget:
+		{
+			//calling it here although RenderTarget is not part of the graph search anymore...
+			static_cast<RenderTargetNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
 		
 		case NodeType::Draw:
 		{
-			//LOG_ERROR("------ NodeType::Draw");
-			//auto valueStackClone = valueStack;
-			//while (!valueStackClone.empty())
-			//{
-			//	LOG_ERROR("NodeType::Draw {0}", valueStackClone.top());
-			//	valueStackClone.pop();
-			//}
 			auto drawNode = static_cast<DrawNode*>(_UINodeIdMap[id]);
-			size_t numExpectedInputs = drawNode->ShaderBindingPins.size() + (size_t)2u; // bindings + fixed pins
-
-			if (valueStack.size() != numExpectedInputs)
-			{
-				LOG_ERROR("Draw node expects {0} inputs but got {1}", numExpectedInputs, valueStack.size());
-				assert(valueStack.size() == numExpectedInputs && "Invalid number of DrawNode inputs");
-			}
-			
-			auto it = drawNode->ShaderBindingPins.crbegin();
-			//for (auto& bind : drawNode->ShaderBindingPins)
-			while(it != drawNode->ShaderBindingPins.crend())
-			{
-				float pinValue = valueStack.top();
-				valueStack.pop();
-
-				size_t index = drawNode->ShaderBindingPinIdMap[it->PinId];
-				auto& bindPin = drawNode->ShaderBindingPins[index];
-
-				// TODO: TEMPORARY!!! Only for testing. It should be properly managed
-				
-				if (it->Bind.VarName == "World")
-				{
-					bindPin.Data = &drawNode->_World._11;
-				}
-				else if (it->Bind.VarName == "View")
-				{
-					bindPin.Data = &drawNode->_View._11;
-				}
-				else if (it->Bind.VarName == "Proj")
-				{
-					bindPin.Data = &drawNode->_Proj._11;
-				}
-				else if (it->Bind.VarName == "Color")
-				{
-					
-					if (_Graph.GetNumEdgesFromNode(it->PinId) == 0ull)
-					{
-						XMFLOAT3 color(0.f, 0.f, 0.f);
-						bindPin.Data = &color.x;
-					}
-					else
-					{
-						auto colorValue = static_cast<NodeFloat3*>(drawNode->ParentGraph->GetNodeValue((int)pinValue).get());
-						bindPin.Data = &colorValue->value.x;
-					}
-				}
-
-				//drawNode->SetPinValue(it->PinId, valueStack.top());
-
-				
-				++it;
-			}
-
-			drawNode->SetPinValue(drawNode->ModelPin, valueStack.top());
-			valueStack.pop();
-			
-			drawNode->SetPinValue(drawNode->ShaderPin, valueStack.top());
-			valueStack.pop();
-
+			drawNode->OnEval();
 			RenderToTexture(drawNode);
-
-			drawNode->SetPinValue(drawNode->Id, 1.f); // TODO: fixed 1 as only one texture is allowed at the moment
-			valueStack.push(drawNode->GetPinValue(drawNode->Id)); // TODO: index where the texture is stored, now only one texture
 		}
 		break;
 
 		case NodeType::Primitive:
 		{
-			valueStack.push(node.Value);
+			static_cast<PrimitiveNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
 		case NodeType::Shader:
 		{
-			valueStack.push(node.Value);
+			static_cast<ShaderNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
 		case NodeType::Color:
 		{
-			valueStack.push((float)id); // pass forward the id of the color node output
+			static_cast<ColorNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 		
+		case NodeType::Camera:
+		{
+			static_cast<CameraNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
 		default:
 			LOG_WARN("NodeType {0} not handled", node.Type);
 			break;
@@ -561,15 +507,16 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 {
 	ClearRenderTexture();
 
-	int currentModel = (int)drawNode->GetPinValue(drawNode->ModelPin);
-	if (currentModel == INVALID_INDEX) return;
+	if (drawNode->OutputNodeValue->Data == INVALID_INDEX) return; // NOT READY
 
-	int currentShaderIndex = (int)drawNode->GetPinValue(drawNode->ShaderPin);
-	if (currentShaderIndex == INVALID_INDEX) return;
+	int currentModel = drawNode->ModelNodeValue->Data;
+	if (currentModel == INVALID_INDEX) return; // no model linked
 
-	// when shader is changed, it has to recreate the PSO
+	int currentShaderIndex = drawNode->ShaderNodeValue->Data;
+	if (currentShaderIndex == INVALID_INDEX) return; // no shader linked
+
+	// recreate PSO when shader has changed
 	if(PreviousShaderIndexRT != currentShaderIndex)
-	//if (drawNode->IsDirty)
 	{
 		CreateRenderTargetPSO(currentShaderIndex);
 		PreviousShaderIndexRT = currentShaderIndex;
@@ -591,11 +538,13 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 
 	for (auto& var : drawNode->ShaderBindingPins)
 	{
-		_CommandList->SetGraphicsRoot32BitConstants(var.Bind.RootParameterIndex, var.Bind.VarNum32BitValues, var.Data, var.Bind.VarNum32BitValuesOffset);
+		_CommandList->SetGraphicsRoot32BitConstants(
+			var.Bind.RootParameterIndex, 
+			var.Bind.VarNum32BitValues, 
+			var.Data, 
+			var.Bind.VarNum32BitValuesOffset);
 	}
-	
 
-	// BOX
 	{
 		auto& selectedModel = AssetManager::Get().GetModel(_Primitives[currentModel]);
 		
@@ -767,20 +716,36 @@ void ShaderToolApp::HandleNewLinks()
 	int start_attr, end_attr;
 	if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
 	{
-		const NodeType start_type = _Graph.GetNode(start_attr).Type;
-		const NodeType end_type = _Graph.GetNode(end_attr).Type;
+		const Node start_node = _Graph.GetNode(start_attr);
+		const Node end_node = _Graph.GetNode(end_attr);
 
-		const bool valid_link = start_type != end_type;
-		if (valid_link)
+		const bool valid_direction = start_node.Direction != end_node.Direction 
+			&& start_node.Direction != NodeDirection::None 
+			&& end_node.Direction != NodeDirection::None;
+
+		if (!valid_direction)
 		{
-			// Ensure the edge is always directed from the value to
-			// whatever produces the value
-			if (start_type != NodeType::Value && start_type != NodeType::Link)
-			{
-				std::swap(start_attr, end_attr);
-			}
-			_Graph.CreateEdge(start_attr, end_attr);
+			LOG_WARN("Failed to create link -> Invalid node directions [start: {0} | end: {1}]", 
+				magic_enum::enum_name(start_node.Direction), magic_enum::enum_name(end_node.Direction));
+			return;
 		}
+
+		const bool valid_type = start_node.Type == end_node.Type;
+
+		if (!valid_type)
+		{
+			LOG_WARN("Failed to create link -> Invalid node types [start: {0} | end: {1}]", 
+				magic_enum::enum_name(start_node.Type), magic_enum::enum_name(end_node.Type));
+			return;
+		}
+		
+		// Ensure the edge is always directed from the input pin to
+		// whatever produces the value (output pin)
+		if (start_node.Direction != NodeDirection::In)
+		{
+			std::swap(start_attr, end_attr);
+		}
+		_Graph.CreateEdge(start_attr, end_attr, EdgeType::External);
 	}
 }
 
@@ -836,9 +801,6 @@ void ShaderToolApp::HandleDeletedNodes()
 void ShaderToolApp::UpdateNodeGraph()
 {
 	EVENT_MANAGER.NotifyQueuedEvents();
-
-	for (const auto& node : _UINodes)
-		node->OnUpdate(_Timer);
 }
 
 void ShaderToolApp::RenderNodeGraph()
@@ -859,7 +821,8 @@ void ShaderToolApp::RenderNodeGraph()
 		// If edge doesn't start at value, then it's an internal edge, i.e.
 		// an edge which links a node's operation to its input. We don't
 		// want to render node internals with visible links.
-		if (_Graph.GetNode(edge.from).Type != NodeType::Value && _Graph.GetNode(edge.from).Type != NodeType::Link)
+		//if (_Graph.GetNode(edge.from).Type != NodeType::Value && _Graph.GetNode(edge.from).Type != NodeType::Link)
+		if(edge.type == EdgeType::Internal)
 			continue;
 
 		ImNodes::Link(edge.id, edge.from, edge.to);

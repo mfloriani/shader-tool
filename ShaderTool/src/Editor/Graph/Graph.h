@@ -50,22 +50,14 @@ public:
     int CreateNode(const Node& node);        
     void EraseNode(int node_id);
 
-    int  CreateEdge(int from, int to);    
+    int  CreateEdge(int from, int to, const EdgeType type);
     void EraseEdge(int edge_id);
 
     void SetCurrentId(int currentId) { _CurrentId = currentId; }
 
     void Reset();
     
-    void StoreNodeValue(int id, std::shared_ptr<NodeValue> value)
-    {
-        _NodeValues[id] = value;
-    }
-
-    std::shared_ptr<NodeValue>& GetNodeValue(int id)
-    {
-        return _NodeValues[id];
-    }
+    
 
     
     friend std::ostream& operator<<(std::ostream& out, const Graph& g)
@@ -93,29 +85,26 @@ public:
         in >> comment >> g._CurrentId >> numNodes;
 
         std::string nLabel;
-        int nId, nType;
-        float nValue;
-
+        int nId;
+        Node node;
         for (int i = 0; i < numNodes; ++i)
         {
-            in >> nLabel >> nId >> nType >> nValue;
-            //LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
-            Node node(static_cast<NodeType>(nType));
-            node.Value = nValue;
+            
+            in >> nLabel >> nId >> node;
             g.InsertNode(nId, node);
+            //LOG_TRACE("{0} {1} {2} {3}", nLabel, nId, nType, nValue);
         }
 
         int numEdges;
         in >> numEdges;
 
         std::string eLabel;
-        int eId, eFrom, eTo;
-
+        Edge edge;
         for (int i = 0; i < numEdges; ++i)
         {
-            in >> eLabel >> eId >> eFrom >> eTo;
+            in >> eLabel >> edge;
+            g.InsertEdge(edge.id, edge.from, edge.to, edge.type);
             //LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
-            g.InsertEdge(eId, eFrom, eTo);
         }
 
         return in;
@@ -123,7 +112,7 @@ public:
     
 private:
     int  InsertNode(const int id, const Node& node);
-    int  InsertEdge(const int id, int from, int to);
+    int  InsertEdge(const int id, int from, int to, const EdgeType type);
 
 private:
     int _CurrentId;
@@ -132,8 +121,6 @@ private:
     IdMap<int>              _EdgesFromNode;
     IdMap<std::vector<int>> _Neighbors;    
     IdMap<Edge>             _Edges;        // This container maps to the edge id
-
-    std::unordered_map<NodeId, std::shared_ptr<NodeValue>> _NodeValues;
 };
 
 template<typename Visitor>
@@ -155,3 +142,36 @@ void dfs_traverse(const Graph& graph, const int start_node, Visitor visitor)
         }
     }
 }
+
+template<class T>
+class GraphNodeValues
+{
+public:
+    static GraphNodeValues<T>& Get()
+    {
+        static GraphNodeValues<T> instance;
+        return instance;
+    }
+    
+    void StoreNodeValuePtr(int id, std::shared_ptr<NodeValue<T>> value)
+    {
+        _NodeValues[id] = value;
+    }
+
+    std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(int id)
+    {
+        return _NodeValues[id];
+    }
+
+    void Reset()
+    {
+        _NodeValues.clear();
+    }
+
+private:
+    GraphNodeValues() = default;
+
+private:
+    std::unordered_map<NodeId, std::shared_ptr<NodeValue<T>>> _NodeValues;
+};
+

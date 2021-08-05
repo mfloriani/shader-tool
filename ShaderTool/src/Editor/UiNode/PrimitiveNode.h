@@ -4,30 +4,53 @@
 
 struct PrimitiveNode : UiNode
 {
-    explicit PrimitiveNode(Graph* graph, std::vector<const char*>& primitives)
-        : UiNode(graph, UiNodeType::Primitive), Primitives(primitives), SelectedModel(0)
-    {
-    }
+private:
+    std::vector<const char*>& _Primitives;
+    int _SelectedModel;
 
-    std::vector<const char*>& Primitives;
-    int SelectedModel;
+public:
+    NodeId OutputPin;
+    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+
+public:
+    explicit PrimitiveNode(Graph* graph, std::vector<const char*>& primitives)
+        : UiNode(graph, UiNodeType::Primitive), _Primitives(primitives), _SelectedModel(0), OutputPin(INVALID_ID)
+    {
+        OutputNodeValue = std::make_shared<NodeValue<int>>();
+        OutputNodeValue->TypeName = "int";
+        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        OutputNodeValue->Data = INVALID_INDEX;
+    }
 
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
-        const Node output(NodeType::Primitive);
-        Id = ParentGraph->CreateNode(output);
+        const Node idNode(NodeType::Primitive, NodeDirection::None);
+        Id = ParentGraph->CreateNode(idNode);
+
+        const Node outputNode(NodeType::Int, NodeDirection::Out);
+        OutputPin = ParentGraph->CreateNode(outputNode);
+
+        ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
+        
+        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
     }
 
-    virtual void OnUpdate(GameTimer& timer) override
+    virtual void OnLoad() override
     {
-        ParentGraph->GetNode(Id).Value = static_cast<float>(SelectedModel);
+        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+    }
+
+    
+    virtual void OnEval() override
+    {
+        GetNodeValuePtr<int>(OutputPin)->Data = _SelectedModel;
     }
 
     virtual void OnDelete() override
     {
-        
+        ParentGraph->EraseNode(OutputPin);
     }
 
     virtual void OnRender() override
@@ -39,10 +62,10 @@ struct PrimitiveNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         ImGui::PushItemWidth(node_width);
-        ImGui::Combo("##hidelabel", &SelectedModel, Primitives.data(), (int)Primitives.size());
+        ImGui::Combo("##hidelabel", &_SelectedModel, _Primitives.data(), (int)_Primitives.size());
         ImGui::PopItemWidth();
         
-        ImNodes::BeginOutputAttribute(Id);
+        ImNodes::BeginOutputAttribute(OutputPin);
         const float label_width = ImGui::CalcTextSize("output").x;
         ImGui::Indent(node_width - label_width);
         ImGui::Text("output");
@@ -54,14 +77,15 @@ struct PrimitiveNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << SelectedModel;
+        out << " " << OutputPin << " " << _SelectedModel;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Primitive;
-        in >> Id >> SelectedModel;
+        in >> Id >> OutputPin >> _SelectedModel;
+        OnLoad();
         return in;
     }
 

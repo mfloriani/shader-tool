@@ -4,37 +4,71 @@
 
 struct ShaderNode : UiNode
 {
+private:
+    std::string _Path;
+    std::string _ShaderName;
+
+public:
+    NodeId OutputPin;
+    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+
+public:
     explicit ShaderNode(Graph* graph)
         : UiNode(graph, UiNodeType::Shader)
     {
+        OutputNodeValue = std::make_shared<NodeValue<int>>();
+        OutputNodeValue->TypeName = "int";
+        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        OutputNodeValue->Data = INVALID_INDEX;
     }
 
-    struct ShaderData
-    {
-        std::string path;
-        std::string shaderName;
-    } Data;
+    const std::string GetPath() const { return _Path; }
+    const std::string GetName() const { return _ShaderName; }
 
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
-        const Node op(NodeType::Shader);
-        Id = ParentGraph->CreateNode(op);
+        _Path = "INTERNAL_SHADER_PATH";
+        _ShaderName = DEFAULT_SHADER;
+        OutputNodeValue->Data = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
 
-        Data.path = "INTERNAL_SHADER_PATH";
-        Data.shaderName = DEFAULT_SHADER;
-        SetPinValue( Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName) );
+        const Node idNode = Node(NodeType::Shader, NodeDirection::None);
+        Id = ParentGraph->CreateNode(idNode);
+
+        const Node shaderIndexNodeOut(NodeType::Int, NodeDirection::Out);
+        OutputPin = ParentGraph->CreateNode(shaderIndexNodeOut);
+
+        ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
+        
+        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
     }
 
-    virtual void OnUpdate(GameTimer& timer) override
+    virtual void OnLoad() override
     {
-        //ParentGraph->GetNode(Id).Value = static_cast<float>(Data.shaderIndex);
+        if (!ShaderManager::Get().HasShader(_ShaderName))
+        {
+            _ShaderName = ShaderManager::Get().LoadShaderFromFile(_Path);
+            if (!ShaderManager::Get().HasShader(_ShaderName))
+            {
+                LOG_ERROR("Failed to load shader {0}! The default shader was used instead.", _Path);
+
+                _Path = "INTERNAL_SHADER_PATH";
+                _ShaderName = DEFAULT_SHADER;
+            }
+        }
+        OutputNodeValue->Data = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
+        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+    }
+    
+    virtual void OnEval() override
+    {
+
     }
 
     virtual void OnDelete() override
     {
-        
+        ParentGraph->EraseNode(OutputPin);
     }
 
     virtual void OnRender() override
@@ -55,23 +89,10 @@ struct ShaderNode : UiNode
 
             if (result == NFD_OKAY)
             {
-                auto shaderPath = std::string(outPath);
+                _Path = std::string(outPath);
+                _ShaderName = ShaderManager::Get().LoadShaderFromFile(_Path);
+                OnLoad();
                 free(outPath);
-                //LOG_TRACE("Selected file [{0} | {1} | {2}]", path, D3DUtil::ExtractFilename(path, true), D3DUtil::ExtractFilename(path));
-                //auto shaderName = ShaderManager::Get().LoadRawShader(shaderPath, "main", "vs_5_0");
-                auto shaderName = ShaderManager::Get().LoadShaderFromFile(shaderPath);
-                if (shaderName.size() == 0)
-                {
-                    // Failed
-                    LOG_WARN("### Failed to load the selected shader! The previous shader was kept.");
-                }
-                else
-                {
-                    // Loaded and Compiled successfully
-                    Data.path = shaderPath;
-                    Data.shaderName = shaderName;
-                    SetPinValue(Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName));
-                }
             }
             else if (result == NFD_CANCEL)
             {
@@ -93,9 +114,9 @@ struct ShaderNode : UiNode
 
         //}
 
-        ImGui::Text(Data.shaderName.c_str());
+        ImGui::Text(_ShaderName.c_str());
 
-        ImNodes::BeginOutputAttribute(Id);
+        ImNodes::BeginOutputAttribute(OutputPin);
         const float label_width = ImGui::CalcTextSize("output").x;
         ImGui::Indent(node_width - label_width);
         ImGui::TextUnformatted("output");
@@ -107,34 +128,17 @@ struct ShaderNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Data.shaderName << " " << Data.path;
+        out << " " << OutputPin << " " << _ShaderName << " " << _Path;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Shader;
-        in >> Id >> Data.shaderName >> Data.path;
+        in >> Id >> OutputPin >> _ShaderName >> _Path;
         
-        if (ShaderManager::Get().HasShader(Data.shaderName))
-        {
-            SetPinValue(Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName));
-        }
-        else
-        {
-            auto shaderName = ShaderManager::Get().LoadShaderFromFile(Data.path);
-            if (shaderName.size() == 0)
-            {
-                LOG_ERROR("Failed to load shader {0}", Data.path);
-                Data.shaderName = "SHADER_NOT_FOUND";
-                SetPinValue(Id, (float)INVALID_INDEX);
-            }
-            else
-            {
-                Data.shaderName = shaderName;
-                SetPinValue(Id, (float)ShaderManager::Get().GetShaderIndex(Data.shaderName));
-            }
-        }
+        OnLoad();
+                
         return in;
     }
 

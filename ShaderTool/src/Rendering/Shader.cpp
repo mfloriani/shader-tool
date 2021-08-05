@@ -69,8 +69,8 @@ void Shader::BuildRootParameters()
 			{
 				for (auto var : it->second)
 				{
-					auto it = D3DUtil::DxMathTypeMap.find(var.Type.Name);
-					if (it == D3DUtil::DxMathTypeMap.end())
+					auto it = D3DUtil::HlslTypeMap.find(var.Type.Name);
+					if (it == D3DUtil::HlslTypeMap.end())
 					{
 						LOG_CRITICAL("DirectXMath value for {0} is not mapped", var.Type.Name);
 						throw std::runtime_error("DirectXMath value for "+ var.Type.Name +" is not mapped");
