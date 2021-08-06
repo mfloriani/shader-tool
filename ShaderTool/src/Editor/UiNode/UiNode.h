@@ -26,7 +26,8 @@ enum class UiNodeType
     Scalar,
     Vector4,
     Vector3,
-    Vector2
+    Vector2,
+    Matrix4x4
 };
 
 struct UiNode : public IObserver
@@ -68,7 +69,7 @@ public:
     }
 
     template <typename T>
-    bool CopyNeighborNodeValue(NodeId id, T defaultValue)
+    bool CopyFromLinkedSourceNodeValue(NodeId id, T defaultValue)
     {
         size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(id);
         if (numNeighbors == 1ull) // there is one link

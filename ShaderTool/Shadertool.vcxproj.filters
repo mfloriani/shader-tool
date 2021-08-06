@@ -166,6 +166,7 @@
     <ClInclude Include="src\Editor\UiNode\Vector4Node.h" />
     <ClInclude Include="src\Editor\UiNode\Vector3Node.h" />
     <ClInclude Include="src\Editor\UiNode\Vector2Node.h" />
+    <ClInclude Include="src\Editor\UiNode\Matrix4x4Node.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />

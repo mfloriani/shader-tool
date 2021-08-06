@@ -28,7 +28,8 @@ enum class NodeType
     Scalar,
     Vector4,
     Vector3,
-    Vector2
+    Vector2,
+    Matrix4x4
 };
 
 // None for uinode ids

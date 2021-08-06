@@ -16,6 +16,7 @@
 #include "Editor\UiNode\Vector4Node.h"
 #include "Editor\UiNode\Vector3Node.h"
 #include "Editor\UiNode\Vector2Node.h"
+#include "Editor\UiNode\Matrix4x4Node.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -278,6 +279,18 @@ void DebugInfo(ShaderToolApp* app)
 				}
 				break;
 
+				case UiNodeType::Matrix4x4:
+				{
+					auto uinode = static_cast<Matrix4x4Node*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector2Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("Input:      %i", uinode->InputPin);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
 				default:
 					break;
 				}
@@ -510,6 +523,12 @@ void ShaderToolApp::EvaluateGraph()
 		case NodeType::Vector2:
 		{
 			static_cast<Vector2Node*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Matrix4x4:
+		{
+			static_cast<Matrix4x4Node*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
@@ -814,6 +833,15 @@ void ShaderToolApp::HandleNewNodes()
 			if (ImGui::MenuItem("Vector2"))
 			{
 				auto node = std::make_unique<Vector2Node>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Matrix4x4"))
+			{
+				auto node = std::make_unique<Matrix4x4Node>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
@@ -1129,6 +1157,14 @@ void ShaderToolApp::Load()
 		case UiNodeType::Vector2:
 		{
 			auto node = std::make_unique<Vector2Node>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Matrix4x4:
+		{
+			auto node = std::make_unique<Matrix4x4Node>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));

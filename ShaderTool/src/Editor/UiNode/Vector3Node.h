@@ -81,9 +81,9 @@ public:
 
     virtual void OnEval() override
     {
-        CopyNeighborNodeValue<float>(XInputPin, 0.f);
-        CopyNeighborNodeValue<float>(YInputPin, 0.f);
-        CopyNeighborNodeValue<float>(ZInputPin, 0.f);
+        CopyFromLinkedSourceNodeValue<float>(XInputPin, 0.f);
+        CopyFromLinkedSourceNodeValue<float>(YInputPin, 0.f);
+        CopyFromLinkedSourceNodeValue<float>(ZInputPin, 0.f);
 
         OutputNodeValue->Data = DirectX::XMFLOAT3(
             XInputNodeValue->Data,

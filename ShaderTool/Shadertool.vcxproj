@@ -121,6 +121,7 @@
     <ClInclude Include="src\Editor\UiNode\CameraNode.h" />
     <ClInclude Include="src\Editor\UiNode\ColorNode.h" />
     <ClInclude Include="src\Editor\UiNode\DrawNode.h" />
+    <ClInclude Include="src\Editor\UiNode\Matrix4x4Node.h" />
     <ClInclude Include="src\Editor\UiNode\MultiplyNode.h" />
     <ClInclude Include="src\Editor\UiNode\PrimitiveNode.h" />
     <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h" />

@@ -59,7 +59,7 @@ public:
     
     virtual void OnEval() override
     {
-        CopyNeighborNodeValue<float>(InputPin, 0.f);
+        CopyFromLinkedSourceNodeValue<float>(InputPin, 0.f);
         OutputNodeValue->Data = std::abs(std::sin( InputNodeValue->Data ));
     }
 
