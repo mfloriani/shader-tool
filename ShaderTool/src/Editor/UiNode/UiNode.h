@@ -22,7 +22,12 @@ enum class UiNodeType
     Primitive,
     Shader,
     Color,
-    Camera
+    Camera,
+    Scalar,
+    Vector4,
+    Vector3,
+    Vector2,
+    Matrix4x4
 };
 
 struct UiNode : public IObserver
@@ -46,6 +51,7 @@ public:
     virtual void OnEvent(Event*) = 0;
     virtual void OnCreate() = 0;
     virtual void OnLoad() = 0;
+    virtual void OnUpdate() = 0;
     virtual void OnDelete() = 0;
     virtual void OnRender() = 0;
     virtual void OnEval() = 0;
@@ -60,6 +66,27 @@ public:
     std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(NodeId id)
     {
         return GraphNodeValues<T>::Get().GetNodeValuePtr(id);
+    }
+
+    template <typename T>
+    bool CopyFromLinkedSourceNodeValue(NodeId id, T defaultValue)
+    {
+        size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(id);
+        if (numNeighbors == 1ull) // there is one link
+        {
+            NodeId neighborId = *ParentGraph->GetNeighbors(id).begin();
+            GetNodeValuePtr<T>(id)->Data = GetNodeValuePtr<T>(neighborId)->Data;
+            return true;
+        }
+        
+        // no link or more than one
+
+        if (numNeighbors > 1ull)
+            LOG_ERROR("Multiple links [{0}] at node {1}", numNeighbors, id);
+
+        GetNodeValuePtr<T>(id)->Data = defaultValue;
+
+        return false;
     }
 
     virtual std::ostream& Serialize(std::ostream& out) const

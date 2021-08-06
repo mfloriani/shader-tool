@@ -60,6 +60,11 @@ public:
         OutputNodeValue->Data = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
         StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
     }
+
+    virtual void OnUpdate() override
+    {
+
+    }
     
     virtual void OnEval() override
     {

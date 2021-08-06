@@ -41,6 +41,7 @@ public:
     virtual void OnLoad() override;
     virtual void OnDelete() override;
     virtual void OnRender() override;
+    virtual void OnUpdate() override;
     virtual void OnEval() override;
 
     void CreateShaderBindings(Shader* shader);

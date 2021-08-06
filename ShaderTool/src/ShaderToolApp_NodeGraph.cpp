@@ -12,6 +12,11 @@
 #include "Editor\UiNode\TimeNode.h"
 #include "Editor\UiNode\ColorNode.h"
 #include "Editor\UiNode\CameraNode.h"
+#include "Editor\UiNode\ScalarNode.h"
+#include "Editor\UiNode\Vector4Node.h"
+#include "Editor\UiNode\Vector3Node.h"
+#include "Editor\UiNode\Vector2Node.h"
+#include "Editor\UiNode\Matrix4x4Node.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -217,6 +222,71 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:         %i", uinode->Id);
 						ImGui::Text("View:       %i", uinode->ViewPin);
 						ImGui::Text("Projection: %i", uinode->ProjectionPin);
+						});
+				}
+				break;
+
+				case UiNodeType::Scalar:
+				{
+					auto uinode = static_cast<ScalarNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("ScalarNode");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
+				case UiNodeType::Vector4:
+				{
+					auto uinode = static_cast<Vector4Node*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector4Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("X:          %i", uinode->XInputPin);
+						ImGui::Text("Y:          %i", uinode->YInputPin);
+						ImGui::Text("Z:          %i", uinode->ZInputPin);
+						ImGui::Text("W:          %i", uinode->WInputPin);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
+				case UiNodeType::Vector3:
+				{
+					auto uinode = static_cast<Vector3Node*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector3Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("X:          %i", uinode->XInputPin);
+						ImGui::Text("Y:          %i", uinode->YInputPin);
+						ImGui::Text("Z:          %i", uinode->ZInputPin);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
+				case UiNodeType::Vector2:
+				{
+					auto uinode = static_cast<Vector2Node*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector2Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("X:          %i", uinode->XInputPin);
+						ImGui::Text("Y:          %i", uinode->YInputPin);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
+				case UiNodeType::Matrix4x4:
+				{
+					auto uinode = static_cast<Matrix4x4Node*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector2Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("Input:      %i", uinode->InputPin);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
 						});
 				}
 				break;
@@ -429,6 +499,36 @@ void ShaderToolApp::EvaluateGraph()
 		case NodeType::Camera:
 		{
 			static_cast<CameraNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Scalar:
+		{
+			static_cast<ScalarNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Vector4:
+		{
+			static_cast<Vector4Node*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Vector3:
+		{
+			static_cast<Vector3Node*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Vector2:
+		{
+			static_cast<Vector2Node*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Matrix4x4:
+		{
+			static_cast<Matrix4x4Node*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
@@ -702,6 +802,51 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
+
+			if (ImGui::MenuItem("Scalar"))
+			{
+				auto node = std::make_unique<ScalarNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Vector4"))
+			{
+				auto node = std::make_unique<Vector4Node>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Vector3"))
+			{
+				auto node = std::make_unique<Vector3Node>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Vector2"))
+			{
+				auto node = std::make_unique<Vector2Node>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Matrix4x4"))
+			{
+				auto node = std::make_unique<Matrix4x4Node>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
 			
 			ImGui::EndPopup();
 		}
@@ -801,6 +946,9 @@ void ShaderToolApp::HandleDeletedNodes()
 void ShaderToolApp::UpdateNodeGraph()
 {
 	EVENT_MANAGER.NotifyQueuedEvents();
+
+	for (auto& node : _UINodes)
+		node->OnUpdate();
 }
 
 void ShaderToolApp::RenderNodeGraph()
@@ -977,6 +1125,46 @@ void ShaderToolApp::Load()
 		case UiNodeType::Camera:
 		{
 			auto node = std::make_unique<CameraNode>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Scalar:
+		{
+			auto node = std::make_unique<ScalarNode>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Vector4:
+		{
+			auto node = std::make_unique<Vector4Node>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Vector3:
+		{
+			auto node = std::make_unique<Vector3Node>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Vector2:
+		{
+			auto node = std::make_unique<Vector2Node>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Matrix4x4:
+		{
+			auto node = std::make_unique<Matrix4x4Node>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));

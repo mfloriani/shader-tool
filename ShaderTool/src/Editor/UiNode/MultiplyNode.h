@@ -63,8 +63,16 @@ public:
         StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
     }
 
+    virtual void OnUpdate() override
+    {
+
+    }
+
     virtual void OnEval() override
     {
+        CopyFromLinkedSourceNodeValue<float>(LeftPin, 0.f);
+        CopyFromLinkedSourceNodeValue<float>(RightPin, 0.f);
+
         OutputNodeValue->Data = LeftNodeValue->Data * RightNodeValue->Data;
     }
 
