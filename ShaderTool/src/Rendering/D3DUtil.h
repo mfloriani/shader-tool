@@ -13,12 +13,13 @@
 
 namespace D3DUtil
 {
-	static std::unordered_map<std::string, UINT> DxMathTypeMap = {
+	static std::unordered_map<std::string, UINT> HlslTypeMap = {
 		{"float4x4", 16},
 		{"float4", 4},
 		{"float3", 3},
 		{"float2", 2},
 		{"float", 1},
+		{"int", 1},
 	};
 
 
@@ -52,9 +53,9 @@ namespace D3DUtil
     }
 
     #ifndef ThrowIfFailed
-    #define ThrowIfFailed(x)                                              \
-    {                                                                     \
-        HRESULT hr__ = (x);                                               \
+    #define ThrowIfFailed(x)                                                       \
+    {                                                                              \
+        HRESULT hr__ = (x);                                                        \
         std::wstring wfn = D3DUtil::AnsiToWString(__FILE__);                       \
         if(FAILED(hr__)) { throw D3DUtil::DxException(hr__, L#x, wfn, __LINE__); } \
     }

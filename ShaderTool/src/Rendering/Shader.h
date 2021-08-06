@@ -6,6 +6,7 @@
 
 struct ShaderBind
 {
+	UINT RootParameterIndex;
 	UINT BindPoint;
 	D3D_SHADER_INPUT_TYPE BindType;
 	std::string BindTypeName;
@@ -18,11 +19,7 @@ struct ShaderBind
 };
 
 class Shader
-{
-public:
-	using RootParameterId = UINT;
-	using BindingVarsMap = std::map<RootParameterId, std::vector<ShaderBind>>;
-
+{	
 public:
 	Shader(const std::string& name, Microsoft::WRL::ComPtr<ID3DBlob> vsBuffer, Microsoft::WRL::ComPtr<ID3DBlob> psBuffer);
 	~Shader();
@@ -34,7 +31,7 @@ public:
 	UINT GetNumConstantBuffers();
 	UINT GetNumTextures();
 
-	const BindingVarsMap& GetBindingVars() const { return _BindingVarsMap; }
+	const std::vector<ShaderBind>& GetBindingVars() const { return _BindingVarsMap; }
 	const std::vector<CD3DX12_ROOT_PARAMETER>& GetRootParameters() const { return _RootParameters; }
 	
 private:
@@ -46,5 +43,5 @@ private:
 	Microsoft::WRL::ComPtr<ID3DBlob>      _PsByteCode;
 	std::unique_ptr<ShaderReflection>     _Reflection;
 	std::vector<CD3DX12_ROOT_PARAMETER>   _RootParameters;
-	BindingVarsMap                        _BindingVarsMap;
+	std::vector<ShaderBind>               _BindingVarsMap;
 };

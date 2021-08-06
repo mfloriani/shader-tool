@@ -4,10 +4,23 @@
 
 struct RenderTargetNode : UiNode
 {
-    explicit RenderTargetNode(Graph<Node>* graph, RenderTexture* renderTexture)
-        : UiNode(graph, UiNodeType::RenderTarget), RenderTex(renderTexture), Input(INVALID_ID), IsLinkedToDrawNode(false)
+private:
+    RenderTexture* _RenderTex;
+    bool _IsLinkedToDrawNode;
+
+public:
+    NodeId InputPin;
+    std::shared_ptr<NodeValue<int>> InputNodeValue;
+
+public:
+    explicit RenderTargetNode(Graph* graph, RenderTexture* renderTexture)
+        : UiNode(graph, UiNodeType::RenderTarget), _RenderTex(renderTexture), InputPin(INVALID_ID), _IsLinkedToDrawNode(false)
     {
         EVENT_MANAGER.Attach(this);
+        InputNodeValue = std::make_shared<NodeValue<int>>();
+        InputNodeValue->TypeName = "int";
+        InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
+        InputNodeValue->Data = INVALID_INDEX;
     }
 
     virtual ~RenderTargetNode()
@@ -15,11 +28,6 @@ struct RenderTargetNode : UiNode
         EVENT_MANAGER.Detach(this);
     }
     
-    RenderTexture* RenderTex;
-    NodeId Input;
-
-    bool IsLinkedToDrawNode;
-
     virtual void OnEvent(Event* e) override
     {
         if (dynamic_cast<LinkCreatedEvent*>(e))
@@ -27,7 +35,7 @@ struct RenderTargetNode : UiNode
             auto lce = dynamic_cast<LinkCreatedEvent*>(e);
             LOG_TRACE("RenderTargetNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
 
-            if (Input == lce->from)
+            if (InputPin == lce->from)
                 OnDrawLinkCreated(lce->from, lce->to);
         }
 
@@ -36,39 +44,48 @@ struct RenderTargetNode : UiNode
             auto lde = dynamic_cast<LinkDeletedEvent*>(e);
             LOG_TRACE("RenderTargetNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
 
-            if (Input == lde->from)
+            if (InputPin == lde->from)
                 OnDrawLinkDeleted(lde->from, lde->to);
         }
     }
 
     void OnDrawLinkCreated(int from, int to)
     {
-        IsLinkedToDrawNode = true;
+        _IsLinkedToDrawNode = true;
     }
 
     void OnDrawLinkDeleted(int from, int to)
     {
-        IsLinkedToDrawNode = false;
+        _IsLinkedToDrawNode = false;
     }
 
     virtual void OnCreate() override
     {
-        const Node value(NodeType::Value, 0.f);
-        const Node op(NodeType::RenderTarget);
+        const Node idNode(NodeType::RenderTarget, NodeDirection::None);
+        Id = ParentGraph->CreateNode(idNode);
 
-        Input = ParentGraph->CreateNode(value);
-        Id = ParentGraph->CreateNode(op);
+        const Node inputNode(NodeType::Int, NodeDirection::In);
+        InputPin = ParentGraph->CreateNode(inputNode);
 
-        ParentGraph->CreateEdge(Id, Input);
+        ParentGraph->CreateEdge(Id, InputPin, EdgeType::Internal);
+
+        StoreNodeValuePtr<int>(InputPin, InputNodeValue);
     }
 
-    virtual void OnUpdate(GameTimer& timer) override
+    virtual void OnLoad() override
     {
+        StoreNodeValuePtr<int>(InputPin, InputNodeValue);
+    }
+
+    
+    virtual void OnEval() override
+    {
+
     }
 
     virtual void OnDelete() override
     {
-        ParentGraph->EraseNode(Input);
+        ParentGraph->EraseNode(InputPin);
     }
 
     virtual void OnRender() override
@@ -81,22 +98,16 @@ struct RenderTargetNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         {
-            ImNodes::BeginInputAttribute(Input);
+            ImNodes::BeginInputAttribute(InputPin);
             const float label_width = ImGui::CalcTextSize("input").x;
             ImGui::TextUnformatted("input");
-            if (ParentGraph->GetNumEdgesFromNode(Input) == 0ull)
-            {
-                ImGui::SameLine();
-                ImGui::PushItemWidth(node_width - label_width);
-                ImGui::PopItemWidth();
-            }
             ImNodes::EndInputAttribute();
 
             static int w = 256;
             static int h = 256;
             
-            if(IsLinkedToDrawNode)
-                ImGui::Image((ImTextureID)RenderTex->SRV().ptr, ImVec2((float)w, (float)h));
+            if(_IsLinkedToDrawNode)
+                ImGui::Image((ImTextureID)_RenderTex->SRV().ptr, ImVec2((float)w, (float)h));
         }
 
         ImNodes::EndNode();
@@ -105,14 +116,15 @@ struct RenderTargetNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Input;
+        out << " " << InputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::RenderTarget;
-        in >> Id >> Input;
+        in >> Id >> InputPin;
+        OnLoad();
         return in;
     }
 

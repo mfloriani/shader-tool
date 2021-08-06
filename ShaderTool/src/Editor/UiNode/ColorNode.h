@@ -4,31 +4,51 @@
 
 struct ColorNode : UiNode
 {
-    explicit ColorNode(Graph<Node>* graph)
+private:
+    ImVec4 TempColor;
+
+public:
+    NodeId OutputPin;
+    std::shared_ptr<NodeValue<DirectX::XMFLOAT3>> OutputNodeValue;
+
+public:
+    explicit ColorNode(Graph* graph)
         : UiNode(graph, UiNodeType::Color)
     {
+        OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
+        OutputNodeValue->TypeName = "float3";
+        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        OutputNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
     }
-
-    ImVec4 Color;
 
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
-        const Node op(NodeType::Color);
-        Id = ParentGraph->CreateNode(op);
+        const Node idNode(NodeType::Color, NodeDirection::None);
+        Id = ParentGraph->CreateNode(idNode);
 
-        
+        const Node colorNodeOut(NodeType::Float3, NodeDirection::Out);
+        OutputPin = ParentGraph->CreateNode(colorNodeOut);
+
+        ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
+
+        StoreNodeValuePtr<DirectX::XMFLOAT3>(OutputPin, OutputNodeValue);
     }
 
-    virtual void OnUpdate(GameTimer& timer) override
+    virtual void OnLoad() override
     {
-        SetPinValue(Id, 6.f);
+        StoreNodeValuePtr<DirectX::XMFLOAT3>(OutputPin, OutputNodeValue);
+    }
+
+    virtual void OnEval() override
+    {
+        OutputNodeValue->Data = DirectX::XMFLOAT3(TempColor.x, TempColor.y, TempColor.z);
     }
 
     virtual void OnDelete() override
     {
-
+        ParentGraph->EraseNode(OutputPin);
     }
 
     virtual void OnRender() override
@@ -42,18 +62,18 @@ struct ColorNode : UiNode
         ImNodes::EndNodeTitleBar();
 
         ImGui::Indent(15);
-        if (ImGui::ColorButton("##3c", Color, ImGuiColorEditFlags_NoBorder, ImVec2(80, 80)))
+        if (ImGui::ColorButton("##3c", TempColor, ImGuiColorEditFlags_NoBorder, ImVec2(80, 80)))
         {
             ImGui::OpenPopup("mypicker");
         }
 
         if (ImGui::BeginPopup("mypicker"))
         {
-            ImGui::ColorPicker4("##picker", (float*)&Color, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_PickerHueWheel);
+            ImGui::ColorPicker4("##picker", (float*)&TempColor, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_PickerHueWheel);
             ImGui::EndPopup();
         }
 
-        ImNodes::BeginOutputAttribute(Id);
+        ImNodes::BeginOutputAttribute(OutputPin);
         const float label_width = ImGui::CalcTextSize("output").x;
         ImGui::Indent(node_width - label_width);
         ImGui::TextUnformatted("output");
@@ -65,14 +85,15 @@ struct ColorNode : UiNode
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << Color.x << " " << Color.y << " " << Color.z << " " << Color.w;
+        out << " " << OutputPin << " " << OutputNodeValue->Data.x << " " << OutputNodeValue->Data.y << " " << OutputNodeValue->Data.z;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Color;
-        in >> Id >> Color.x >> Color.y >> Color.z >> Color.w;
+        in >> Id >> OutputPin >> OutputNodeValue->Data.x >> OutputNodeValue->Data.y >> OutputNodeValue->Data.z;
+        OnLoad();
         return in;
     }
 

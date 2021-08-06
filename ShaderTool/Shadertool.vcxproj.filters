@@ -161,6 +161,7 @@
     <ClInclude Include="src\Events\Event.h" />
     <ClInclude Include="src\Events\EventManager.h" />
     <ClInclude Include="src\Editor\UiNode\ColorNode.h" />
+    <ClInclude Include="src\Editor\UiNode\CameraNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -231,6 +232,7 @@
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\Editor\UiNode\DrawNode.cpp" />
     <ClCompile Include="src\Events\EventManager.cpp" />
+    <ClCompile Include="src\Editor\Graph\Graph.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">

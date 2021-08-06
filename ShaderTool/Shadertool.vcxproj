@@ -118,6 +118,7 @@
     <ClInclude Include="src\Editor\NFD\nfd_common.h" />
     <ClInclude Include="src\Editor\NFD\simple_exec.h" />
     <ClInclude Include="src\Editor\UiNode\AddNode.h" />
+    <ClInclude Include="src\Editor\UiNode\CameraNode.h" />
     <ClInclude Include="src\Editor\UiNode\ColorNode.h" />
     <ClInclude Include="src\Editor\UiNode\DrawNode.h" />
     <ClInclude Include="src\Editor\UiNode\MultiplyNode.h" />
@@ -154,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
+    <ClCompile Include="src\Editor\Graph\Graph.cpp" />
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
