@@ -25,7 +25,10 @@ enum class NodeType
     Shader,
     Color,
     Camera,
-    Scalar
+    Scalar,
+    Vector4,
+    Vector3,
+    Vector2
 };
 
 // None for uinode ids

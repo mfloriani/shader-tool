@@ -5,8 +5,7 @@
 struct ScalarNode : UiNode
 {
 private:
-    float _Value{ 0 };
-
+    
 public:
     NodeId OutputPin;
     std::shared_ptr<NodeValue<float>> OutputNodeValue;
@@ -42,7 +41,7 @@ public:
 
     virtual void OnEval() override
     {
-        OutputNodeValue->Data = _Value;
+        
     }
 
     virtual void OnDelete() override
@@ -59,13 +58,13 @@ public:
         ImNodes::EndNodeTitleBar();
 
         ImGui::PushItemWidth(node_width);
-        ImGui::InputFloat("", &_Value);
+        ImGui::DragFloat("##hidelabel", &OutputNodeValue->Data, 0.01f);
         ImGui::PopItemWidth();
 
         ImNodes::BeginOutputAttribute(OutputPin);
-        const float label_width = ImGui::CalcTextSize("output (float)").x;
+        const float label_width = ImGui::CalcTextSize("output").x;
         ImGui::Indent(node_width - label_width);
-        ImGui::Text("output (float)");
+        ImGui::Text("output");
         ImNodes::EndOutputAttribute();
 
         ImNodes::EndNode();
@@ -74,14 +73,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << _Value;
+        out << " " << OutputPin << " " << OutputNodeValue->Data;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Scalar;
-        in >> Id >> OutputPin >> _Value;
+        in >> Id >> OutputPin >> OutputNodeValue->Data;
         OnLoad();
         return in;
     }

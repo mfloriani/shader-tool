@@ -13,6 +13,7 @@
 #include "Editor\UiNode\ColorNode.h"
 #include "Editor\UiNode\CameraNode.h"
 #include "Editor\UiNode\ScalarNode.h"
+#include "Editor\UiNode\Vector4Node.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -233,6 +234,21 @@ void DebugInfo(ShaderToolApp* app)
 				}
 				break;
 
+				case UiNodeType::Vector4:
+				{
+					auto uinode = static_cast<Vector4Node*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector4Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("X:          %i", uinode->XInputPin);
+						ImGui::Text("Y:          %i", uinode->YInputPin);
+						ImGui::Text("Z:          %i", uinode->ZInputPin);
+						ImGui::Text("W:          %i", uinode->WInputPin);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
 				default:
 					break;
 				}
@@ -447,6 +463,12 @@ void ShaderToolApp::EvaluateGraph()
 		case NodeType::Scalar:
 		{
 			static_cast<ScalarNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Vector4:
+		{
+			static_cast<Vector4Node*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
@@ -724,6 +746,15 @@ void ShaderToolApp::HandleNewNodes()
 			if (ImGui::MenuItem("Scalar"))
 			{
 				auto node = std::make_unique<ScalarNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Vector4"))
+			{
+				auto node = std::make_unique<Vector4Node>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
@@ -1015,6 +1046,30 @@ void ShaderToolApp::Load()
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Vector4:
+		{
+			auto node = std::make_unique<Vector4Node>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Vector3:
+		{
+			//auto node = std::make_unique<Vector3Node>(&_Graph);
+			//fin >> *node.get();
+			//_UINodeIdMap[node->Id] = node.get();
+			//_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Vector2:
+		{
+			//auto node = std::make_unique<Vector2Node>(&_Graph);
+			//fin >> *node.get();
+			//_UINodeIdMap[node->Id] = node.get();
+			//_UINodes.push_back(std::move(node));
 		}
 		break;
 		default:

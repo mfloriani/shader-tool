@@ -23,7 +23,10 @@ enum class UiNodeType
     Shader,
     Color,
     Camera,
-    Scalar
+    Scalar,
+    Vector4,
+    Vector3,
+    Vector2
 };
 
 struct UiNode : public IObserver
