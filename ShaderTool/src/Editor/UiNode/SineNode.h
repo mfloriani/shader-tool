@@ -52,9 +52,14 @@ public:
         StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
     }
 
+    virtual void OnUpdate() override
+    {
+
+    }
     
     virtual void OnEval() override
     {
+        CopyNeighborNodeValue<float>(InputPin, 0.f);
         OutputNodeValue->Data = std::abs(std::sin( InputNodeValue->Data ));
     }
 

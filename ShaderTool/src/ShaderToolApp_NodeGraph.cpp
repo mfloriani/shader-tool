@@ -918,6 +918,9 @@ void ShaderToolApp::HandleDeletedNodes()
 void ShaderToolApp::UpdateNodeGraph()
 {
 	EVENT_MANAGER.NotifyQueuedEvents();
+
+	for (auto& node : _UINodes)
+		node->OnUpdate();
 }
 
 void ShaderToolApp::RenderNodeGraph()

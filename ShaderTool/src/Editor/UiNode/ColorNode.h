@@ -41,6 +41,11 @@ public:
         StoreNodeValuePtr<DirectX::XMFLOAT3>(OutputPin, OutputNodeValue);
     }
 
+    virtual void OnUpdate() override
+    {
+
+    }
+
     virtual void OnEval() override
     {
         OutputNodeValue->Data = DirectX::XMFLOAT3(TempColor.x, TempColor.y, TempColor.z);

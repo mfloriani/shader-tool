@@ -58,6 +58,11 @@ public:
         StoreNodeValuePtr<DirectX::XMFLOAT4X4>(ProjectionPin, ProjectionNodeValue);
     }
     
+    virtual void OnUpdate() override
+    {
+
+    }
+
     virtual void OnEval() override
     {
         // Convert Spherical to Cartesian coordinates.

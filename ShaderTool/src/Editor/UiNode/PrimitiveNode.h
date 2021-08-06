@@ -42,6 +42,10 @@ public:
         StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
     }
 
+    virtual void OnUpdate() override
+    {
+
+    }
     
     virtual void OnEval() override
     {

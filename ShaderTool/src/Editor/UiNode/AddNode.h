@@ -70,8 +70,16 @@ public:
         ParentGraph->EraseNode(OutputPin);
     }
 
+    virtual void OnUpdate() override
+    {
+
+    }
+
     virtual void OnEval() override
     {
+        CopyNeighborNodeValue<float>(LeftPin, 0.f);
+        CopyNeighborNodeValue<float>(RightPin, 0.f);
+
         OutputNodeValue->Data = LeftNodeValue->Data + RightNodeValue->Data;
     }
 

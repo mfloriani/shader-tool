@@ -64,8 +64,16 @@ public:
     }
 
 
+    virtual void OnUpdate() override
+    {
+
+    }
+
     virtual void OnEval() override
     {
+        CopyNeighborNodeValue<float>(XInputPin, 0.f);
+        CopyNeighborNodeValue<float>(YInputPin, 0.f);
+        
         OutputNodeValue->Data = DirectX::XMFLOAT2(
             XInputNodeValue->Data,
             YInputNodeValue->Data);

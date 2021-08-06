@@ -47,7 +47,12 @@ public:
     {
         ParentGraph->EraseNode(OutputPin);
     }
-        
+    
+    virtual void OnUpdate() override
+    {
+        _Timer.Tick();
+    }
+
     virtual void OnEval() override
     {
         OutputNodeValue->Data = _Timer.TotalTime();
@@ -79,6 +84,7 @@ public:
     {
         Type = UiNodeType::Time;
         in >> Id >> OutputPin;
+        OnLoad();
         return in;
     }
 

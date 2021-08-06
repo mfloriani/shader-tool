@@ -169,42 +169,20 @@ void DrawNode::OnRender()
     ImNodes::PopColorStyle();
 }
 
+void DrawNode::OnUpdate()
+{
+
+}
+
 void DrawNode::OnEval()
 {
     bool isReadyToRender = true;
 
-    // SHADER PIN
-    size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(ShaderPin);
-    if (numNeighbors == 1ull) // there is one link
-    {
-        int neighborId = *ParentGraph->GetNeighbors(ShaderPin).begin();
-        ShaderNodeValue->Data = GetNodeValuePtr<int>(neighborId)->Data;
-    }
-    else // no link or more than one
-    {
-        if(numNeighbors > 1ull)
-            LOG_ERROR("Multiple links [{1}] at node {0}", ModelPin, numNeighbors);
+    if(!CopyNeighborNodeValue<int>(ShaderPin, INVALID_INDEX))
+        bool isReadyToRender = false;
 
-        ShaderNodeValue->Data = INVALID_INDEX;
-        isReadyToRender = false;
-    }
-    
-    // MODEL PIN
-    numNeighbors = ParentGraph->GetNumEdgesFromNode(ModelPin);
-    if (numNeighbors == 1ull)
-    {
-        int neighborId = *ParentGraph->GetNeighbors(ModelPin).begin();
-        ModelNodeValue->Data = GetNodeValuePtr<int>(neighborId)->Data;
-    }
-    else
-    {
-        if (numNeighbors > 1ull)
-            LOG_ERROR("Multiple links [{1}] at node {0}", ModelPin, numNeighbors);
-
-        ModelNodeValue->Data = INVALID_INDEX;
-        isReadyToRender = false;
-    }
-
+    if (!CopyNeighborNodeValue<int>(ModelPin, INVALID_INDEX))
+        bool isReadyToRender = false;
 
     //XMFLOAT3 Entity_Rotation = { 0.f, timer.TotalTime(), 0.f };
     //XMFLOAT3 Entity_Scale = { 10.f, 10.f, 10.f };
@@ -216,7 +194,7 @@ void DrawNode::OnEval()
     // SHADER BINDING PINS
     for (auto& bindPin : ShaderBindingPins)
     {
-        numNeighbors = ParentGraph->GetNumEdgesFromNode(bindPin.PinId);
+        size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(bindPin.PinId);
         
         if (numNeighbors == 0ull) // no link
         {

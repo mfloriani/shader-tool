@@ -85,9 +85,18 @@ public:
         StoreNodeValuePtr<DirectX::XMFLOAT4>(OutputPin, OutputNodeValue);
     }
 
+    virtual void OnUpdate() override
+    {
+
+    }
 
     virtual void OnEval() override
     {
+        CopyNeighborNodeValue<float>(XInputPin, 0.f);
+        CopyNeighborNodeValue<float>(YInputPin, 0.f);
+        CopyNeighborNodeValue<float>(ZInputPin, 0.f);
+        CopyNeighborNodeValue<float>(WInputPin, 0.f);
+
         OutputNodeValue->Data = DirectX::XMFLOAT4(
             XInputNodeValue->Data,
             YInputNodeValue->Data,
