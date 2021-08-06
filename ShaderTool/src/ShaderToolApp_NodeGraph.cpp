@@ -12,6 +12,7 @@
 #include "Editor\UiNode\TimeNode.h"
 #include "Editor\UiNode\ColorNode.h"
 #include "Editor\UiNode\CameraNode.h"
+#include "Editor\UiNode\ScalarNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -217,6 +218,17 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:         %i", uinode->Id);
 						ImGui::Text("View:       %i", uinode->ViewPin);
 						ImGui::Text("Projection: %i", uinode->ProjectionPin);
+						});
+				}
+				break;
+
+				case UiNodeType::Scalar:
+				{
+					auto uinode = static_cast<ScalarNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("ScalarNode");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
 						});
 				}
 				break;
@@ -429,6 +441,12 @@ void ShaderToolApp::EvaluateGraph()
 		case NodeType::Camera:
 		{
 			static_cast<CameraNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
+		case NodeType::Scalar:
+		{
+			static_cast<ScalarNode*>(_UINodeIdMap[id])->OnEval();
 		}
 		break;
 
@@ -697,6 +715,15 @@ void ShaderToolApp::HandleNewNodes()
 			if (ImGui::MenuItem("Camera"))
 			{
 				auto node = std::make_unique<CameraNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Scalar"))
+			{
+				auto node = std::make_unique<ScalarNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
@@ -977,6 +1004,14 @@ void ShaderToolApp::Load()
 		case UiNodeType::Camera:
 		{
 			auto node = std::make_unique<CameraNode>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Scalar:
+		{
+			auto node = std::make_unique<ScalarNode>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));

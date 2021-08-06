@@ -22,7 +22,8 @@ enum class UiNodeType
     Primitive,
     Shader,
     Color,
-    Camera
+    Camera,
+    Scalar
 };
 
 struct UiNode : public IObserver

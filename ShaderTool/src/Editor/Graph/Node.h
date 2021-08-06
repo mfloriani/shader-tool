@@ -24,7 +24,8 @@ enum class NodeType
     Primitive,
     Shader,
     Color,
-    Camera
+    Camera,
+    Scalar
 };
 
 // None for uinode ids

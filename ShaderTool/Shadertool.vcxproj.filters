@@ -162,6 +162,7 @@
     <ClInclude Include="src\Events\EventManager.h" />
     <ClInclude Include="src\Editor\UiNode\ColorNode.h" />
     <ClInclude Include="src\Editor\UiNode\CameraNode.h" />
+    <ClInclude Include="src\Editor\UiNode\ScalarNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />

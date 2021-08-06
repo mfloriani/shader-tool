@@ -124,6 +124,7 @@
     <ClInclude Include="src\Editor\UiNode\MultiplyNode.h" />
     <ClInclude Include="src\Editor\UiNode\PrimitiveNode.h" />
     <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h" />
+    <ClInclude Include="src\Editor\UiNode\ScalarNode.h" />
     <ClInclude Include="src\Editor\UiNode\ShaderNode.h" />
     <ClInclude Include="src\Editor\UiNode\SineNode.h" />
     <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
