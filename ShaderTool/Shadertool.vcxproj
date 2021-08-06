@@ -129,6 +129,8 @@
     <ClInclude Include="src\Editor\UiNode\SineNode.h" />
     <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
     <ClInclude Include="src\Editor\UiNode\UiNode.h" />
+    <ClInclude Include="src\Editor\UiNode\Vector2Node.h" />
+    <ClInclude Include="src\Editor\UiNode\Vector3Node.h" />
     <ClInclude Include="src\Editor\UiNode\Vector4Node.h" />
     <ClInclude Include="src\Events\Event.h" />
     <ClInclude Include="src\Events\EventManager.h" />

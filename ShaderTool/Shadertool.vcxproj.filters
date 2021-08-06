@@ -164,6 +164,8 @@
     <ClInclude Include="src\Editor\UiNode\CameraNode.h" />
     <ClInclude Include="src\Editor\UiNode\ScalarNode.h" />
     <ClInclude Include="src\Editor\UiNode\Vector4Node.h" />
+    <ClInclude Include="src\Editor\UiNode\Vector3Node.h" />
+    <ClInclude Include="src\Editor\UiNode\Vector2Node.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
