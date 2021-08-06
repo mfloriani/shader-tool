@@ -863,22 +863,17 @@ void ShaderToolApp::Save()
 	fout << _UINodes.size() << "\n";
 
 	for (auto& uin : _UINodes)
-		fout << "uin " << *uin.get() << "\n";
+		fout << *uin.get() << "\n";
 
 	fout.close();
 }
 
 void ShaderToolApp::Load()
 {
-	EVENT_MANAGER.Enable(false); // TODO: awful hack to avoid duplication :/
+	EVENT_MANAGER.Enable(false); // TODO: awful hack to avoid duplication :/	
 	
-	//LOG_TRACE("###################");
-	//LOG_TRACE("Loading node graph");
-
-	// Load the internal imnodes state
-	ImNodes::LoadCurrentEditorStateFromIniFile("node_graph.ini");
-
-	std::ifstream fin("node_graph.txt", std::ios_base::in);
+	ImNodes::LoadCurrentEditorStateFromIniFile("node_graph.ini"); // Load the internal imnodes state
+	std::ifstream fin("node_graph.txt", std::ios_base::in); // load project data
 
 	if (!fin.is_open())
 	{
@@ -894,15 +889,15 @@ void ShaderToolApp::Load()
 	int numUiNodes;
 	fin >> comment >> _RootNodeId >> numUiNodes;
 
-	std::string uinLabel;
+	std::string typeName;
 	int type;
 
 	for (int i = 0; i < numUiNodes; ++i)
 	{
-		fin >> uinLabel >> type;
+		fin >> typeName >> type;
 		auto nodeType = static_cast<UiNodeType>(type);
 		
-		// TODO: it should be implemented using the pattern described in the links below... for now I'll use a switch
+		// TODO: could be implemented using the pattern described in the links below... for now I'll use a switch
 		// https://isocpp.org/wiki/faq/serialization#serialize-inherit-no-ptrs
 		// https://stackoverflow.com/questions/3268801/how-do-you-de-serialize-a-derived-class-from-serialized-data
 		switch (nodeType)

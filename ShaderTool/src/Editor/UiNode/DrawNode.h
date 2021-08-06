@@ -75,18 +75,20 @@ public:
                 ShaderBindingPinNameMap[pin.Bind.VarName] = ShaderBindingPins.size() - 1;
                 ShaderBindingPinIdMap[pin.PinId] = ShaderBindingPins.size() - 1;
 
-                if (pin.Bind.VarTypeName == "float4x4")
-                    StoreNodeValuePtr<DirectX::XMFLOAT4X4>(pin.PinId, NodeValue<XMFLOAT4X4>(D3DUtil::Identity4x4()));
-                else if (pin.Bind.VarTypeName == "float4")
-                    StoreNodeValuePtr<DirectX::XMFLOAT4>(pin.PinId, value);
-                else if (pin.Bind.VarTypeName == "float3")
-                    StoreNodeValuePtr<DirectX::XMFLOAT3>(pin.PinId, value);
-                else if (pin.Bind.VarTypeName == "float2")
-                    StoreNodeValuePtr<DirectX::XMFLOAT2>(pin.PinId, value);
-                else if (pin.Bind.VarTypeName == "float")
-                    StoreNodeValuePtr<float>(pin.PinId, value);
-                else if (pin.Bind.VarTypeName == "int")
-                    StoreNodeValuePtr<DirectX::XMFLOAT4X4>(pin.PinId, value);
+                // TODO: Solve this
+
+                //if (pin.Bind.VarTypeName == "float4x4")
+                //    StoreNodeValuePtr<DirectX::XMFLOAT4X4>(pin.PinId, NodeValue<XMFLOAT4X4>(D3DUtil::Identity4x4()));
+                //else if (pin.Bind.VarTypeName == "float4")
+                //    StoreNodeValuePtr<DirectX::XMFLOAT4>(pin.PinId, value);
+                //else if (pin.Bind.VarTypeName == "float3")
+                //    StoreNodeValuePtr<DirectX::XMFLOAT3>(pin.PinId, value);
+                //else if (pin.Bind.VarTypeName == "float2")
+                //    StoreNodeValuePtr<DirectX::XMFLOAT2>(pin.PinId, value);
+                //else if (pin.Bind.VarTypeName == "float")
+                //    StoreNodeValuePtr<float>(pin.PinId, value);
+                //else if (pin.Bind.VarTypeName == "int")
+                //    StoreNodeValuePtr<DirectX::XMFLOAT4X4>(pin.PinId, value);
             }
         }
         return in;

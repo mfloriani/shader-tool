@@ -64,15 +64,12 @@ public:
 
     virtual std::ostream& Serialize(std::ostream& out) const
     {
-        out << static_cast<int>(Type) << " " << Id;
+        out << magic_enum::enum_name(Type) << " " << static_cast<int>(Type) << " " << Id;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        int type;
-        in >> type >> Id;
-        Type = static_cast<UiNodeType>(type);
         return in;
     }
 
