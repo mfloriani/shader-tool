@@ -3,9 +3,7 @@
 #include <fstream>
 #include <DirectXMath.h>
 
-const static int INVALID_ID = -1;
-const static int NOT_LINKED = -1;
-const static int INVALID_INDEX = -1;
+
 
 enum class NodeType
 {
@@ -29,7 +27,8 @@ enum class NodeType
     Vector4,
     Vector3,
     Vector2,
-    Matrix4x4
+    Matrix4x4,
+    Model
 };
 
 // None for uinode ids

@@ -17,6 +17,7 @@
 #include "Editor\UiNode\Vector3Node.h"
 #include "Editor\UiNode\Vector2Node.h"
 #include "Editor\UiNode\Matrix4x4Node.h"
+#include "Editor\UiNode\ModelNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -198,6 +199,19 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Path:   %s", shaderNode->GetPath().c_str());
 						ImGui::Text("Output: %i %i", shaderNode->OutputPin, shaderNode->OutputNodeValue->Data);
 					});
+				}
+				break;
+
+				case UiNodeType::Model:
+				{
+					auto modelNode = static_cast<ModelNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("ShaderNode");
+						ImGui::Text("Id:     %i", modelNode->Id);
+						ImGui::Text("Name:   %s", modelNode->GetName().c_str());
+						ImGui::Text("Path:   %s", modelNode->GetPath().c_str());
+						ImGui::Text("Output: %i %i", modelNode->OutputPin, modelNode->OutputNodeValue->Data);
+						});
 				}
 				break;
 
@@ -532,6 +546,12 @@ void ShaderToolApp::EvaluateGraph()
 		}
 		break;
 
+		case NodeType::Model:
+		{
+			static_cast<ModelNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
 		default:
 			LOG_WARN("NodeType {0} not handled", node.Type);
 			break;
@@ -601,7 +621,7 @@ void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 	_CurrFrameResource->RenderTargetPSO = _RenderTargetPSO;
 }
 
-static int PreviousShaderIndexRT = -1;
+static int PreviousShaderIndexRT = INVALID_INDEX;
 
 void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 {
@@ -646,7 +666,7 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 	}
 
 	{
-		auto& selectedModel = AssetManager::Get().GetModel(_Primitives[currentModel]);
+		auto& selectedModel = AssetManager::Get().GetModel(currentModel);
 		
 		_CommandList->IASetVertexBuffers(0, 1, &selectedModel.VertexBufferView);
 		_CommandList->IASetIndexBuffer(&selectedModel.IndexBufferView);
@@ -770,6 +790,15 @@ void ShaderToolApp::HandleNewNodes()
 			if (ImGui::MenuItem("Primitive"))
 			{
 				auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+
+			if (ImGui::MenuItem("Model"))
+			{
+				auto node = std::make_unique<ModelNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
@@ -1085,6 +1114,14 @@ void ShaderToolApp::Load()
 		case UiNodeType::Primitive:
 		{
 			auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Model:
+		{
+			auto node = std::make_unique<ModelNode>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));

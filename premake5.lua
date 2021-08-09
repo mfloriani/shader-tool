@@ -37,11 +37,12 @@ project "ShaderTool"
 	{
 		"%{prj.name}/src",
 		"Common/spdlog/include",
+		"Common/assimp/include",
 	}
 
 	libdirs
 	{
-		
+		"Common/assimp/lib"
 	}
 
 	links
@@ -49,7 +50,8 @@ project "ShaderTool"
 		"d3d12.lib",
 		"dxgi.lib",
 		"dxguid.lib",
-		"D3DCompiler.lib"
+		"D3DCompiler.lib",
+		"assimp-vc142-mt.lib"
 	}
 	
 	filter "system:windows"
@@ -64,8 +66,7 @@ project "ShaderTool"
 		--prebuildcommands
 		postbuildcommands
 		{
-			--("{MKDIR} ../bin/" ..outputdir.. "/Sandbox"),
-			--("{COPY} src/Shaders/*.fx %{cfg.targetdir}")
+			("{COPY} ../Common/assimp/dll/assimp-vc142-mt.dll %{cfg.targetdir}")
 		}
 
 	filter "configurations:Debug"

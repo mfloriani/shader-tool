@@ -23,6 +23,10 @@ constexpr int NUM_FRAMES = 3;
 constexpr char* BACKBUFFER_VS = "backbuffer_vs.cso";
 constexpr char* DEFAULT_SHADER = "default";
 
+const static int INVALID_ID = -1;
+const static int NOT_LINKED = -1;
+const static int INVALID_INDEX = -1;
+
 #if defined(min)
 #undef min
 #endif

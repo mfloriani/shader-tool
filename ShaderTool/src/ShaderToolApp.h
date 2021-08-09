@@ -70,7 +70,7 @@ private:
 private: // Node Graph	
 	bool _RenderTargetReady{ false };
 	std::unique_ptr<RenderTexture> _RenderTarget;  // TODO: at the moment only 1 render target supported
-	std::vector<const char*> _Primitives;
+	std::vector<int> _Primitives; // stores indexes to the primitive models 
 	std::vector<std::unique_ptr<UiNode>> _UINodes;
 	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
 	Graph _Graph;

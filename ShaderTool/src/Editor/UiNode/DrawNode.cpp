@@ -179,10 +179,10 @@ void DrawNode::OnEval()
     bool isReadyToRender = true;
 
     if(!CopyFromLinkedSourceNodeValue<int>(ShaderPin, INVALID_INDEX))
-        bool isReadyToRender = false;
+        isReadyToRender = false;
 
     if (!CopyFromLinkedSourceNodeValue<int>(ModelPin, INVALID_INDEX))
-        bool isReadyToRender = false;
+        isReadyToRender = false;
 
     //XMFLOAT3 Entity_Rotation = { 0.f, timer.TotalTime(), 0.f };
     //XMFLOAT3 Entity_Scale = { 10.f, 10.f, 10.f };

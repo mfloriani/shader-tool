@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameTimer.h"
+#include "Defines.h"
 #include "Patterns/IObserver.h"
 
 #include "Editor\Graph\Graph.h"
@@ -27,7 +28,8 @@ enum class UiNodeType
     Vector4,
     Vector3,
     Vector2,
-    Matrix4x4
+    Matrix4x4,
+    Model
 };
 
 struct UiNode : public IObserver

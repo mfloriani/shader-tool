@@ -10,27 +10,7 @@ void ShaderManager::LoadBinaryShader(const std::string& filename, ComPtr<ID3DBlo
 	LOG_TRACE("Loading cso shader {0}", filename);
 	const std::string name = D3DUtil::ExtractFilename(filename);
 	ThrowIfFailed(D3DReadFileToBlob(AnsiToWString(filename).c_str(), &bytecode));
-
-	//_Shaders.push_back(std::make_unique<Shader>(name, blob, nullptr));
-	//_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
-	//_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
 }
-
-//std::string ShaderManager::LoadRawShader(const std::string& filename, const std::string& entryPoint, const std::string& target)
-//{
-//	LOG_TRACE("Loading raw shader [{0} | {1} | {2}]", filename, entryPoint, target);
-//	ComPtr<ID3DBlob> blob;
-//	if (D3DUtil::CompileShader(filename, entryPoint, target, blob))
-//	{
-//		const auto name = D3DUtil::ExtractFilename(filename);	
-//		_Shaders.push_back(std::make_unique<Shader>(name, blob));
-//		_ShaderNameIndexMap.insert(std::make_pair(name, _Shaders.size() - 1u));
-//		_ShaderIndexNameMap.insert(std::make_pair(_Shaders.size() - 1u, name));
-//
-//		return name;
-//	}
-//	return std::string();
-//}
 
 std::string ShaderManager::LoadShaderFromFile(const std::string& filename)
 {
