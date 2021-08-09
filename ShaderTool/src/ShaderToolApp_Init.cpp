@@ -37,6 +37,8 @@ bool ShaderToolApp::Init()
 	ImNodesIO& io = ImNodes::GetIO();
 	io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
+	AssetManager::Get().Init(_Device.Get(), _CommandList.Get());
+
 	InitNodeGraph();
 
 	return true;
@@ -183,23 +185,26 @@ void ShaderToolApp::LoadPrimitiveModels()
 	model.IndexBufferView = mesh->IndexBufferView();
 
 	// Cube
+	model.Name = "cube";
 	model.IndexCount = (UINT)cube.Indices32.size();
 	model.StartIndexLocation = 0;
 	model.BaseVertexLocation = 0;
-	AssetManager::Get().AddModel("cube", model);
-	_Primitives.push_back("cube");
+	int modelIndex = AssetManager::Get().AddModel(model);
+	_Primitives.push_back(modelIndex);
 
 	// Sphere
+	model.Name = "sphere";
 	model.IndexCount = (UINT)sphere.Indices32.size();
 	model.StartIndexLocation = (UINT)cube.Indices32.size();
 	model.BaseVertexLocation = (UINT)cube.Vertices.size();
-	AssetManager::Get().AddModel("sphere", model);
-	_Primitives.push_back("sphere");
+	modelIndex = AssetManager::Get().AddModel(model);
+	_Primitives.push_back(modelIndex);
 
 	// Grid
+	model.Name = "grid";
 	model.IndexCount = (UINT)grid.Indices32.size();
 	model.StartIndexLocation += (UINT)sphere.Indices32.size();
 	model.BaseVertexLocation += (UINT)sphere.Vertices.size();
-	AssetManager::Get().AddModel("grid", model);
-	_Primitives.push_back("grid");
+	modelIndex = AssetManager::Get().AddModel(model);
+	_Primitives.push_back(modelIndex);
 }

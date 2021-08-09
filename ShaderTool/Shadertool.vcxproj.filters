@@ -16,6 +16,12 @@
     <Filter Include="Editor\UiNode">
       <UniqueIdentifier>{DFA18F1F-4B62-0B56-149D-54D3801C5032}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Events">
+      <UniqueIdentifier>{3A8963B1-262B-8E87-0FE6-A1DBFB2615D8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Patterns">
+      <UniqueIdentifier>{B6AE1992-A27B-749D-CB94-6245B7C0A92B}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Rendering">
       <UniqueIdentifier>{E3AE1F7C-4F19-D4F2-9857-85980401B247}</UniqueIdentifier>
     </Filter>
@@ -86,7 +92,16 @@
     <ClInclude Include="src\Editor\UiNode\AddNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\CameraNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\ColorNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\UiNode\DrawNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\Matrix4x4Node.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\UiNode\MultiplyNode.h">
@@ -96,6 +111,9 @@
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\ScalarNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\UiNode\ShaderNode.h">
@@ -110,11 +128,32 @@
     <ClInclude Include="src\Editor\UiNode\UiNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\Vector2Node.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\Vector3Node.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\Vector4Node.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\Event.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Events\EventManager.h">
+      <Filter>Events</Filter>
+    </ClInclude>
     <ClInclude Include="src\GameTimer.h" />
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\MagicEnum.h" />
     <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\Patterns\IObserver.h">
+      <Filter>Patterns</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Patterns\ISubject.h">
+      <Filter>Patterns</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rendering\D3DApp.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -156,20 +195,13 @@
     </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Patterns\IObserver.h" />
-    <ClInclude Include="src\Patterns\ISubject.h" />
-    <ClInclude Include="src\Events\Event.h" />
-    <ClInclude Include="src\Events\EventManager.h" />
-    <ClInclude Include="src\Editor\UiNode\ColorNode.h" />
-    <ClInclude Include="src\Editor\UiNode\CameraNode.h" />
-    <ClInclude Include="src\Editor\UiNode\ScalarNode.h" />
-    <ClInclude Include="src\Editor\UiNode\Vector4Node.h" />
-    <ClInclude Include="src\Editor\UiNode\Vector3Node.h" />
-    <ClInclude Include="src\Editor\UiNode\Vector2Node.h" />
-    <ClInclude Include="src\Editor\UiNode\Matrix4x4Node.h" />
+    <ClInclude Include="src\Editor\UiNode\ModelNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
+    <ClCompile Include="src\Editor\Graph\Graph.cpp">
+      <Filter>Editor\Graph</Filter>
+    </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
       <Filter>Editor\ImGui</Filter>
     </ClCompile>
@@ -199,6 +231,12 @@
     </ClCompile>
     <ClCompile Include="src\Editor\NFD\nfd_win.cpp">
       <Filter>Editor\NFD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Editor\UiNode\DrawNode.cpp">
+      <Filter>Editor\UiNode</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Events\EventManager.cpp">
+      <Filter>Events</Filter>
     </ClCompile>
     <ClCompile Include="src\GameTimer.cpp" />
     <ClCompile Include="src\GeometryGenerator.cpp" />
@@ -235,9 +273,6 @@
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\Editor\UiNode\DrawNode.cpp" />
-    <ClCompile Include="src\Events\EventManager.cpp" />
-    <ClCompile Include="src\Editor\Graph\Graph.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">

@@ -60,7 +60,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\Common\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\Common\spdlog\include;..\Common\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -70,15 +70,19 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;D3DCompiler.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\Common\assimp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST ..\Common\assimp\dll\assimp-vc142-mt.dll\ (xcopy /Q /E /Y /I ..\Common\assimp\dll\assimp-vc142-mt.dll ..\bin\Debug-x86_64\ShaderTool &gt; nul) ELSE (xcopy /Q /Y /I ..\Common\assimp\dll\assimp-vc142-mt.dll ..\bin\Debug-x86_64\ShaderTool &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>src;..\Common\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\Common\spdlog\include;..\Common\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -92,8 +96,12 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;D3DCompiler.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\Common\assimp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>IF EXIST ..\Common\assimp\dll\assimp-vc142-mt.dll\ (xcopy /Q /E /Y /I ..\Common\assimp\dll\assimp-vc142-mt.dll ..\bin\Release-x86_64\ShaderTool &gt; nul) ELSE (xcopy /Q /Y /I ..\Common\assimp\dll\assimp-vc142-mt.dll ..\bin\Release-x86_64\ShaderTool &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\AssetManager.h" />
@@ -122,6 +130,7 @@
     <ClInclude Include="src\Editor\UiNode\ColorNode.h" />
     <ClInclude Include="src\Editor\UiNode\DrawNode.h" />
     <ClInclude Include="src\Editor\UiNode\Matrix4x4Node.h" />
+    <ClInclude Include="src\Editor\UiNode\ModelNode.h" />
     <ClInclude Include="src\Editor\UiNode\MultiplyNode.h" />
     <ClInclude Include="src\Editor\UiNode\PrimitiveNode.h" />
     <ClInclude Include="src\Editor\UiNode\RenderTargetNode.h" />

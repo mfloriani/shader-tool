@@ -5,21 +5,29 @@
 struct PrimitiveNode : UiNode
 {
 private:
-    std::vector<const char*>& _Primitives;
-    int _SelectedModel;
+    std::vector<std::string> _PrimitiveNames;               // list of all primitives
+    std::unordered_map<size_t, int> _PrimitiveNameIndexMap; // maps internal vector index with model index
+    int _SelectedModel;                                     // stores the internal index of primitives (do not return this)
 
 public:
     NodeId OutputPin;
     std::shared_ptr<NodeValue<int>> OutputNodeValue;
 
 public:
-    explicit PrimitiveNode(Graph* graph, std::vector<const char*>& primitives)
-        : UiNode(graph, UiNodeType::Primitive), _Primitives(primitives), _SelectedModel(0), OutputPin(INVALID_ID)
+    explicit PrimitiveNode(Graph* graph, std::vector<int>& primitives)
+        : UiNode(graph, UiNodeType::Primitive), _SelectedModel(0), OutputPin(INVALID_ID)
     {
         OutputNodeValue = std::make_shared<NodeValue<int>>();
         OutputNodeValue->TypeName = "int";
         OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = INVALID_INDEX;
+
+        for (int p : primitives)
+        {
+            auto model = AssetManager::Get().GetModel(p);
+            _PrimitiveNames.push_back(model.Name);
+            _PrimitiveNameIndexMap[_PrimitiveNames.size()-1] = p;
+        }
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -49,7 +57,8 @@ public:
     
     virtual void OnEval() override
     {
-        GetNodeValuePtr<int>(OutputPin)->Data = _SelectedModel;
+
+        GetNodeValuePtr<int>(OutputPin)->Data = _PrimitiveNameIndexMap[_SelectedModel];
     }
 
     virtual void OnDelete() override
@@ -65,8 +74,12 @@ public:
         ImGui::TextUnformatted("PRIMITIVE");
         ImNodes::EndNodeTitleBar();
 
+        std::vector<const char*> items;
+        for (int i = 0; i < _PrimitiveNames.size(); ++i)
+            items.push_back(_PrimitiveNames[i].c_str());
+
         ImGui::PushItemWidth(node_width);
-        ImGui::Combo("##hidelabel", &_SelectedModel, _Primitives.data(), (int)_Primitives.size());
+        ImGui::Combo("##hidelabel", &_SelectedModel, items.data(), (int)items.size());
         ImGui::PopItemWidth();
         
         ImNodes::BeginOutputAttribute(OutputPin);
