@@ -199,6 +199,7 @@
     <ClInclude Include="src\Editor\UiNode\TextureNode.h" />
     <ClInclude Include="src\Rendering\DDSTextureLoader.h" />
     <ClInclude Include="src\Rendering\Texture.h" />
+    <ClInclude Include="src\Editor\UiNode\TransformNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />

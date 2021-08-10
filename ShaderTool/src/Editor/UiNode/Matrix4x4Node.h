@@ -95,9 +95,6 @@ public:
 
         {
             ImNodes::BeginOutputAttribute(OutputPin);
-            const float label_width = ImGui::CalcTextSize("output").x;
-            ImGui::Indent(node_width - label_width);
-            ImGui::Text("output");
             ImNodes::EndOutputAttribute();
         }
 

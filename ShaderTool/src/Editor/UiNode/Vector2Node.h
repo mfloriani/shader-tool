@@ -66,14 +66,12 @@ public:
 
     virtual void OnUpdate() override
     {
-
+        CopyFromLinkedSourceNodeValue<float>(XInputPin, XInputNodeValue->Data);
+        CopyFromLinkedSourceNodeValue<float>(YInputPin, YInputNodeValue->Data);
     }
 
     virtual void OnEval() override
     {
-        CopyFromLinkedSourceNodeValue<float>(XInputPin, 0.f);
-        CopyFromLinkedSourceNodeValue<float>(YInputPin, 0.f);
-        
         OutputNodeValue->Data = DirectX::XMFLOAT2(
             XInputNodeValue->Data,
             YInputNodeValue->Data);
@@ -124,9 +122,6 @@ public:
 
         {
             ImNodes::BeginOutputAttribute(OutputPin);
-            const float label_width = ImGui::CalcTextSize("output").x;
-            ImGui::Indent(node_width - label_width);
-            ImGui::Text("output");
             ImNodes::EndOutputAttribute();
         }
 
