@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Rendering\Mesh.h"
-#include "Model.h"
+#include "Rendering/Mesh.h"
+#include "Rendering/Texture.h"
+#include "Rendering/Model.h"
 
 class AssetManager
 {
@@ -17,32 +18,29 @@ public:
 	}
 
 	bool Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
-
-	int LoadModelFromFile(const std::string& path);
+	void SetTextureDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu, CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu);
 
 	int AddMesh(std::shared_ptr<Mesh>& mesh);
+	int LoadModelFromFile(const std::string& path);
 	int AddModel(Model& model);
-
-	//bool HasMesh(const std::string& name);
-	//bool HasModel(const std::string& name);
-
-	//std::shared_ptr<Mesh> GetMesh(const std::string& name);
-	//size_t GetMeshIndex(const std::string& name);
-	
 	Model GetModel(int index);
-	//size_t GetModelIndex(const std::string& name);
 	
+	int LoadTextureFromFile(const std::string& path);
+	Texture* GetTexture(int index);
+
 private:
 	AssetManager() : _Device(nullptr), _CommandList(nullptr){}
 
 private:
 	ID3D12Device* _Device;
 	ID3D12GraphicsCommandList* _CommandList;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE _TexSrvCpuDescHandle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE _TexSrvGpuDescHandle;
 
 	std::vector<std::shared_ptr<Mesh>> _Meshes;
 	std::vector<Model> _Models;
-
-	using NameIndexMap = std::unordered_map<std::string, size_t>;
-	NameIndexMap _MeshNameIndexMap;
-	NameIndexMap _ModelNameIndexMap;
+	std::vector<std::unique_ptr<Texture>> _Textures;
+	std::unordered_map<std::string, size_t> _MeshNameIndexMap;
+	std::unordered_map<std::string, size_t> _ModelNameIndexMap;
+	std::unordered_map<std::string, size_t> _TextureIndexMap;
 };

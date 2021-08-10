@@ -28,7 +28,8 @@ enum class NodeType
     Vector3,
     Vector2,
     Matrix4x4,
-    Model
+    Model,
+    Texture
 };
 
 // None for uinode ids

@@ -21,6 +21,7 @@ constexpr int NUM_BACK_BUFFERS = 3;
 constexpr int NUM_FRAMES = 3;
 
 constexpr char* BACKBUFFER_VS = "backbuffer_vs.cso";
+constexpr char* DEFAULT_SHADER_FILE = "default.fx";
 constexpr char* DEFAULT_SHADER = "default";
 
 const static int INVALID_ID = -1;

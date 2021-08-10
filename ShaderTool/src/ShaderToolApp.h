@@ -57,7 +57,6 @@ public:
 	UiNode* GetUiNode(NodeId id) { return _UINodeIdMap[id]; }
 
 private:
-	//FrameConstants _FrameCB;
 	GameTimer _Timer;
 	bool _IsRunning{ true };
 
@@ -68,14 +67,14 @@ private:
 	std::shared_ptr<PipelineStateObject> _RenderTargetPSO;
 	
 private: // Node Graph	
-	bool _RenderTargetReady{ false };
-	std::unique_ptr<RenderTexture> _RenderTarget;  // TODO: at the moment only 1 render target supported
-	std::vector<int> _Primitives; // stores indexes to the primitive models 
-	std::vector<std::unique_ptr<UiNode>> _UINodes;
-	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
 	Graph _Graph;
 	int _RootNodeId;
-	
+	bool _RenderTargetReady{ false };
+	std::vector<int> _Primitives; // stores indexes to the primitive models 
+	std::unique_ptr<RenderTexture> _RenderTarget;  // TODO: at the moment only 1 render target supported
+	std::vector<std::unique_ptr<UiNode>> _UINodes;
+	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
+
 	void InitNodeGraph();
 	void Reset();
 	void Save();

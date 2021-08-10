@@ -147,7 +147,7 @@
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\MagicEnum.h" />
-    <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\Rendering\Model.h" />
     <ClInclude Include="src\Patterns\IObserver.h">
       <Filter>Patterns</Filter>
     </ClInclude>
@@ -196,6 +196,9 @@
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\Editor\UiNode\ModelNode.h" />
+    <ClInclude Include="src\Editor\UiNode\TextureNode.h" />
+    <ClInclude Include="src\Rendering\DDSTextureLoader.h" />
+    <ClInclude Include="src\Rendering\Texture.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
@@ -273,6 +276,7 @@
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\Rendering\DDSTextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">

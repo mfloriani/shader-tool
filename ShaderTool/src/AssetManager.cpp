@@ -1,23 +1,22 @@
 #include "pch.h"
 #include "AssetManager.h"
-#include "Rendering/Vertex.h"
 #include "Defines.h"
+
+#include "Rendering/D3DUtil.h"
+#include "Rendering/Vertex.h"
+#include "Rendering/DDSTextureLoader.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+using namespace DirectX;
+using namespace D3DUtil;
+
 AssetManager::~AssetManager()
 {
 
 }
-
-// MESH
-
-//bool AssetManager::HasMesh(const std::string& name)
-//{
-//	return _MeshNameIndexMap[type].find(name) != _MeshNameIndexMap[type].end();
-//}
 
 bool AssetManager::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
 {
@@ -25,6 +24,12 @@ bool AssetManager::Init(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList
 	_CommandList = cmdList;
 
 	return true;
+}
+
+void AssetManager::SetTextureDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE srvCpu, CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpu)
+{
+	_TexSrvCpuDescHandle = srvCpu;
+	_TexSrvGpuDescHandle = srvGpu;
 }
 
 int AssetManager::LoadModelFromFile(const std::string& path)
@@ -150,28 +155,6 @@ int AssetManager::AddMesh(std::shared_ptr<Mesh>& mesh)
 	return (int)_Meshes.size()-1;
 }
 
-//std::shared_ptr<Mesh> AssetManager::GetMesh(ModelType type, const std::string& name)
-//{
-//	return _Meshes[type][GetMeshIndex(type, name)];
-//}
-//
-//size_t AssetManager::GetMeshIndex(ModelType type, const std::string& name)
-//{
-//	if (!HasMesh(type, name))
-//	{
-//		LOG_ERROR("Mesh [{0}] NOT FOUND in AssetManager", name);
-//		return 0;
-//	}
-//	return _MeshNameIndexMap[type].find(name)->second;
-//}
-
-// MODEL
-
-//bool AssetManager::HasModel(ModelType type, const std::string& name)
-//{
-//	return _ModelNameIndexMap[type].find(name) != _ModelNameIndexMap[type].end();
-//}
-
 int AssetManager::AddModel(Model& model)
 {
 	if (model.Name.size() == 0)
@@ -189,5 +172,46 @@ Model AssetManager::GetModel(int index)
 {
 	assert(index != INVALID_INDEX && index < _Models.size() && "Model index out of bounds");
 	return _Models[index];
+}
+
+int AssetManager::LoadTextureFromFile(const std::string& path)
+{
+	std::string name = ExtractFilename(path);
+
+	auto tex = std::make_unique<Texture>();
+	tex->Name = name;
+	tex->Filename = AnsiToWString(path);
+	tex->SrvCpuDescHandle = _TexSrvCpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
+	tex->SrvGpuDescHandle = _TexSrvGpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
+	
+	ThrowIfFailed(
+		CreateDDSTextureFromFile12(
+			_Device,
+			_CommandList,
+			tex->Filename.c_str(),
+			tex->Resource,
+			tex->UploadHeap));
+	
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = tex->Resource->GetDesc().Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = tex->Resource->GetDesc().MipLevels;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	_Device->CreateShaderResourceView(tex->Resource.Get(), &srvDesc, tex->SrvCpuDescHandle);
+
+	_Textures.push_back(std::move(tex));
+	size_t index = _Textures.size() - 1;
+	_TextureIndexMap[name] = index;
+
+	return (int)index;
+}
+
+Texture* AssetManager::GetTexture(int index)
+{
+	assert(index != INVALID_INDEX && index < _Textures.size() && "Model index out of bounds");
+	return _Textures[index].get();
 }
 

@@ -18,6 +18,7 @@
 #include "Editor\UiNode\Vector2Node.h"
 #include "Editor\UiNode\Matrix4x4Node.h"
 #include "Editor\UiNode\ModelNode.h"
+#include "Editor\UiNode\TextureNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -305,6 +306,19 @@ void DebugInfo(ShaderToolApp* app)
 				}
 				break;
 
+				case UiNodeType::Texture:
+				{
+					auto uinode = static_cast<TextureNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector2Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("Name:       %s", uinode->GetName().c_str());
+						ImGui::Text("Path:       %s", uinode->GetPath().c_str());
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
 				default:
 					break;
 				}
@@ -552,6 +566,12 @@ void ShaderToolApp::EvaluateGraph()
 		}
 		break;
 
+		case NodeType::Texture:
+		{
+			static_cast<TextureNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
 		default:
 			LOG_WARN("NodeType {0} not handled", node.Type);
 			break;
@@ -732,24 +752,6 @@ void ShaderToolApp::HandleNewNodes()
 		{
 			const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
-			if (ImGui::MenuItem("Add"))
-			{
-				auto node = std::make_unique<AddNode>(&_Graph);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
-			if (ImGui::MenuItem("Multiply"))
-			{
-				auto node = std::make_unique<MultiplyNode>(&_Graph);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
 			if (ImGui::MenuItem("Draw") && _RootNodeId == INVALID_ID)
 			{
 				auto node = std::make_unique<DrawNode>(&_Graph);
@@ -759,26 +761,7 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Sine"))
-			{
-				auto node = std::make_unique<SineNode>(&_Graph);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
-			if (ImGui::MenuItem("Time"))
-			{
-				auto node = std::make_unique<TimeNode>(&_Graph);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
-			if (ImGui::MenuItem("Render Target") )
+			else if (ImGui::MenuItem("Render Target"))
 			{
 				auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
 				node->OnCreate();
@@ -786,26 +769,7 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Primitive"))
-			{
-				auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
-			if (ImGui::MenuItem("Model"))
-			{
-				auto node = std::make_unique<ModelNode>(&_Graph);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
-			if (ImGui::MenuItem("Shader"))
+			else if (ImGui::MenuItem("Shader"))
 			{
 				auto node = std::make_unique<ShaderNode>(&_Graph);
 				node->OnCreate();
@@ -813,17 +777,7 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Color"))
-			{
-				auto node = std::make_unique<ColorNode>(&_Graph);
-				node->OnCreate();
-				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
-				_UINodeIdMap[node->Id] = node.get();
-				_UINodes.push_back(std::move(node));
-			}
-
-			if (ImGui::MenuItem("Camera"))
+			else if (ImGui::MenuItem("Camera"))
 			{
 				auto node = std::make_unique<CameraNode>(&_Graph);
 				node->OnCreate();
@@ -831,8 +785,71 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Scalar"))
+			else if (ImGui::MenuItem("Primitive"))
+			{
+				auto node = std::make_unique<PrimitiveNode>(&_Graph, _Primitives);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Model"))
+			{
+				auto node = std::make_unique<ModelNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Texture"))
+			{
+				auto node = std::make_unique<TextureNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Color"))
+			{
+				auto node = std::make_unique<ColorNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Time"))
+			{
+				auto node = std::make_unique<TimeNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Add"))
+			{
+				auto node = std::make_unique<AddNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Multiply"))
+			{
+				auto node = std::make_unique<MultiplyNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Sine"))
+			{
+				auto node = std::make_unique<SineNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Scalar"))
 			{
 				auto node = std::make_unique<ScalarNode>(&_Graph);
 				node->OnCreate();
@@ -840,8 +857,7 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Vector4"))
+			else if (ImGui::MenuItem("Vector4"))
 			{
 				auto node = std::make_unique<Vector4Node>(&_Graph);
 				node->OnCreate();
@@ -849,8 +865,7 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Vector3"))
+			else if (ImGui::MenuItem("Vector3"))
 			{
 				auto node = std::make_unique<Vector3Node>(&_Graph);
 				node->OnCreate();
@@ -858,8 +873,7 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Vector2"))
+			else if (ImGui::MenuItem("Vector2"))
 			{
 				auto node = std::make_unique<Vector2Node>(&_Graph);
 				node->OnCreate();
@@ -867,8 +881,7 @@ void ShaderToolApp::HandleNewNodes()
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-
-			if (ImGui::MenuItem("Matrix4x4"))
+			else if (ImGui::MenuItem("Matrix4x4"))
 			{
 				auto node = std::make_unique<Matrix4x4Node>(&_Graph);
 				node->OnCreate();
@@ -1122,6 +1135,14 @@ void ShaderToolApp::Load()
 		case UiNodeType::Model:
 		{
 			auto node = std::make_unique<ModelNode>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Texture:
+		{
+			auto node = std::make_unique<TextureNode>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));

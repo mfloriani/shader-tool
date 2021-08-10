@@ -137,6 +137,7 @@
     <ClInclude Include="src\Editor\UiNode\ScalarNode.h" />
     <ClInclude Include="src\Editor\UiNode\ShaderNode.h" />
     <ClInclude Include="src\Editor\UiNode\SineNode.h" />
+    <ClInclude Include="src\Editor\UiNode\TextureNode.h" />
     <ClInclude Include="src\Editor\UiNode\TimeNode.h" />
     <ClInclude Include="src\Editor\UiNode\UiNode.h" />
     <ClInclude Include="src\Editor\UiNode\Vector2Node.h" />
@@ -148,11 +149,12 @@
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\MagicEnum.h" />
-    <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\Rendering\Model.h" />
     <ClInclude Include="src\Patterns\IObserver.h" />
     <ClInclude Include="src\Patterns\ISubject.h" />
     <ClInclude Include="src\Rendering\D3DApp.h" />
     <ClInclude Include="src\Rendering\D3DUtil.h" />
+    <ClInclude Include="src\Rendering\DDSTextureLoader.h" />
     <ClInclude Include="src\Rendering\FrameResource.h" />
     <ClInclude Include="src\Rendering\Mesh.h" />
     <ClInclude Include="src\Rendering\PipelineStateObject.h" />
@@ -160,6 +162,7 @@
     <ClInclude Include="src\Rendering\Shader.h" />
     <ClInclude Include="src\Rendering\ShaderManager.h" />
     <ClInclude Include="src\Rendering\ShaderReflection.h" />
+    <ClInclude Include="src\Rendering\Texture.h" />
     <ClInclude Include="src\Rendering\UploadBuffer.h" />
     <ClInclude Include="src\Rendering\Vertex.h" />
     <ClInclude Include="src\Rendering\Window.h" />
@@ -208,6 +211,7 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Rendering\D3DApp.cpp" />
     <ClCompile Include="src\Rendering\D3DUtil.cpp" />
+    <ClCompile Include="src\Rendering\DDSTextureLoader.cpp" />
     <ClCompile Include="src\Rendering\FrameResource.cpp" />
     <ClCompile Include="src\Rendering\PipelineStateObject.cpp" />
     <ClCompile Include="src\Rendering\RenderTexture.cpp" />
