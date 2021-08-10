@@ -46,17 +46,39 @@ bool ShaderToolApp::Init()
 
 void ShaderToolApp::InitNodeGraph()
 {
-	ShaderManager::Get().LoadShaderFromFile("default.fx");
+	ShaderManager::Get().LoadShaderFromFile(DEFAULT_SHADER_FILE);
 	CreateRenderTargetPSO(NOT_LINKED);
 }
 
 void ShaderToolApp::CreateDescriptorHeaps()
 {
+	// TODO: handle the offsets properly (maybe moving RenderTarget to AssetManager?)
 	_RenderTarget->CreateDescriptors(
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
-		CD3DX12_GPU_DESCRIPTOR_HANDLE(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 1, _CbvSrvUavDescriptorSize),
-		CD3DX12_CPU_DESCRIPTOR_HANDLE(_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), NUM_BACK_BUFFERS, _RtvDescriptorSize)
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(
+			_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 
+			1, 
+			_CbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 
+			1, 
+			_CbvSrvUavDescriptorSize),
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(
+			_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 
+			NUM_BACK_BUFFERS, 
+			_RtvDescriptorSize)
 	);
+
+	// TODO: handle the offsets properly 
+	// (one solution would be setting offsets as the base descHandle, like from offset 10 is used to textures)
+	AssetManager::Get().SetTextureDescriptors(
+		CD3DX12_CPU_DESCRIPTOR_HANDLE(
+			_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+			2,
+			_CbvSrvUavDescriptorSize),
+		CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			2,
+			_CbvSrvUavDescriptorSize));
 
 }
 

@@ -29,7 +29,8 @@ enum class UiNodeType
     Vector3,
     Vector2,
     Matrix4x4,
-    Model
+    Model,
+    Texture
 };
 
 struct UiNode : public IObserver
