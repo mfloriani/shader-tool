@@ -61,14 +61,12 @@ public:
         ImGui::TextUnformatted("SCALAR");
         ImNodes::EndNodeTitleBar();
 
+        ImNodes::BeginOutputAttribute(OutputPin);
+
         ImGui::PushItemWidth(node_width);
         ImGui::DragFloat("##hidelabel", &OutputNodeValue->Data, 0.01f);
         ImGui::PopItemWidth();
 
-        ImNodes::BeginOutputAttribute(OutputPin);
-        const float label_width = ImGui::CalcTextSize("output").x;
-        ImGui::Indent(node_width - label_width);
-        ImGui::Text("output");
         ImNodes::EndOutputAttribute();
 
         ImNodes::EndNode();

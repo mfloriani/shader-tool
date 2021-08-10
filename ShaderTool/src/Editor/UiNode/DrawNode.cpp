@@ -184,13 +184,6 @@ void DrawNode::OnEval()
     if (!CopyFromLinkedSourceNodeValue<int>(ModelPin, INVALID_INDEX))
         isReadyToRender = false;
 
-    //XMFLOAT3 Entity_Rotation = { 0.f, timer.TotalTime(), 0.f };
-    //XMFLOAT3 Entity_Scale = { 10.f, 10.f, 10.f };
-    //auto rotation = XMMatrixRotationY(Entity_Rotation.y);
-    //auto scale = XMMatrixScaling(Entity_Scale.x, Entity_Scale.y, Entity_Scale.z);
-    //XMStoreFloat4x4(&_World, XMMatrixMultiply(scale, rotation));
-
-
     // SHADER BINDING PINS
     for (auto& bindPin : ShaderBindingPins)
     {

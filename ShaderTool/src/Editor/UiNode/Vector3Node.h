@@ -76,15 +76,13 @@ public:
 
     virtual void OnUpdate() override
     {
-
+        CopyFromLinkedSourceNodeValue<float>(XInputPin, XInputNodeValue->Data);
+        CopyFromLinkedSourceNodeValue<float>(YInputPin, YInputNodeValue->Data);
+        CopyFromLinkedSourceNodeValue<float>(ZInputPin, ZInputNodeValue->Data);
     }
 
     virtual void OnEval() override
     {
-        CopyFromLinkedSourceNodeValue<float>(XInputPin, 0.f);
-        CopyFromLinkedSourceNodeValue<float>(YInputPin, 0.f);
-        CopyFromLinkedSourceNodeValue<float>(ZInputPin, 0.f);
-
         OutputNodeValue->Data = DirectX::XMFLOAT3(
             XInputNodeValue->Data,
             YInputNodeValue->Data,
@@ -115,7 +113,7 @@ public:
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &XInputNodeValue->Data, 0.01f);
+                ImGui::DragFloat("##hidelabel0", &XInputNodeValue->Data, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -129,7 +127,7 @@ public:
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &YInputNodeValue->Data, 0.01f);
+                ImGui::DragFloat("##hidelabel1", &YInputNodeValue->Data, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -143,7 +141,7 @@ public:
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &ZInputNodeValue->Data, 0.01f);
+                ImGui::DragFloat("##hidelabel2", &ZInputNodeValue->Data, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -151,9 +149,6 @@ public:
 
         {
             ImNodes::BeginOutputAttribute(OutputPin);
-            const float label_width = ImGui::CalcTextSize("output").x;
-            ImGui::Indent(node_width - label_width);
-            ImGui::Text("output");
             ImNodes::EndOutputAttribute();
         }
 

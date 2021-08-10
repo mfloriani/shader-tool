@@ -19,6 +19,7 @@
 #include "Editor\UiNode\Matrix4x4Node.h"
 #include "Editor\UiNode\ModelNode.h"
 #include "Editor\UiNode\TextureNode.h"
+#include "Editor\UiNode\TransformNode.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -319,6 +320,20 @@ void DebugInfo(ShaderToolApp* app)
 				}
 				break;
 
+				case UiNodeType::Transform:
+				{
+					auto uinode = static_cast<TransformNode*>(node);
+					ShowHoverDebugInfo([&]() {
+						ImGui::Text("Vector2Node");
+						ImGui::Text("Id:         %i", uinode->Id);
+						ImGui::Text("Position:   %i %.3f %.3f %.3f", uinode->PositionPin, uinode->PositionNodeValue->Data.x, uinode->PositionNodeValue->Data.y, uinode->PositionNodeValue->Data.z);
+						ImGui::Text("Rotation:   %i %.3f %.3f %.3f", uinode->RotationPin, uinode->RotationNodeValue->Data.x, uinode->RotationNodeValue->Data.y, uinode->RotationNodeValue->Data.z);
+						ImGui::Text("Scale:      %i %.3f %.3f %.3f", uinode->ScalePin, uinode->ScaleNodeValue->Data.x, uinode->ScaleNodeValue->Data.y, uinode->ScaleNodeValue->Data.z);
+						ImGui::Text("Output:     %i", uinode->OutputPin);
+						});
+				}
+				break;
+
 				default:
 					break;
 				}
@@ -572,6 +587,12 @@ void ShaderToolApp::EvaluateGraph()
 		}
 		break;
 
+		case NodeType::Transform:
+		{
+			static_cast<TransformNode*>(_UINodeIdMap[id])->OnEval();
+		}
+		break;
+
 		default:
 			LOG_WARN("NodeType {0} not handled", node.Type);
 			break;
@@ -780,6 +801,14 @@ void ShaderToolApp::HandleNewNodes()
 			else if (ImGui::MenuItem("Camera"))
 			{
 				auto node = std::make_unique<CameraNode>(&_Graph);
+				node->OnCreate();
+				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
+				_UINodeIdMap[node->Id] = node.get();
+				_UINodes.push_back(std::move(node));
+			}
+			else if (ImGui::MenuItem("Transform"))
+			{
+				auto node = std::make_unique<TransformNode>(&_Graph);
 				node->OnCreate();
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
@@ -1223,6 +1252,14 @@ void ShaderToolApp::Load()
 		case UiNodeType::Matrix4x4:
 		{
 			auto node = std::make_unique<Matrix4x4Node>(&_Graph);
+			fin >> *node.get();
+			_UINodeIdMap[node->Id] = node.get();
+			_UINodes.push_back(std::move(node));
+		}
+		break;
+		case UiNodeType::Transform:
+		{
+			auto node = std::make_unique<TransformNode>(&_Graph);
 			fin >> *node.get();
 			_UINodeIdMap[node->Id] = node.get();
 			_UINodes.push_back(std::move(node));
