@@ -7,6 +7,7 @@ using namespace D3DUtil;
 Shader::Shader(const std::string& name, ComPtr<ID3DBlob> vsBuffer, ComPtr<ID3DBlob> psBuffer)
 	: _Name(name), _VsByteCode(vsBuffer), _PsByteCode(psBuffer)
 {
+	LOG_TRACE("Shader Reflection {0}", _Name);
 	_Reflection = std::make_unique<ShaderReflection>(vsBuffer, psBuffer);
 	BuildRootParameters();
 }

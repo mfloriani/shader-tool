@@ -602,7 +602,7 @@ void ShaderToolApp::EvaluateGraph()
 
 void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName)
 {
-	auto shader = ShaderManager::Get().GetShader(shaderName);	
+	auto shader = ShaderManager::Get().GetShader(shaderName);
 	auto& rootParameters = shader->GetRootParameters();
 	auto staticSamplers = D3DUtil::GetStaticSamplers();
 

@@ -8,7 +8,9 @@ using namespace D3DUtil;
 
 ShaderReflection::ShaderReflection(Microsoft::WRL::ComPtr<ID3DBlob>& vsBytecode, Microsoft::WRL::ComPtr<ID3DBlob>& psBytecode) : _NumTotalCBufferVars(0)
 {
+	LOG_TRACE("VS");
 	Reflect(vsBytecode);
+	LOG_TRACE("PS");
 	Reflect(psBytecode);
 }
 
@@ -35,6 +37,15 @@ void ShaderReflection::Reflect(Microsoft::WRL::ComPtr<ID3DBlob>& bytecode)
 		D3D12_SHADER_BUFFER_DESC bufferDesc;
 		buffer->GetDesc(&bufferDesc);
 		LOG_TRACE("CBUFFER {0}", bufferDesc.Name);
+
+		// there are no variables for this CBuffer or 
+		// the CBuffer was already loaded from other shader function (e.g. same CBuffer for VS and PS)
+		if (bufferDesc.Variables == 0 || _CBufferVars.find(bufferDesc.Name) != _CBufferVars.end())
+		{
+			LOG_WARN("This CBuffer has no variables or was already loaded from VS shader");
+			continue;
+		}
+
 		_CBuffersDesc.push_back(SHADER_BUFFER_DESC(bufferDesc));
 		
 		_CBufferVars[bufferDesc.Name] = std::vector<SHADER_VARIABLE_DESC>();
@@ -62,10 +73,20 @@ void ShaderReflection::Reflect(Microsoft::WRL::ComPtr<ID3DBlob>& bytecode)
 	{
 		D3D12_SHADER_INPUT_BIND_DESC bindDesc = {};
 		shaderReflection->GetResourceBindingDesc(i, &bindDesc);
-
 		LOG_TRACE("INPUT_BIND_DESC {0} {1} {2} {3}", bindDesc.BindPoint, bindDesc.Type, magic_enum::enum_name(bindDesc.Type), bindDesc.Name);
+		
+		auto shaderIBD = SHADER_INPUT_BIND_DESC(bindDesc);
+		
+		auto it = std::find_if(_ShaderInputBinds.begin(), _ShaderInputBinds.end(), [&shaderIBD](SHADER_INPUT_BIND_DESC&b) {
+			return b.BindPoint == shaderIBD.BindPoint && b.Type == shaderIBD.Type && b.Name == shaderIBD.Name;
+		});
 
-		_ShaderInputBinds.push_back(SHADER_INPUT_BIND_DESC(bindDesc));
+		if (it != _ShaderInputBinds.end())
+		{
+			LOG_WARN("This INPUT BIND DESC was already loaded from another shader (VS or PS)");
+			continue;
+		}
+		_ShaderInputBinds.push_back(shaderIBD);
 	}
 
 	// SHADER INPUT
