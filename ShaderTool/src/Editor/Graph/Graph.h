@@ -168,6 +168,11 @@ public:
         _NodeValues.clear();
     }
 
+    //virtual std::ostream& Serialize(std::ostream& out) const = 0;
+    //virtual std::istream& Deserialize(std::istream& in) = 0;
+    //friend std::ostream& operator<<(std::ostream& out, const UiNode& n) = 0;
+    //friend std::istream& operator>>(std::istream& in, UiNode& n) = 0;
+
 private:
     GraphNodeValues() = default;
 
