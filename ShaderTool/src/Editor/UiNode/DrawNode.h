@@ -23,8 +23,8 @@ public:
     NodeId ModelPin, ShaderPin, OutputPin;
     
     std::shared_ptr<GraphNodeValueInt> ShaderNodeValue;
-    std::shared_ptr<NodeValue<int>> ModelNodeValue;
-    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueInt> ModelNodeValue;
+    std::shared_ptr<GraphNodeValueInt> OutputNodeValue;
 
     std::vector<ShaderBindingPin>           ShaderBindingPins;
     std::unordered_map<std::string, size_t> ShaderBindingPinNameMap;

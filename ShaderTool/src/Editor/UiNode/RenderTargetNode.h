@@ -10,17 +10,14 @@ private:
 
 public:
     NodeId InputPin;
-    std::shared_ptr<NodeValue<int>> InputNodeValue;
+    std::shared_ptr<GraphNodeValueInt> InputNodeValue;
 
 public:
     explicit RenderTargetNode(Graph* graph, RenderTexture* renderTexture)
         : UiNode(graph, UiNodeType::RenderTarget), _RenderTex(renderTexture), InputPin(INVALID_ID), _IsLinkedToDrawNode(false)
     {
         EVENT_MANAGER.Attach(this);
-        InputNodeValue = std::make_shared<NodeValue<int>>();
-        InputNodeValue->TypeName = "int";
-        //InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
-        InputNodeValue->Data = INVALID_INDEX;
+        InputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
     }
 
     virtual ~RenderTargetNode()
@@ -68,13 +65,12 @@ public:
         InputPin = ParentGraph->CreateNode(inputNode);
 
         ParentGraph->CreateEdge(Id, InputPin, EdgeType::Internal);
-
-        StoreNodeValuePtr<int>(InputPin, InputNodeValue);
+        ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<int>(InputPin, InputNodeValue);
+        ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
     }
 
     virtual void OnUpdate() override

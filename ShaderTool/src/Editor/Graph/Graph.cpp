@@ -10,14 +10,7 @@ void Graph::Reset()
     _EdgesFromNode.clear();
     _Neighbors.clear();
     _Edges.clear();
-    
-    // TODO: figure out how to handle this in a proper way
-    GraphNodeValues<int>::Get().Reset();
-    GraphNodeValues<float>::Get().Reset();
-    GraphNodeValues<XMFLOAT2>::Get().Reset();
-    GraphNodeValues<XMFLOAT3>::Get().Reset();
-    GraphNodeValues<XMFLOAT4>::Get().Reset();
-    GraphNodeValues<XMFLOAT4X4>::Get().Reset();
+    _NodeValueStorage.clear();
 }
 
 void Graph::StoreNodeValue(int nodeId, std::shared_ptr<GraphNodeValue> value)

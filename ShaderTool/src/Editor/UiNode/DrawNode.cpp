@@ -13,16 +13,8 @@ DrawNode::DrawNode(Graph* graph)
     EVENT_MANAGER.Attach(this);
     
     ShaderNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
-    
-    ModelNodeValue = std::make_shared<NodeValue<int>>();
-    ModelNodeValue->TypeName = "int";
-    //ModelNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ModelNodeValue->TypeName];
-    ModelNodeValue->Data = INVALID_INDEX;
-
-    OutputNodeValue = std::make_shared<NodeValue<int>>();
-    OutputNodeValue->TypeName = "int";
-    //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-    OutputNodeValue->Data = INVALID_INDEX;
+    ModelNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
+    OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
 }
 
 DrawNode::~DrawNode()
@@ -68,16 +60,16 @@ void DrawNode::OnCreate()
     ParentGraph->CreateEdge(Id, ModelPin, EdgeType::Internal);
     ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
 
-    StoreNodeValue(ShaderPin, ShaderNodeValue);
-    StoreNodeValuePtr<int>(ModelPin, ModelNodeValue);
-    StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+    ParentGraph->StoreNodeValue(ShaderPin, ShaderNodeValue);
+    ParentGraph->StoreNodeValue(ModelPin, ModelNodeValue);
+    ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
 }
 
 void DrawNode::OnLoad()
 {
-    StoreNodeValue(ShaderPin, ShaderNodeValue);
-    StoreNodeValuePtr<int>(ModelPin, ModelNodeValue);
-    StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+    ParentGraph->StoreNodeValue(ShaderPin, ShaderNodeValue);
+    ParentGraph->StoreNodeValue(ModelPin, ModelNodeValue);
+    ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
 }
 
 void DrawNode::OnDelete() 
@@ -178,110 +170,52 @@ void DrawNode::OnEval()
     if (!CopyValueFromLinkedSource(ShaderPin, (void*)&INVALID_INDEX))
         isReadyToRender = false;
 
-    //if(!CopyFromLinkedSourceNodeValue<int>(ShaderPin, INVALID_INDEX))
-    //    isReadyToRender = false;
-
-    if (!CopyFromLinkedSourceNodeValue<int>(ModelPin, INVALID_INDEX))
+    if (!CopyValueFromLinkedSource(ModelPin, (void*)&INVALID_INDEX))
         isReadyToRender = false;
 
     // SHADER BINDING PINS
     for (auto& bindPin : ShaderBindingPins)
     {
-        size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(bindPin.PinId);
-        
-        if (numNeighbors == 0ull) // no link
+        if (bindPin.Bind.VarTypeName == "float4x4")
         {
-            if (bindPin.Bind.VarTypeName == "float4x4")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT4X4>(bindPin.PinId);
-                value->Data = D3DUtil::Identity4x4();
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float4")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT4>(bindPin.PinId);
-                value->Data = XMFLOAT4(0.f, 0.f, 0.f, 0.f);
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float3")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT3>(bindPin.PinId);
-                value->Data = XMFLOAT3(0.f, 0.f, 0.f);
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float2")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT2>(bindPin.PinId);
-                value->Data = XMFLOAT2(0.f, 0.f);
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float")
-            {
-                auto value = GetNodeValuePtr<float>(bindPin.PinId);
-                value->Data = 0.f;
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "int")
-            {
-                auto value = GetNodeValuePtr<int>(bindPin.PinId);
-                value->Data = 0;
-                bindPin.Data = &value->Data;
-            }
+            CopyValueFromLinkedSource(bindPin.PinId, (void*)&D3DUtil::Identity4x4());
+            bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
         }
-        else if (numNeighbors == 1ull) // 1 link
+        else if (bindPin.Bind.VarTypeName == "float4")
         {
-            int neighborId = *ParentGraph->GetNeighbors(bindPin.PinId).begin();
-            if (bindPin.Bind.VarTypeName == "float4x4")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT4X4>(bindPin.PinId);
-                value->Data = GetNodeValuePtr<XMFLOAT4X4>(neighborId)->Data;
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float4")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT4>(bindPin.PinId);
-                value->Data = GetNodeValuePtr<XMFLOAT4>(neighborId)->Data;
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float3")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT3>(bindPin.PinId);
-                value->Data = GetNodeValuePtr<XMFLOAT3>(neighborId)->Data;
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float2")
-            {
-                auto value = GetNodeValuePtr<XMFLOAT2>(bindPin.PinId);
-                value->Data = GetNodeValuePtr<XMFLOAT2>(neighborId)->Data;
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "float")
-            {
-                auto value = GetNodeValuePtr<float>(bindPin.PinId);
-                value->Data = GetNodeValuePtr<float>(neighborId)->Data;
-                bindPin.Data = &value->Data;
-            }
-            else if (bindPin.Bind.VarTypeName == "int")
-            {
-                auto value = GetNodeValuePtr<int>(bindPin.PinId);
-                value->Data = GetNodeValuePtr<int>(neighborId)->Data;
-                bindPin.Data = &value->Data;
-            }
-            else
-            {
-                LOG_CRITICAL("Unknown binding variable type {0}", bindPin.Bind.VarTypeName);
-            }
+            auto defaultValue = XMFLOAT4(0.f, 0.f, 0.f, 0.f);
+            CopyValueFromLinkedSource(bindPin.PinId, (void*)&defaultValue);
+            bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
         }
-        else // more than 1 link
+        else if (bindPin.Bind.VarTypeName == "float3")
         {
-            LOG_ERROR("Multiple links [{1}] at node {0}", ModelPin, numNeighbors);
-            isReadyToRender = false;
+            auto defaultValue = XMFLOAT3(0.f, 0.f, 0.f);
+            CopyValueFromLinkedSource(bindPin.PinId, (void*)&defaultValue);
+            bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
+        }
+        else if (bindPin.Bind.VarTypeName == "float2")
+        {
+            auto defaultValue = XMFLOAT2(0.f, 0.f);
+            CopyValueFromLinkedSource(bindPin.PinId, (void*)&defaultValue);
+            bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
+        }
+        else if (bindPin.Bind.VarTypeName == "float")
+        {
+            float defaultValue = 0.f;
+            CopyValueFromLinkedSource(bindPin.PinId, (void*)&defaultValue);
+            bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
+        }
+        else if (bindPin.Bind.VarTypeName == "int")
+        {
+            int defaultValue = 0;
+            CopyValueFromLinkedSource(bindPin.PinId, (void*)&defaultValue);
+            bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
         }
     }
 
-    OutputNodeValue->Data = INVALID_INDEX;
+    OutputNodeValue->Value = INVALID_INDEX;
     if(isReadyToRender) 
-        OutputNodeValue->Data = 1; // only set valid index when all pins are linked
+        OutputNodeValue->Value = 1; // only set valid index when all pins are linked
 
 }
 
@@ -299,10 +233,11 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             const Node link(NodeType::Float4x4, NodeDirection::In);
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
-            auto value = std::make_shared<NodeValue<DirectX::XMFLOAT4X4>>();
-            value->Data = D3DUtil::Identity4x4();
-            StoreNodeValuePtr<DirectX::XMFLOAT4X4>(pinId, value);
-            bindPin.Data = &value->Data;
+
+            auto float4x4Value = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
+            ParentGraph->StoreNodeValue(pinId, float4x4Value);
+
+            bindPin.Data = &float4x4Value->Value;
             bindPin.PinId = pinId;
         }
         else if (var.VarTypeName == "float4")
@@ -310,9 +245,11 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             const Node link(NodeType::Float4, NodeDirection::In);
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
-            auto value = std::make_shared<NodeValue<DirectX::XMFLOAT4>>();
-            StoreNodeValuePtr<DirectX::XMFLOAT4>(pinId, value);
-            bindPin.Data = &value->Data;
+
+            auto float4Value = std::make_shared<GraphNodeValueFloat4>(DirectX::XMFLOAT4());
+            ParentGraph->StoreNodeValue(pinId, float4Value);
+
+            bindPin.Data = &float4Value->Value;
             bindPin.PinId = pinId;
         }
         else if (var.VarTypeName == "float3")
@@ -320,9 +257,11 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             const Node link(NodeType::Float3, NodeDirection::In);
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
-            auto value = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
-            StoreNodeValuePtr<DirectX::XMFLOAT3>(pinId, value);
-            bindPin.Data = &value->Data;
+
+            auto float3Value = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3());
+            ParentGraph->StoreNodeValue(pinId, float3Value);
+                        
+            bindPin.Data = &float3Value->Value;
             bindPin.PinId = pinId;
         }
         else if (var.VarTypeName == "float2")
@@ -330,9 +269,11 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             const Node link(NodeType::Float2, NodeDirection::In);
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
-            auto value = std::make_shared<NodeValue<DirectX::XMFLOAT2>>();
-            StoreNodeValuePtr<DirectX::XMFLOAT2>(pinId, value);
-            bindPin.Data = &value->Data;
+
+            auto float2Value = std::make_shared<GraphNodeValueFloat2>(DirectX::XMFLOAT2());
+            ParentGraph->StoreNodeValue(pinId, float2Value);
+
+            bindPin.Data = &float2Value->Value;
             bindPin.PinId = pinId;
         }
         else if (var.VarTypeName == "float")
@@ -340,9 +281,11 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             const Node link(NodeType::Float, NodeDirection::In);
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
-            auto value = std::make_shared<NodeValue<float>>();
-            StoreNodeValuePtr<float>(pinId, value);
-            bindPin.Data = &value->Data;
+
+            auto floatValue = std::make_shared<GraphNodeValueFloat>(0.f);
+            ParentGraph->StoreNodeValue(pinId, floatValue);
+
+            bindPin.Data = &floatValue->Value;
             bindPin.PinId = pinId;
         }
         else if (var.VarTypeName == "int")
@@ -350,9 +293,11 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             const Node link(NodeType::Int, NodeDirection::In);
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
-            auto value = std::make_shared<NodeValue<int>>();
-            StoreNodeValuePtr<int>(pinId, value);
-            bindPin.Data = &value->Data;
+
+            auto intValue = std::make_shared<GraphNodeValueInt>(0);
+            ParentGraph->StoreNodeValue(pinId, intValue);
+
+            bindPin.Data = &intValue->Value;
             bindPin.PinId = pinId;
         }
         else
@@ -373,10 +318,8 @@ void DrawNode::OnShaderLinkCreated(int from, int to)
 {
     LOG_TRACE("ShaderPin link created");
     
-    //int shaderIndex = GetNodeValuePtr<int>(to)->Data;
-
     auto nodevalue = ParentGraph->GetNodeValue(to);
-    int shaderIndex = *(int*)nodevalue->GetValue();
+    int shaderIndex = *(int*)nodevalue->GetValuePtr();
     auto shader = ShaderManager::Get().GetShader((size_t)shaderIndex);
     if (!shader)
     {

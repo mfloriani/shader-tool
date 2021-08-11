@@ -111,13 +111,13 @@ struct Node
     }
 };
 
-template<class T>
-struct NodeValue
-{
-    std::string TypeName{""};
-    //UINT Num32BitValues{ 0 };
-    T Data{};
-};
+//template<class T>
+//struct NodeValue
+//{
+//    std::string TypeName{""};
+//    //UINT Num32BitValues{ 0 };
+//    T Data{};
+//};
 
 struct GraphNodeValue
 {
@@ -125,8 +125,8 @@ struct GraphNodeValue
         : Type(t), TypeName(n)
     {
     }
-    virtual void SetValue(void*) = 0;
-    virtual void* GetValue() = 0;
+    virtual void SetValuePtr(void*) = 0;
+    virtual void* GetValuePtr() = 0;
 
     virtual std::ostream& Serialize(std::ostream& out) const
     {
@@ -136,6 +136,7 @@ struct GraphNodeValue
 
     virtual std::istream& Deserialize(std::istream& in)
     {
+        // TODO: implement it using factory pattern
         return in;
     }
 
@@ -163,8 +164,8 @@ public:
         : GraphNodeValue(std::type_index(typeid(float)), "float"), Value(initValue)
     {}
 
-    virtual void SetValue(void* newValue) override { Value = *(float*)newValue; }
-    virtual void* GetValue() override { return &Value; }
+    virtual void SetValuePtr(void* newValue) override { Value = *(float*)newValue; }
+    virtual void* GetValuePtr() override { return &Value; }
 
     virtual std::ostream& Serialize(std::ostream& out) const override
     {
@@ -194,8 +195,8 @@ public:
     {
     }
 
-    virtual void SetValue(void* newValue) override { Value = *(int*)newValue; }
-    virtual void* GetValue() override { return &Value; }
+    virtual void SetValuePtr(void* newValue) override { Value = *(int*)newValue; }
+    virtual void* GetValuePtr() override { return &Value; }
 
     virtual std::ostream& Serialize(std::ostream& out) const override
     {
@@ -215,49 +216,134 @@ public:
     friend std::istream& operator>>(std::istream& in, GraphNodeValueInt& n) { return n.Deserialize(in); }
 };
 
-//class GraphNodeValueStorage
-//{
-//public:
-//    //void StoreNodeValuePtr(std::type_index typeIndex, std::shared_ptr<GraphNodeValue>& valuePtr)
-//    void StoreNodeValuePtr(int nodeId, std::shared_ptr<GraphNodeValue>& valuePtr)
-//    {
-//        //_TypeValueMap[typeIndex].push_back(valuePtr);
-//        _NodeIdValueMap[nodeId] = valuePtr;
-//    }
-//
-//    std::shared_ptr<GraphNodeValue>& GetNodeValuePtr(int nodeId)
-//    {
-//        return _NodeIdValueMap[nodeId];
-//    }
-//
-//    virtual std::ostream& Serialize(std::ostream& out) const
-//    {
-//        out << _NodeIdValueMap.size() << "\n";
-//        for (auto& [nodeId, nodeValue] : _NodeIdValueMap)
-//        {
-//            out << "nv " << nodeId << " " << *nodeValue.get() << "\n";
-//        }
-//        return out;
-//    }
-//
-//    virtual std::istream& Deserialize(std::istream& in)
-//    {
-//        return in;
-//    }
-//
-//    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueStorage& n)
-//    {
-//        return n.Serialize(out);
-//    }
-//
-//    friend std::istream& operator>>(std::istream& in, GraphNodeValueStorage& n)
-//    {
-//        return n.Deserialize(in);
-//    }
-//
-//private:
-//    std::unordered_map<int, std::shared_ptr<GraphNodeValue>> _NodeIdValueMap;
-//
-//    //std::unordered_map<std::string, std::type_index> _NameTypeMap;
-//    //std::unordered_map<std::type_index, std::vector<std::shared_ptr<GraphNodeValue>>> _TypeValueMap;
-//};
+struct GraphNodeValueFloat4x4 : public GraphNodeValue
+{
+    DirectX::XMFLOAT4X4 Value;
+
+public:
+    GraphNodeValueFloat4x4(DirectX::XMFLOAT4X4 initValue)
+        : GraphNodeValue(std::type_index(typeid(int)), "float4x4"), Value(initValue)
+    {
+    }
+
+    virtual void SetValuePtr(void* newValue) override { Value = *(DirectX::XMFLOAT4X4*)newValue; }
+    virtual void* GetValuePtr() override { return &Value; }
+
+    virtual std::ostream& Serialize(std::ostream& out) const override
+    {
+        GraphNodeValue::Serialize(out);
+        LOG_ERROR("GraphNodeValueFloat4x4::Serialize NOT IMPLEMENTED");
+        out << " " << "NOT IMPLEMENTED";
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in) override
+    {
+        GraphNodeValue::Deserialize(in);
+        LOG_ERROR("GraphNodeValueFloat4x4::Deserialize NOT IMPLEMENTED");
+        //in >> Value;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat4x4& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat4x4& n) { return n.Deserialize(in); }
+};
+
+struct GraphNodeValueFloat4 : public GraphNodeValue
+{
+    DirectX::XMFLOAT4 Value;
+
+public:
+    GraphNodeValueFloat4(DirectX::XMFLOAT4 initValue)
+        : GraphNodeValue(std::type_index(typeid(int)), "float4"), Value(initValue)
+    {
+    }
+
+    virtual void SetValuePtr(void* newValue) override { Value = *(DirectX::XMFLOAT4*)newValue; }
+    virtual void* GetValuePtr() override { return &Value; }
+
+    virtual std::ostream& Serialize(std::ostream& out) const override
+    {
+        GraphNodeValue::Serialize(out);
+        LOG_ERROR("GraphNodeValueFloat4::Serialize NOT IMPLEMENTED");
+        out << " " << "NOT IMPLEMENTED";
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in) override
+    {
+        GraphNodeValue::Deserialize(in);
+        LOG_ERROR("GraphNodeValueFloat4::Deserialize NOT IMPLEMENTED");
+        //in >> Value;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat4& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat4& n) { return n.Deserialize(in); }
+};
+
+struct GraphNodeValueFloat3 : public GraphNodeValue
+{
+    DirectX::XMFLOAT3 Value;
+
+public:
+    GraphNodeValueFloat3(DirectX::XMFLOAT3 initValue)
+        : GraphNodeValue(std::type_index(typeid(int)), "float3"), Value(initValue)
+    {
+    }
+
+    virtual void SetValuePtr(void* newValue) override { Value = *(DirectX::XMFLOAT3*)newValue; }
+    virtual void* GetValuePtr() override { return &Value; }
+
+    virtual std::ostream& Serialize(std::ostream& out) const override
+    {
+        GraphNodeValue::Serialize(out);
+        LOG_ERROR("GraphNodeValueFloat3::Serialize NOT IMPLEMENTED");
+        out << " " << "NOT IMPLEMENTED";
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in) override
+    {
+        GraphNodeValue::Deserialize(in);
+        LOG_ERROR("GraphNodeValueFloat3::Deserialize NOT IMPLEMENTED");
+        //in >> Value;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat3& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat3& n) { return n.Deserialize(in); }
+};
+
+struct GraphNodeValueFloat2 : public GraphNodeValue
+{
+    DirectX::XMFLOAT2 Value;
+
+public:
+    GraphNodeValueFloat2(DirectX::XMFLOAT2 initValue)
+        : GraphNodeValue(std::type_index(typeid(int)), "float2"), Value(initValue)
+    {
+    }
+
+    virtual void SetValuePtr(void* newValue) override { Value = *(DirectX::XMFLOAT2*)newValue; }
+    virtual void* GetValuePtr() override { return &Value; }
+
+    virtual std::ostream& Serialize(std::ostream& out) const override
+    {
+        GraphNodeValue::Serialize(out);
+        LOG_ERROR("GraphNodeValueFloat2::Serialize NOT IMPLEMENTED");
+        out << " " << "NOT IMPLEMENTED";
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in) override
+    {
+        GraphNodeValue::Deserialize(in);
+        LOG_ERROR("GraphNodeValueFloat2::Deserialize NOT IMPLEMENTED");
+        //in >> Value;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat2& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat2& n) { return n.Deserialize(in); }
+};

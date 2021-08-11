@@ -9,28 +9,17 @@ private:
 public:
     NodeId LeftPin, RightPin, OutputPin;
 
-    std::shared_ptr<NodeValue<float>> LeftNodeValue;
-    std::shared_ptr<NodeValue<float>> RightNodeValue;
-    std::shared_ptr<NodeValue<float>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> LeftNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> RightNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> OutputNodeValue;
 
 public:
     explicit MultiplyNode(Graph* graph)
         : UiNode(graph, UiNodeType::Multiply), LeftPin(INVALID_ID), RightPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        LeftNodeValue = std::make_shared<NodeValue<float>>();
-        LeftNodeValue->TypeName = "float";
-        //LeftNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[LeftNodeValue->TypeName];
-        LeftNodeValue->Data = 0.f;
-
-        RightNodeValue = std::make_shared<NodeValue<float>>();
-        RightNodeValue->TypeName = "float";
-        //RightNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[RightNodeValue->TypeName];
-        RightNodeValue->Data = 0.f;
-
-        OutputNodeValue = std::make_shared<NodeValue<float>>();
-        OutputNodeValue->TypeName = "float";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = 0.f;
+        LeftNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        RightNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        OutputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -50,17 +39,17 @@ public:
         ParentGraph->CreateEdge(Id, LeftPin, EdgeType::Internal);
         ParentGraph->CreateEdge(Id, RightPin, EdgeType::Internal);
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-
-        StoreNodeValuePtr<float>(LeftPin, LeftNodeValue);
-        StoreNodeValuePtr<float>(RightPin, RightNodeValue);
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        
+        ParentGraph->StoreNodeValue(LeftPin, LeftNodeValue);
+        ParentGraph->StoreNodeValue(RightPin, RightNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<float>(LeftPin, LeftNodeValue);
-        StoreNodeValuePtr<float>(RightPin, RightNodeValue);
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(LeftPin, LeftNodeValue);
+        ParentGraph->StoreNodeValue(RightPin, RightNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
@@ -70,10 +59,11 @@ public:
 
     virtual void OnEval() override
     {
-        CopyFromLinkedSourceNodeValue<float>(LeftPin, 0.f);
-        CopyFromLinkedSourceNodeValue<float>(RightPin, 0.f);
+        float defaultValue = 0.f;
+        CopyValueFromLinkedSource(LeftPin, (void*)&defaultValue);
+        CopyValueFromLinkedSource(RightPin, (void*)&defaultValue);
 
-        OutputNodeValue->Data = LeftNodeValue->Data * RightNodeValue->Data;
+        OutputNodeValue->Value = LeftNodeValue->Value * RightNodeValue->Value;
     }
 
     virtual void OnDelete() override

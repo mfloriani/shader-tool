@@ -9,17 +9,13 @@ private:
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<float>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> OutputNodeValue;
 
 public:
     explicit TimeNode(Graph* graph)
         : UiNode(graph, UiNodeType::Time), OutputPin(INVALID_ID)
     {
-        OutputNodeValue = std::make_shared<NodeValue<float>>();
-        OutputNodeValue->TypeName = "float";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = 0.f;
-
+        OutputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
         _Timer.Start();
     }
 
@@ -34,13 +30,12 @@ public:
         OutputPin = ParentGraph->CreateNode(outputNode);
 
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnDelete() override
@@ -55,7 +50,7 @@ public:
 
     virtual void OnEval() override
     {
-        OutputNodeValue->Data = _Timer.TotalTime();
+        OutputNodeValue->Value = _Timer.TotalTime();
     }
 
     virtual void OnRender() override

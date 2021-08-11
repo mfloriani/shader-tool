@@ -12,16 +12,13 @@ private:
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueInt> OutputNodeValue;
 
 public:
     explicit TextureNode(Graph* graph)
         : UiNode(graph, UiNodeType::Texture), _Path(""), _TextureIndex(INVALID_INDEX), _Texture(nullptr)
     {
-        OutputNodeValue = std::make_shared<NodeValue<int>>();
-        OutputNodeValue->TypeName = "int";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = INVALID_INDEX;
+        OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
     }
 
     const std::string GetPath() const { return _Path; }
@@ -31,7 +28,7 @@ public:
 
     virtual void OnCreate() override
     {
-        OutputNodeValue->Data = INVALID_INDEX;
+        OutputNodeValue->Value = INVALID_INDEX;
 
         const Node idNode = Node(NodeType::Texture, NodeDirection::None);
         Id = ParentGraph->CreateNode(idNode);
@@ -40,8 +37,7 @@ public:
         OutputPin = ParentGraph->CreateNode(indexNodeOut);
 
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
@@ -55,15 +51,15 @@ public:
                 LOG_ERROR("Failed to load texture {0}!", _Path);
                 _Path = "";
                 _Texture = nullptr;
-                OutputNodeValue->Data = INVALID_INDEX;
-                StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+                OutputNodeValue->Value = INVALID_INDEX;
+                ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
                 return;
             }
         }
         else
         {
-            OutputNodeValue->Data = _TextureIndex;
-            StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+            OutputNodeValue->Value = _TextureIndex;
+            ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
         }
     }
 

@@ -92,9 +92,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("AddNode");
 						ImGui::Text("Id:      %i", addNode->Id);
-						ImGui::Text("Left:    %i %.3f", addNode->LeftPin, addNode->LeftNodeValue->Data);
-						ImGui::Text("Right:   %i %.3f", addNode->RightPin, addNode->RightNodeValue->Data);
-						ImGui::Text("Output:  %i %.3f", addNode->OutputPin, addNode->OutputNodeValue->Data);
+						ImGui::Text("Left:    %i %.3f", addNode->LeftPin, addNode->LeftNodeValue->Value);
+						ImGui::Text("Right:   %i %.3f", addNode->RightPin, addNode->RightNodeValue->Value);
+						ImGui::Text("Output:  %i %.3f", addNode->OutputPin, addNode->OutputNodeValue->Value);
 						});
 				}
 				break;
@@ -105,9 +105,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("MultiplyNode");
 						ImGui::Text("Id:      %i", multNode->Id);
-						ImGui::Text("Left:    %i %.3f", multNode->LeftPin, multNode->LeftNodeValue->Data);
-						ImGui::Text("Right:   %i %.3f", multNode->RightPin, multNode->RightNodeValue->Data);
-						ImGui::Text("Output:  %i %.3f", multNode->OutputPin, multNode->OutputNodeValue->Data);
+						ImGui::Text("Left:    %i %.3f", multNode->LeftPin, multNode->LeftNodeValue->Value);
+						ImGui::Text("Right:   %i %.3f", multNode->RightPin, multNode->RightNodeValue->Value);
+						ImGui::Text("Output:  %i %.3f", multNode->OutputPin, multNode->OutputNodeValue->Value);
 						});
 				}
 				break;
@@ -118,7 +118,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("TimeNode");
 						ImGui::Text("Id:      %i", timeNode->Id);
-						ImGui::Text("Output:  %i %.5f", timeNode->OutputPin, timeNode->OutputNodeValue->Data);
+						ImGui::Text("Output:  %i %.5f", timeNode->OutputPin, timeNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -129,8 +129,8 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("SineNode");
 						ImGui::Text("Id:      %i", sineNode->Id);
-						ImGui::Text("Input:   %i %.5f", sineNode->InputPin, sineNode->InputNodeValue->Data);
-						ImGui::Text("Output:  %i %.5f", sineNode->OutputPin, sineNode->OutputNodeValue->Data);
+						ImGui::Text("Input:   %i %.5f", sineNode->InputPin, sineNode->InputNodeValue->Value);
+						ImGui::Text("Output:  %i %.5f", sineNode->OutputPin, sineNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -144,7 +144,7 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("DrawNode");
 						ImGui::Text("Id:      %i", drawNode->Id);
 						ImGui::Text("Shader:  %i %i", drawNode->ShaderPin, drawNode->ShaderNodeValue->Value);
-						ImGui::Text("Model:   %i %i", drawNode->ModelPin, drawNode->ModelNodeValue->Data);
+						ImGui::Text("Model:   %i %i", drawNode->ModelPin, drawNode->ModelNodeValue->Value);
 
 						for (auto& bindPin : drawNode->ShaderBindingPins)
 						{
@@ -152,29 +152,29 @@ void DebugInfo(ShaderToolApp* app)
 								ImGui::Text("%s:   %i", bindPin.Bind.VarName.c_str(), bindPin.PinId);
 							else if (bindPin.Bind.VarTypeName == "float4")
 							{
-								auto float4Data = drawNode->GetNodeValuePtr<XMFLOAT4>(bindPin.PinId)->Data;
+								auto float4Data = *(DirectX::XMFLOAT4*) drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr();
 								float x = float4Data.x, y = float4Data.y, z = float4Data.z, w = float4Data.w;
 								ImGui::Text("%s:   %i %.3f %.3f %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y, z, w);
 							}
 							else if (bindPin.Bind.VarTypeName == "float3")
 							{
-								auto float3Data = drawNode->GetNodeValuePtr<XMFLOAT3>(bindPin.PinId)->Data;
+								auto float3Data = *(DirectX::XMFLOAT3*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr();
 								float x = float3Data.x, y = float3Data.y, z = float3Data.z;
 								ImGui::Text("%s:   %i %.3f %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y, z);
 							}
 							else if (bindPin.Bind.VarTypeName == "float2")
 							{
-								auto float2Data = drawNode->GetNodeValuePtr<XMFLOAT2>(bindPin.PinId)->Data;
+								auto float2Data = *(DirectX::XMFLOAT2*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr();
 								float x = float2Data.x, y = float2Data.y;
 								ImGui::Text("%s:   %i %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y);
 							}
 							else if (bindPin.Bind.VarTypeName == "float")
-								ImGui::Text("%s:   %i %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, drawNode->GetNodeValuePtr<float>(bindPin.PinId)->Data);
+								ImGui::Text("%s:   %i %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, *(float*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr());
 							else if (bindPin.Bind.VarTypeName == "int")
-								ImGui::Text("%s:   %i %i", bindPin.Bind.VarName.c_str(), bindPin.PinId, drawNode->GetNodeValuePtr<int>(bindPin.PinId)->Data);
+								ImGui::Text("%s:   %i %i", bindPin.Bind.VarName.c_str(), bindPin.PinId, *(int*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr());
 						}
 
-						ImGui::Text("Output:  %i %i", drawNode->OutputPin, drawNode->OutputNodeValue->Data);
+						ImGui::Text("Output:  %i %i", drawNode->OutputPin, drawNode->OutputNodeValue->Value);
 
 						});
 				}
@@ -186,7 +186,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("PrimitiveNode");
 						ImGui::Text("Id:    %i", primNode->Id);
-						ImGui::Text("Model: %i %i", primNode->OutputPin, primNode->OutputNodeValue->Data);
+						ImGui::Text("Model: %i %i", primNode->OutputPin, primNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -212,7 +212,7 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:     %i", modelNode->Id);
 						ImGui::Text("Name:   %s", modelNode->GetName().c_str());
 						ImGui::Text("Path:   %s", modelNode->GetPath().c_str());
-						ImGui::Text("Output: %i %i", modelNode->OutputPin, modelNode->OutputNodeValue->Data);
+						ImGui::Text("Output: %i %i", modelNode->OutputPin, modelNode->OutputNodeValue->Value);
 						});
 				}
 				break;
@@ -220,7 +220,7 @@ void DebugInfo(ShaderToolApp* app)
 				case UiNodeType::Color:
 				{
 					auto colorNode = static_cast<ColorNode*>(node);
-					auto float3Value = colorNode->GetNodeValuePtr<XMFLOAT3>(colorNode->OutputPin)->Data;
+					auto float3Value = colorNode->OutputNodeValue->Value;
 					float x = float3Value.x, y = float3Value.y, z = float3Value.z;
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("ColorNode");
@@ -326,9 +326,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("Vector2Node");
 						ImGui::Text("Id:         %i", uinode->Id);
-						ImGui::Text("Position:   %i %.3f %.3f %.3f", uinode->PositionPin, uinode->PositionNodeValue->Data.x, uinode->PositionNodeValue->Data.y, uinode->PositionNodeValue->Data.z);
-						ImGui::Text("Rotation:   %i %.3f %.3f %.3f", uinode->RotationPin, uinode->RotationNodeValue->Data.x, uinode->RotationNodeValue->Data.y, uinode->RotationNodeValue->Data.z);
-						ImGui::Text("Scale:      %i %.3f %.3f %.3f", uinode->ScalePin, uinode->ScaleNodeValue->Data.x, uinode->ScaleNodeValue->Data.y, uinode->ScaleNodeValue->Data.z);
+						ImGui::Text("Position:   %i %.3f %.3f %.3f", uinode->PositionPin, uinode->PositionNodeValue->Value.x, uinode->PositionNodeValue->Value.y, uinode->PositionNodeValue->Value.z);
+						ImGui::Text("Rotation:   %i %.3f %.3f %.3f", uinode->RotationPin, uinode->RotationNodeValue->Value.x, uinode->RotationNodeValue->Value.y, uinode->RotationNodeValue->Value.z);
+						ImGui::Text("Scale:      %i %.3f %.3f %.3f", uinode->ScalePin, uinode->ScaleNodeValue->Value.x, uinode->ScaleNodeValue->Value.y, uinode->ScaleNodeValue->Value.z);
 						ImGui::Text("Output:     %i", uinode->OutputPin);
 						});
 				}
@@ -668,9 +668,9 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 {
 	ClearRenderTexture();
 
-	if (drawNode->OutputNodeValue->Data == INVALID_INDEX) return; // NOT READY
+	if (drawNode->OutputNodeValue->Value == INVALID_INDEX) return; // NOT READY
 
-	int currentModel = drawNode->ModelNodeValue->Data;
+	int currentModel = drawNode->ModelNodeValue->Value;
 	if (currentModel == INVALID_INDEX) return; // no model linked
 
 	int currentShaderIndex = drawNode->ShaderNodeValue->Value;

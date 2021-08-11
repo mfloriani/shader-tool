@@ -10,35 +10,20 @@ private:
 
 public:
     NodeId PositionPin, RotationPin, ScalePin, OutputPin;
-    std::shared_ptr<NodeValue<DirectX::XMFLOAT3>> PositionNodeValue;
-    std::shared_ptr<NodeValue<DirectX::XMFLOAT3>> RotationNodeValue;
-    std::shared_ptr<NodeValue<DirectX::XMFLOAT3>> ScaleNodeValue;
-    std::shared_ptr<NodeValue<DirectX::XMFLOAT4X4>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat3> PositionNodeValue;
+    std::shared_ptr<GraphNodeValueFloat3> RotationNodeValue;
+    std::shared_ptr<GraphNodeValueFloat3> ScaleNodeValue;
+    std::shared_ptr<GraphNodeValueFloat4x4> OutputNodeValue;
 
 public:
     explicit TransformNode(Graph* graph)
         : UiNode(graph, UiNodeType::Transform), 
         PositionPin(INVALID_ID), RotationPin(INVALID_ID), ScalePin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        PositionNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
-        PositionNodeValue->TypeName = "float3";
-        //PositionNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[PositionNodeValue->TypeName];
-        PositionNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
-
-        RotationNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
-        RotationNodeValue->TypeName = "float3";
-        //RotationNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[RotationNodeValue->TypeName];
-        RotationNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
-
-        ScaleNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
-        ScaleNodeValue->TypeName = "float3";
-        //ScaleNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ScaleNodeValue->TypeName];
-        ScaleNodeValue->Data = DirectX::XMFLOAT3(1.f, 1.f, 1.f);
-
-        OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT4X4>>();
-        OutputNodeValue->TypeName = "float4x4";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = D3DUtil::Identity4x4();
+        PositionNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
+        RotationNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
+        ScaleNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(1.f, 1.f, 1.f));
+        OutputNodeValue = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -61,40 +46,40 @@ public:
         ParentGraph->CreateEdge(Id, ScalePin, EdgeType::Internal);
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
 
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(PositionPin, PositionNodeValue);
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(RotationPin, RotationNodeValue);
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(ScalePin, ScaleNodeValue);
-        StoreNodeValuePtr<DirectX::XMFLOAT4X4>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(PositionPin, PositionNodeValue);
+        ParentGraph->StoreNodeValue(RotationPin, RotationNodeValue);
+        ParentGraph->StoreNodeValue(ScalePin, ScaleNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(PositionPin, PositionNodeValue);
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(RotationPin, RotationNodeValue);
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(ScalePin, ScaleNodeValue);
-        StoreNodeValuePtr<DirectX::XMFLOAT4X4>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(PositionPin, PositionNodeValue);
+        ParentGraph->StoreNodeValue(RotationPin, RotationNodeValue);
+        ParentGraph->StoreNodeValue(ScalePin, ScaleNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
     {
-        CopyFromLinkedSourceNodeValue<DirectX::XMFLOAT3>(PositionPin, PositionNodeValue->Data);
-        CopyFromLinkedSourceNodeValue<DirectX::XMFLOAT3>(RotationPin, RotationNodeValue->Data);
-        CopyFromLinkedSourceNodeValue<DirectX::XMFLOAT3>(ScalePin, ScaleNodeValue->Data);
+        CopyValueFromLinkedSource(PositionPin, (void*)&PositionNodeValue->Value);
+        CopyValueFromLinkedSource(RotationPin, (void*)&RotationNodeValue->Value);
+        CopyValueFromLinkedSource(ScalePin, (void*)&ScaleNodeValue->Value);
     }
 
     virtual void OnEval() override
     {
-        auto position = DirectX::XMMatrixTranslation(PositionNodeValue->Data.x, PositionNodeValue->Data.y, PositionNodeValue->Data.z);
+        auto position = DirectX::XMMatrixTranslation(PositionNodeValue->Value.x, PositionNodeValue->Value.y, PositionNodeValue->Value.z);
         
-        auto xRot = DirectX::XMMatrixRotationX(RotationNodeValue->Data.x);
-        auto yRot = DirectX::XMMatrixRotationY(RotationNodeValue->Data.y);
-        auto zRot = DirectX::XMMatrixRotationZ(RotationNodeValue->Data.z);
+        auto xRot = DirectX::XMMatrixRotationX(RotationNodeValue->Value.x);
+        auto yRot = DirectX::XMMatrixRotationY(RotationNodeValue->Value.y);
+        auto zRot = DirectX::XMMatrixRotationZ(RotationNodeValue->Value.z);
         auto rotation = DirectX::XMMatrixMultiply(xRot, DirectX::XMMatrixMultiply(yRot, zRot));
 
-        auto scale = DirectX::XMMatrixScaling(ScaleNodeValue->Data.x, ScaleNodeValue->Data.y, ScaleNodeValue->Data.z);
+        auto scale = DirectX::XMMatrixScaling(ScaleNodeValue->Value.x, ScaleNodeValue->Value.y, ScaleNodeValue->Value.z);
 
         auto world = DirectX::XMMatrixMultiply(scale, DirectX::XMMatrixMultiply(rotation, position));
-        DirectX::XMStoreFloat4x4(&OutputNodeValue->Data, DirectX::XMMatrixTranspose(world));
+        DirectX::XMStoreFloat4x4(&OutputNodeValue->Value, DirectX::XMMatrixTranspose(world));
     }
 
     virtual void OnDelete() override
@@ -122,7 +107,7 @@ public:
             ImNodes::BeginInputAttribute(PositionPin);
             ImGui::PushItemWidth(node_width);
             ImGui::TextUnformatted("position"); ImGui::SameLine();
-            ImGui::DragFloat3("##hidelabel0", &PositionNodeValue->Data.x, 0.01f);
+            ImGui::DragFloat3("##hidelabel0", &PositionNodeValue->Value.x, 0.01f);
             ImGui::PopItemWidth();
             ImNodes::EndInputAttribute();
 
@@ -132,14 +117,14 @@ public:
         ImNodes::BeginInputAttribute(RotationPin);
         ImGui::PushItemWidth(node_width);
         ImGui::TextUnformatted("rotation"); ImGui::SameLine();
-        ImGui::DragFloat3("##hidelabel1", &RotationNodeValue->Data.x, 0.01f);
+        ImGui::DragFloat3("##hidelabel1", &RotationNodeValue->Value.x, 0.01f);
         ImGui::PopItemWidth();
         ImNodes::EndInputAttribute();
 
         ImNodes::BeginInputAttribute(ScalePin);
         ImGui::PushItemWidth(node_width);
         ImGui::TextUnformatted("scale   "); ImGui::SameLine();
-        ImGui::DragFloat3("##hidelabel2", &ScaleNodeValue->Data.x, 0.01f);
+        ImGui::DragFloat3("##hidelabel2", &ScaleNodeValue->Value.x, 0.01f);
         ImGui::PopItemWidth();
         ImNodes::EndInputAttribute();
 

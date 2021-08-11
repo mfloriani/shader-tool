@@ -153,42 +153,37 @@ void dfs_traverse(const Graph& graph, const int start_node, Visitor visitor)
     }
 }
 
-template<class T>
-class GraphNodeValues
-{
-public:
-    static GraphNodeValues<T>& Get()
-    {
-        static GraphNodeValues<T> instance;
-        return instance;
-    }
-    
-    void StoreNodeValuePtr(int id, std::shared_ptr<NodeValue<T>> value)
-    {
-        _NodeValues[id] = value;
-    }
-
-    std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(int id)
-    {
-        return _NodeValues[id];
-    }
-
-    void Reset()
-    {
-        _NodeValues.clear();
-    }
-
-    //virtual std::ostream& Serialize(std::ostream& out) const = 0;
-    //virtual std::istream& Deserialize(std::istream& in) = 0;
-    //friend std::ostream& operator<<(std::ostream& out, const UiNode& n) = 0;
-    //friend std::istream& operator>>(std::istream& in, UiNode& n) = 0;
-
-private:
-    GraphNodeValues() = default;
-
-private:
-    std::unordered_map<NodeId, std::shared_ptr<NodeValue<T>>> _NodeValues;
-};
+//template<class T>
+//class GraphNodeValues
+//{
+//public:
+//    static GraphNodeValues<T>& Get()
+//    {
+//        static GraphNodeValues<T> instance;
+//        return instance;
+//    }
+//    
+//    void StoreNodeValuePtr(int id, std::shared_ptr<NodeValue<T>> value)
+//    {
+//        _NodeValues[id] = value;
+//    }
+//
+//    std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(int id)
+//    {
+//        return _NodeValues[id];
+//    }
+//
+//    void Reset()
+//    {
+//        _NodeValues.clear();
+//    }
+//
+//private:
+//    GraphNodeValues() = default;
+//
+//private:
+//    std::unordered_map<NodeId, std::shared_ptr<NodeValue<T>>> _NodeValues;
+//};
 
 
 

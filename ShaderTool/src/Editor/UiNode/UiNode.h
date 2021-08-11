@@ -47,7 +47,6 @@ public:
         LOG_TRACE("~UiNode()");
         if(ParentGraph) ParentGraph->EraseNode(Id);
     }
-
     
     UiNodeType Type;
     NodeId Id;
@@ -60,22 +59,29 @@ public:
     virtual void OnRender() = 0;
     virtual void OnEval() = 0;
     
-    template <typename T>
-    void StoreNodeValuePtr(NodeId id, std::shared_ptr<NodeValue<T>> value)
-    {
-        GraphNodeValues<T>::Get().StoreNodeValuePtr(id, value);
-    }
+    Graph* GetGraph() const { return ParentGraph; }
 
-    template <typename T>
-    std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(NodeId id)
-    {
-        return GraphNodeValues<T>::Get().GetNodeValuePtr(id);
-    }
+    //template <typename T>
+    //void StoreNodeValuePtr(NodeId id, std::shared_ptr<NodeValue<T>> value)
+    //{
+    //    GraphNodeValues<T>::Get().StoreNodeValuePtr(id, value);
+    //}
 
-    void StoreNodeValue(NodeId id, std::shared_ptr<GraphNodeValue> value)
-    {
-        ParentGraph->StoreNodeValue(id, value);
-    }
+    //template <typename T>
+    //std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(NodeId id)
+    //{
+    //    return GraphNodeValues<T>::Get().GetNodeValuePtr(id);
+    //}
+
+    //void StoreNodeValue(NodeId id, std::shared_ptr<GraphNodeValue> value)
+    //{
+    //    ParentGraph->StoreNodeValue(id, value);
+    //}
+
+    //std::shared_ptr<GraphNodeValue>& GetNodeValue(NodeId id)
+    //{
+    //    return ParentGraph->GetNodeValue(id);
+    //}
 
     bool CopyValueFromLinkedSource(NodeId id, void* defaultValue)
     {
@@ -83,39 +89,39 @@ public:
         if (numNeighbors == 1ull) // there is one link
         {
             NodeId neighborId = *ParentGraph->GetNeighbors(id).begin();
-            auto neighborValue = ParentGraph->GetNodeValue(neighborId)->GetValue();
-            ParentGraph->GetNodeValue(id)->SetValue( neighborValue );
+            auto neighborValue = ParentGraph->GetNodeValue(neighborId)->GetValuePtr();
+            ParentGraph->GetNodeValue(id)->SetValuePtr( neighborValue );
             return true;
         }
         
         if (numNeighbors > 1ull)
             LOG_ERROR("Multiple links [{0}] at node {1}", numNeighbors, id);
 
-        ParentGraph->GetNodeValue(id)->SetValue(defaultValue);
+        ParentGraph->GetNodeValue(id)->SetValuePtr(defaultValue);
 
         return false;
     }
 
-    template <typename T>
-    bool CopyFromLinkedSourceNodeValue(NodeId id, T defaultValue)
-    {
-        size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(id);
-        if (numNeighbors == 1ull) // there is one link
-        {
-            NodeId neighborId = *ParentGraph->GetNeighbors(id).begin();
-            GetNodeValuePtr<T>(id)->Data = GetNodeValuePtr<T>(neighborId)->Data;
-            return true;
-        }
-        
-        // no link or more than one
+    //template <typename T>
+    //bool CopyFromLinkedSourceNodeValue(NodeId id, T defaultValue)
+    //{
+    //    size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(id);
+    //    if (numNeighbors == 1ull) // there is one link
+    //    {
+    //        NodeId neighborId = *ParentGraph->GetNeighbors(id).begin();
+    //        GetNodeValuePtr<T>(id)->Data = GetNodeValuePtr<T>(neighborId)->Data;
+    //        return true;
+    //    }
+    //    
+    //    // no link or more than one
 
-        if (numNeighbors > 1ull)
-            LOG_ERROR("Multiple links [{0}] at node {1}", numNeighbors, id);
+    //    if (numNeighbors > 1ull)
+    //        LOG_ERROR("Multiple links [{0}] at node {1}", numNeighbors, id);
 
-        GetNodeValuePtr<T>(id)->Data = defaultValue;
+    //    GetNodeValuePtr<T>(id)->Data = defaultValue;
 
-        return false;
-    }
+    //    return false;
+    //}
 
     virtual std::ostream& Serialize(std::ostream& out) const
     {

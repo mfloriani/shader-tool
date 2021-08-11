@@ -8,41 +8,23 @@ private:
     
 public:
     NodeId XInputPin, YInputPin, ZInputPin, WInputPin, OutputPin;
-    std::shared_ptr<NodeValue<float>> XInputNodeValue;
-    std::shared_ptr<NodeValue<float>> YInputNodeValue;
-    std::shared_ptr<NodeValue<float>> ZInputNodeValue;
-    std::shared_ptr<NodeValue<float>> WInputNodeValue;
-    std::shared_ptr<NodeValue<DirectX::XMFLOAT4>> OutputNodeValue;
+    
+    std::shared_ptr<GraphNodeValueFloat> XInputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> YInputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> ZInputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> WInputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat4> OutputNodeValue;
 
 public:
     explicit Vector4Node(Graph* graph)
         : UiNode(graph, UiNodeType::Vector4), 
         XInputPin(INVALID_ID), YInputPin(INVALID_ID), ZInputPin(INVALID_ID), WInputPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        XInputNodeValue = std::make_shared<NodeValue<float>>();
-        XInputNodeValue->TypeName = "float";
-        //XInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[XInputNodeValue->TypeName];
-        XInputNodeValue->Data = 0.f;
-
-        YInputNodeValue = std::make_shared<NodeValue<float>>();
-        YInputNodeValue->TypeName = "float";
-        //YInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[YInputNodeValue->TypeName];
-        YInputNodeValue->Data = 0.f;
-
-        ZInputNodeValue = std::make_shared<NodeValue<float>>();
-        ZInputNodeValue->TypeName = "float";
-        //ZInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ZInputNodeValue->TypeName];
-        ZInputNodeValue->Data = 0.f;
-
-        WInputNodeValue = std::make_shared<NodeValue<float>>();
-        WInputNodeValue->TypeName = "float";
-        //WInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[WInputNodeValue->TypeName];
-        WInputNodeValue->Data = 0.f;
-
-        OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT4>>();
-        OutputNodeValue->TypeName = "float4";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = DirectX::XMFLOAT4(0.f, 0.f, 0.f, 0.f);
+        XInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        YInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        ZInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        WInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        OutputNodeValue = std::make_shared<GraphNodeValueFloat4>(DirectX::XMFLOAT4(0.f, 0.f, 0.f, 0.f));
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -56,33 +38,33 @@ public:
 
         XInputPin = ParentGraph->CreateNode(inputNode);
         ParentGraph->CreateEdge(Id, XInputPin, EdgeType::Internal);
-        StoreNodeValuePtr<float>(XInputPin, XInputNodeValue);
+        ParentGraph->StoreNodeValue(XInputPin, XInputNodeValue);
 
         YInputPin = ParentGraph->CreateNode(inputNode);
         ParentGraph->CreateEdge(Id, YInputPin, EdgeType::Internal);
-        StoreNodeValuePtr<float>(YInputPin, YInputNodeValue);
+        ParentGraph->StoreNodeValue(YInputPin, YInputNodeValue);
 
         ZInputPin = ParentGraph->CreateNode(inputNode);
         ParentGraph->CreateEdge(Id, ZInputPin, EdgeType::Internal);
-        StoreNodeValuePtr<float>(ZInputPin, ZInputNodeValue);
+        ParentGraph->StoreNodeValue(ZInputPin, ZInputNodeValue);
 
         WInputPin = ParentGraph->CreateNode(inputNode);
         ParentGraph->CreateEdge(Id, WInputPin, EdgeType::Internal);
-        StoreNodeValuePtr<float>(WInputPin, WInputNodeValue);
+        ParentGraph->StoreNodeValue(WInputPin, WInputNodeValue);
 
         const Node outputNode(NodeType::Float4, NodeDirection::Out);
         OutputPin = ParentGraph->CreateNode(outputNode);
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-        StoreNodeValuePtr<DirectX::XMFLOAT4>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<float>(XInputPin, XInputNodeValue);
-        StoreNodeValuePtr<float>(YInputPin, YInputNodeValue);
-        StoreNodeValuePtr<float>(ZInputPin, ZInputNodeValue);
-        StoreNodeValuePtr<float>(WInputPin, WInputNodeValue);
-        StoreNodeValuePtr<DirectX::XMFLOAT4>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(XInputPin, XInputNodeValue);
+        ParentGraph->StoreNodeValue(YInputPin, YInputNodeValue);
+        ParentGraph->StoreNodeValue(ZInputPin, ZInputNodeValue);
+        ParentGraph->StoreNodeValue(WInputPin, WInputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
@@ -92,16 +74,17 @@ public:
 
     virtual void OnEval() override
     {
-        CopyFromLinkedSourceNodeValue<float>(XInputPin, 0.f);
-        CopyFromLinkedSourceNodeValue<float>(YInputPin, 0.f);
-        CopyFromLinkedSourceNodeValue<float>(ZInputPin, 0.f);
-        CopyFromLinkedSourceNodeValue<float>(WInputPin, 0.f);
+        float defaultValue = 0.f;
+        CopyValueFromLinkedSource(XInputPin, (void*)&defaultValue);
+        CopyValueFromLinkedSource(YInputPin, (void*)&defaultValue);
+        CopyValueFromLinkedSource(ZInputPin, (void*)&defaultValue);
+        CopyValueFromLinkedSource(WInputPin, (void*)&defaultValue);
 
-        OutputNodeValue->Data = DirectX::XMFLOAT4(
-            XInputNodeValue->Data,
-            YInputNodeValue->Data,
-            ZInputNodeValue->Data,
-            WInputNodeValue->Data);
+        OutputNodeValue->Value = DirectX::XMFLOAT4(
+            XInputNodeValue->Value,
+            YInputNodeValue->Value,
+            ZInputNodeValue->Value,
+            WInputNodeValue->Value);
     }
 
     virtual void OnDelete() override
@@ -129,7 +112,7 @@ public:
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &XInputNodeValue->Data, 0.01f);
+                ImGui::DragFloat("##hidelabel", &XInputNodeValue->Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -143,7 +126,7 @@ public:
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &YInputNodeValue->Data, 0.01f);
+                ImGui::DragFloat("##hidelabel", &YInputNodeValue->Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -157,7 +140,7 @@ public:
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &ZInputNodeValue->Data, 0.01f);
+                ImGui::DragFloat("##hidelabel", &ZInputNodeValue->Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -171,7 +154,7 @@ public:
             {
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &WInputNodeValue->Data, 0.01f);
+                ImGui::DragFloat("##hidelabel", &WInputNodeValue->Value, 0.01f);
                 ImGui::PopItemWidth();
             }
             ImNodes::EndInputAttribute();
@@ -196,10 +179,10 @@ public:
             << " " << ZInputPin 
             << " " << WInputPin 
             << " " << OutputPin
-            << " " << XInputNodeValue->Data
-            << " " << YInputNodeValue->Data
-            << " " << ZInputNodeValue->Data
-            << " " << WInputNodeValue->Data;
+            << " " << XInputNodeValue->Value
+            << " " << YInputNodeValue->Value
+            << " " << ZInputNodeValue->Value
+            << " " << WInputNodeValue->Value;
         return out;
     }
 
@@ -212,10 +195,10 @@ public:
             >> ZInputPin 
             >> WInputPin 
             >> OutputPin
-            >> XInputNodeValue->Data
-            >> YInputNodeValue->Data
-            >> ZInputNodeValue->Data
-            >> WInputNodeValue->Data;
+            >> XInputNodeValue->Value
+            >> YInputNodeValue->Value
+            >> ZInputNodeValue->Value
+            >> WInputNodeValue->Value;
         OnLoad();
         return in;
     }

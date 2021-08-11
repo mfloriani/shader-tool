@@ -8,16 +8,13 @@ private:
     
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<float>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> OutputNodeValue;
 
 public:
     explicit ScalarNode(Graph* graph)
         : UiNode(graph, UiNodeType::Scalar), OutputPin(INVALID_ID)
     {
-        OutputNodeValue = std::make_shared<NodeValue<float>>();
-        OutputNodeValue->TypeName = "float";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = 0.f;
+        OutputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -30,12 +27,12 @@ public:
         const Node outputNode(NodeType::Float, NodeDirection::Out);
         OutputPin = ParentGraph->CreateNode(outputNode);
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
@@ -64,7 +61,7 @@ public:
         ImNodes::BeginOutputAttribute(OutputPin);
 
         ImGui::PushItemWidth(node_width);
-        ImGui::DragFloat("##hidelabel", &OutputNodeValue->Data, 0.01f);
+        ImGui::DragFloat("##hidelabel", &OutputNodeValue->Value, 0.01f);
         ImGui::PopItemWidth();
 
         ImNodes::EndOutputAttribute();
@@ -75,14 +72,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << OutputNodeValue->Data;
+        out << " " << OutputPin << " " << OutputNodeValue->Value;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Scalar;
-        in >> Id >> OutputPin >> OutputNodeValue->Data;
+        in >> Id >> OutputPin >> OutputNodeValue->Value;
         OnLoad();
         return in;
     }

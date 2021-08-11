@@ -11,16 +11,13 @@ private:
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueInt> OutputNodeValue;
 
 public:
     explicit PrimitiveNode(Graph* graph, std::vector<int>& primitives)
         : UiNode(graph, UiNodeType::Primitive), _SelectedModel(0), OutputPin(INVALID_ID)
     {
-        OutputNodeValue = std::make_shared<NodeValue<int>>();
-        OutputNodeValue->TypeName = "int";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = INVALID_INDEX;
+        OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
 
         for (int p : primitives)
         {
@@ -41,24 +38,22 @@ public:
         OutputPin = ParentGraph->CreateNode(outputNode);
 
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-        
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
     {
-
+        
     }
     
     virtual void OnEval() override
     {
-
-        GetNodeValuePtr<int>(OutputPin)->Data = _PrimitiveNameIndexMap[_SelectedModel];
+        OutputNodeValue->Value = _PrimitiveNameIndexMap[_SelectedModel];
     }
 
     virtual void OnDelete() override

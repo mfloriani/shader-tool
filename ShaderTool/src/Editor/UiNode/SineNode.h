@@ -8,22 +8,15 @@ private:
 
 public:
     NodeId InputPin, OutputPin;
-    std::shared_ptr<NodeValue<float>> InputNodeValue;
-    std::shared_ptr<NodeValue<float>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> InputNodeValue;
+    std::shared_ptr<GraphNodeValueFloat> OutputNodeValue;
 
 public:
     explicit SineNode(Graph* graph)
         : UiNode(graph, UiNodeType::Sine), InputPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        InputNodeValue = std::make_shared<NodeValue<float>>();
-        InputNodeValue->TypeName = "float";
-        //InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
-        InputNodeValue->Data = 0.f;
-
-        OutputNodeValue = std::make_shared<NodeValue<float>>();
-        OutputNodeValue->TypeName = "float";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = 0.f;
+        InputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        OutputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -42,14 +35,14 @@ public:
         ParentGraph->CreateEdge(Id, InputPin, EdgeType::Internal);
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
 
-        StoreNodeValuePtr<float>(InputPin, InputNodeValue);
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<float>(InputPin, InputNodeValue);
-        StoreNodeValuePtr<float>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
@@ -59,8 +52,9 @@ public:
     
     virtual void OnEval() override
     {
-        CopyFromLinkedSourceNodeValue<float>(InputPin, 0.f);
-        OutputNodeValue->Data = std::abs(std::sin( InputNodeValue->Data ));
+        float defaultValue = 0.f;
+        CopyValueFromLinkedSource(InputPin, (void*)&defaultValue);
+        OutputNodeValue->Value = std::abs(std::sin( InputNodeValue->Value ));
     }
 
     virtual void OnDelete() override

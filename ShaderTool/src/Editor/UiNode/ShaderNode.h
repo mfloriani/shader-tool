@@ -17,9 +17,6 @@ public:
         : UiNode(graph, UiNodeType::Shader)
     {
         OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
-        //OutputNodeValue->TypeName = "int";
-        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        //OutputNodeValue->Data = INVALID_INDEX;
     }
 
     const std::string GetPath() const { return _Path; }
