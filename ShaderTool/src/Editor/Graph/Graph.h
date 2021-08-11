@@ -10,6 +10,7 @@
 #include <iostream>
 #include <unordered_map>
 
+
 #include "Node.h"
 #include "Edge.h"
 #include "IdMap.h"
@@ -20,7 +21,9 @@
 class Graph
 {
 public:
-    Graph() : _CurrentId(0) {}
+    Graph() : _CurrentId(0) 
+    {
+    }
 
     // Element access
 
@@ -57,7 +60,8 @@ public:
 
     void Reset();
     
-    
+    void StoreNodeValue(int nodeId, std::shared_ptr<GraphNodeValue> value);
+    std::shared_ptr<GraphNodeValue>& GetNodeValue(int nodeId);
 
     
     friend std::ostream& operator<<(std::ostream& out, const Graph& g)
@@ -75,6 +79,10 @@ public:
         for (auto it = edges.begin(); it != edges.end(); ++it)
             out << "e " << *it << "\n";
         
+        out << g._NodeValueStorage.size() << "\n";
+        for (auto& [nodeId, nodeValue] : g._NodeValueStorage)
+            out << "nv " << nodeId << " " << *nodeValue.get() << "\n";
+
         return out;
     }
 
@@ -115,12 +123,14 @@ private:
     int  InsertEdge(const int id, int from, int to, const EdgeType type);
 
 private:
-    int _CurrentId;
-    
+    int                     _CurrentId;    
     IdMap<Node>             _Nodes;         // These contains map to the node id
     IdMap<int>              _EdgesFromNode;
     IdMap<std::vector<int>> _Neighbors;    
     IdMap<Edge>             _Edges;        // This container maps to the edge id
+    
+    std::unordered_map<int, std::shared_ptr<GraphNodeValue>> _NodeValueStorage;
+    //std::unique_ptr<GraphNodeValueStorage> _NodeValueStorage;
 };
 
 template<typename Visitor>
@@ -179,4 +189,6 @@ private:
 private:
     std::unordered_map<NodeId, std::shared_ptr<NodeValue<T>>> _NodeValues;
 };
+
+
 

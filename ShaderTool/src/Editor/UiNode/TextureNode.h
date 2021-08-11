@@ -20,7 +20,7 @@ public:
     {
         OutputNodeValue = std::make_shared<NodeValue<int>>();
         OutputNodeValue->TypeName = "int";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = INVALID_INDEX;
     }
 

@@ -11,20 +11,17 @@ DrawNode::DrawNode(Graph* graph)
     : UiNode(graph, UiNodeType::Draw), ModelPin(INVALID_ID), ShaderPin(INVALID_ID), OutputPin(INVALID_ID)
 {
     EVENT_MANAGER.Attach(this);
-
-    ShaderNodeValue = std::make_shared<NodeValue<int>>();
-    ShaderNodeValue->TypeName = "int";
-    ShaderNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ShaderNodeValue->TypeName];
-    ShaderNodeValue->Data = INVALID_INDEX;
-
+    
+    ShaderNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
+    
     ModelNodeValue = std::make_shared<NodeValue<int>>();
     ModelNodeValue->TypeName = "int";
-    ModelNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ModelNodeValue->TypeName];
+    //ModelNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ModelNodeValue->TypeName];
     ModelNodeValue->Data = INVALID_INDEX;
 
     OutputNodeValue = std::make_shared<NodeValue<int>>();
     OutputNodeValue->TypeName = "int";
-    OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+    //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
     OutputNodeValue->Data = INVALID_INDEX;
 }
 
@@ -71,14 +68,14 @@ void DrawNode::OnCreate()
     ParentGraph->CreateEdge(Id, ModelPin, EdgeType::Internal);
     ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
 
-    StoreNodeValuePtr<int>(ShaderPin, ShaderNodeValue);
+    StoreNodeValue(ShaderPin, ShaderNodeValue);
     StoreNodeValuePtr<int>(ModelPin, ModelNodeValue);
     StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
 }
 
 void DrawNode::OnLoad()
 {
-    StoreNodeValuePtr<int>(ShaderPin, ShaderNodeValue);
+    StoreNodeValue(ShaderPin, ShaderNodeValue);
     StoreNodeValuePtr<int>(ModelPin, ModelNodeValue);
     StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
 }
@@ -178,8 +175,11 @@ void DrawNode::OnEval()
 {
     bool isReadyToRender = true;
 
-    if(!CopyFromLinkedSourceNodeValue<int>(ShaderPin, INVALID_INDEX))
+    if (!CopyValueFromLinkedSource(ShaderPin, (void*)&INVALID_INDEX))
         isReadyToRender = false;
+
+    //if(!CopyFromLinkedSourceNodeValue<int>(ShaderPin, INVALID_INDEX))
+    //    isReadyToRender = false;
 
     if (!CopyFromLinkedSourceNodeValue<int>(ModelPin, INVALID_INDEX))
         isReadyToRender = false;
@@ -285,7 +285,7 @@ void DrawNode::OnEval()
 
 }
 
-void DrawNode::CreateShaderBindings(Shader* shader)
+void DrawNode::CreateShaderBindingPins(Shader* shader)
 {
     // get the constant buffer vars expected by the current shader
     for (auto& var : shader->GetBindingVars())
@@ -373,14 +373,17 @@ void DrawNode::OnShaderLinkCreated(int from, int to)
 {
     LOG_TRACE("ShaderPin link created");
     
-    int shaderIndex = GetNodeValuePtr<int>(to)->Data;
+    //int shaderIndex = GetNodeValuePtr<int>(to)->Data;
+
+    auto nodevalue = ParentGraph->GetNodeValue(to);
+    int shaderIndex = *(int*)nodevalue->GetValue();
     auto shader = ShaderManager::Get().GetShader((size_t)shaderIndex);
     if (!shader)
     {
         LOG_ERROR("Failed to load shader binding vars! Invalid shader index {0}", shaderIndex);
         return;
     }
-    CreateShaderBindings(shader);
+    CreateShaderBindingPins(shader);
 }
 
 void DrawNode::OnShaderLinkDeleted(int from, int to)

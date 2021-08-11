@@ -22,22 +22,22 @@ public:
     {
         PositionNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
         PositionNodeValue->TypeName = "float3";
-        PositionNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[PositionNodeValue->TypeName];
+        //PositionNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[PositionNodeValue->TypeName];
         PositionNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
 
         RotationNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
         RotationNodeValue->TypeName = "float3";
-        RotationNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[RotationNodeValue->TypeName];
+        //RotationNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[RotationNodeValue->TypeName];
         RotationNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
 
         ScaleNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
         ScaleNodeValue->TypeName = "float3";
-        ScaleNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ScaleNodeValue->TypeName];
+        //ScaleNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ScaleNodeValue->TypeName];
         ScaleNodeValue->Data = DirectX::XMFLOAT3(1.f, 1.f, 1.f);
 
         OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT4X4>>();
         OutputNodeValue->TypeName = "float4x4";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = D3DUtil::Identity4x4();
     }
 

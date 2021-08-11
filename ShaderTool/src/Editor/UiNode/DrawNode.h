@@ -21,7 +21,8 @@ private:
     
 public:
     NodeId ModelPin, ShaderPin, OutputPin;
-    std::shared_ptr<NodeValue<int>> ShaderNodeValue;
+    
+    std::shared_ptr<GraphNodeValueInt> ShaderNodeValue;
     std::shared_ptr<NodeValue<int>> ModelNodeValue;
     std::shared_ptr<NodeValue<int>> OutputNodeValue;
 
@@ -41,7 +42,7 @@ public:
     virtual void OnUpdate() override;
     virtual void OnEval() override;
 
-    void CreateShaderBindings(Shader* shader);
+    void CreateShaderBindingPins(Shader* shader);
     void OnShaderLinkCreated(int from, int to);
     void OnShaderLinkDeleted(int from, int to);
         

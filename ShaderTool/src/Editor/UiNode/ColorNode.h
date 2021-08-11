@@ -17,7 +17,7 @@ public:
     {
         OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
         OutputNodeValue->TypeName = "float3";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
     }
 

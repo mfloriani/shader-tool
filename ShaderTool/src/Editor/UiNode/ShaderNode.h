@@ -10,16 +10,16 @@ private:
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+    std::shared_ptr<GraphNodeValueInt> OutputNodeValue;
 
 public:
     explicit ShaderNode(Graph* graph)
         : UiNode(graph, UiNodeType::Shader)
     {
-        OutputNodeValue = std::make_shared<NodeValue<int>>();
-        OutputNodeValue->TypeName = "int";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = INVALID_INDEX;
+        OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
+        //OutputNodeValue->TypeName = "int";
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Data = INVALID_INDEX;
     }
 
     const std::string GetPath() const { return _Path; }
@@ -31,7 +31,7 @@ public:
     {
         _Path = "INTERNAL_SHADER_PATH";
         _ShaderName = DEFAULT_SHADER;
-        OutputNodeValue->Data = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
+        OutputNodeValue->Value = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
 
         const Node idNode = Node(NodeType::Shader, NodeDirection::None);
         Id = ParentGraph->CreateNode(idNode);
@@ -40,8 +40,7 @@ public:
         OutputPin = ParentGraph->CreateNode(shaderIndexNodeOut);
 
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-        
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
@@ -57,8 +56,8 @@ public:
                 _ShaderName = DEFAULT_SHADER;
             }
         }
-        OutputNodeValue->Data = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        OutputNodeValue->Value = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override

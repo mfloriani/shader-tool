@@ -17,12 +17,12 @@ public:
     {
         InputNodeValue = std::make_shared<NodeValue<float>>();
         InputNodeValue->TypeName = "float";
-        InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
+        //InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
         InputNodeValue->Data = 0.f;
 
         OutputNodeValue = std::make_shared<NodeValue<float>>();
         OutputNodeValue->TypeName = "float";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = 0.f;
     }
 

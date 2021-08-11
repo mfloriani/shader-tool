@@ -26,22 +26,22 @@ public:
     {
         EyeInNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
         EyeInNodeValue->TypeName = "float3";
-        EyeInNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[EyeInNodeValue->TypeName];
+        //EyeInNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[EyeInNodeValue->TypeName];
         EyeInNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
 
         EyeOutNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
         EyeOutNodeValue->TypeName = "float3";
-        EyeOutNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[EyeOutNodeValue->TypeName];
+        //EyeOutNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[EyeOutNodeValue->TypeName];
         EyeOutNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
 
         ViewNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT4X4>>();
         ViewNodeValue->TypeName = "float4x4";
-        ViewNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ViewNodeValue->TypeName];
+        //ViewNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ViewNodeValue->TypeName];
         ViewNodeValue->Data = D3DUtil::Identity4x4();
 
         ProjectionNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT4X4>>();
         ProjectionNodeValue->TypeName = "float4x4";
-        ProjectionNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ViewNodeValue->TypeName];
+        //ProjectionNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ViewNodeValue->TypeName];
         ProjectionNodeValue->Data = D3DUtil::Identity4x4();
     }
 

@@ -20,6 +20,15 @@ void Graph::Reset()
     GraphNodeValues<XMFLOAT4X4>::Get().Reset();
 }
 
+void Graph::StoreNodeValue(int nodeId, std::shared_ptr<GraphNodeValue> value)
+{
+    _NodeValueStorage[nodeId] = value;
+}
+
+std::shared_ptr<GraphNodeValue>& Graph::GetNodeValue(int nodeId)
+{
+    return _NodeValueStorage[nodeId];
+}
 
 Node& Graph::GetNode(const int id)
 {

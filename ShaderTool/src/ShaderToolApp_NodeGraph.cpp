@@ -143,7 +143,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("DrawNode");
 						ImGui::Text("Id:      %i", drawNode->Id);
-						ImGui::Text("Shader:  %i %i", drawNode->ShaderPin, drawNode->ShaderNodeValue->Data);
+						ImGui::Text("Shader:  %i %i", drawNode->ShaderPin, drawNode->ShaderNodeValue->Value);
 						ImGui::Text("Model:   %i %i", drawNode->ModelPin, drawNode->ModelNodeValue->Data);
 
 						for (auto& bindPin : drawNode->ShaderBindingPins)
@@ -199,7 +199,7 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:     %i", shaderNode->Id);
 						ImGui::Text("Name:   %s", shaderNode->GetName().c_str());
 						ImGui::Text("Path:   %s", shaderNode->GetPath().c_str());
-						ImGui::Text("Output: %i %i", shaderNode->OutputPin, shaderNode->OutputNodeValue->Data);
+						ImGui::Text("Output: %i %i", shaderNode->OutputPin, shaderNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -673,7 +673,7 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 	int currentModel = drawNode->ModelNodeValue->Data;
 	if (currentModel == INVALID_INDEX) return; // no model linked
 
-	int currentShaderIndex = drawNode->ShaderNodeValue->Data;
+	int currentShaderIndex = drawNode->ShaderNodeValue->Value;
 	if (currentShaderIndex == INVALID_INDEX) return; // no shader linked
 
 	// recreate PSO when shader has changed

@@ -20,22 +20,22 @@ public:
     {
         XInputNodeValue = std::make_shared<NodeValue<float>>();
         XInputNodeValue->TypeName = "float";
-        XInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[XInputNodeValue->TypeName];
+        //XInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[XInputNodeValue->TypeName];
         XInputNodeValue->Data = 0.f;
 
         YInputNodeValue = std::make_shared<NodeValue<float>>();
         YInputNodeValue->TypeName = "float";
-        YInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[YInputNodeValue->TypeName];
+        //YInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[YInputNodeValue->TypeName];
         YInputNodeValue->Data = 0.f;
 
         ZInputNodeValue = std::make_shared<NodeValue<float>>();
         ZInputNodeValue->TypeName = "float";
-        ZInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ZInputNodeValue->TypeName];
+        //ZInputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[ZInputNodeValue->TypeName];
         ZInputNodeValue->Data = 0.f;
 
         OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
         OutputNodeValue->TypeName = "float3";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
     }
 

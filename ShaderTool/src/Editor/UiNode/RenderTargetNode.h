@@ -19,7 +19,7 @@ public:
         EVENT_MANAGER.Attach(this);
         InputNodeValue = std::make_shared<NodeValue<int>>();
         InputNodeValue->TypeName = "int";
-        InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
+        //InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
         InputNodeValue->Data = INVALID_INDEX;
     }
 

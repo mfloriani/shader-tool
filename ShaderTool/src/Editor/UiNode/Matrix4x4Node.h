@@ -18,12 +18,12 @@ public:
     {
         InputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT4X4>>();
         InputNodeValue->TypeName = "float4x4";
-        InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
+        //InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
         InputNodeValue->Data = D3DUtil::Identity4x4();
 
         OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT4X4>>();
         OutputNodeValue->TypeName = "float4x4";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = D3DUtil::Identity4x4();
     }
 

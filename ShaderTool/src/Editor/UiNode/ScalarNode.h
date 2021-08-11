@@ -16,7 +16,7 @@ public:
     {
         OutputNodeValue = std::make_shared<NodeValue<float>>();
         OutputNodeValue->TypeName = "float";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = 0.f;
     }
 

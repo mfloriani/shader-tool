@@ -72,6 +72,30 @@ public:
         return GraphNodeValues<T>::Get().GetNodeValuePtr(id);
     }
 
+    void StoreNodeValue(NodeId id, std::shared_ptr<GraphNodeValue> value)
+    {
+        ParentGraph->StoreNodeValue(id, value);
+    }
+
+    bool CopyValueFromLinkedSource(NodeId id, void* defaultValue)
+    {
+        size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(id);
+        if (numNeighbors == 1ull) // there is one link
+        {
+            NodeId neighborId = *ParentGraph->GetNeighbors(id).begin();
+            auto neighborValue = ParentGraph->GetNodeValue(neighborId)->GetValue();
+            ParentGraph->GetNodeValue(id)->SetValue( neighborValue );
+            return true;
+        }
+        
+        if (numNeighbors > 1ull)
+            LOG_ERROR("Multiple links [{0}] at node {1}", numNeighbors, id);
+
+        ParentGraph->GetNodeValue(id)->SetValue(defaultValue);
+
+        return false;
+    }
+
     template <typename T>
     bool CopyFromLinkedSourceNodeValue(NodeId id, T defaultValue)
     {

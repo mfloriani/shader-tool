@@ -19,17 +19,17 @@ public:
     {
         LeftNodeValue = std::make_shared<NodeValue<float>>();
         LeftNodeValue->TypeName = "float";
-        LeftNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[LeftNodeValue->TypeName];
+        //LeftNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[LeftNodeValue->TypeName];
         LeftNodeValue->Data = 0.f;
 
         RightNodeValue = std::make_shared<NodeValue<float>>();
         RightNodeValue->TypeName = "float";
-        RightNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[RightNodeValue->TypeName];
+        //RightNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[RightNodeValue->TypeName];
         RightNodeValue->Data = 0.f;
 
         OutputNodeValue = std::make_shared<NodeValue<float>>();
         OutputNodeValue->TypeName = "float";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
+        //OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
         OutputNodeValue->Data = 0.f;
     }
     
