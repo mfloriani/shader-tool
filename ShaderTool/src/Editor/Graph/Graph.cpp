@@ -13,6 +13,11 @@ void Graph::Reset()
     _NodeValueStorage.clear();
 }
 
+void Graph::DeleteNodeValue(int nodeId)
+{
+    _NodeValueStorage.erase(nodeId);
+}
+
 void Graph::StoreNodeValue(int nodeId, std::shared_ptr<GraphNodeValue> value)
 {
     _NodeValueStorage[nodeId] = value;
@@ -104,6 +109,7 @@ void Graph::EraseNode(const int id)
     _Nodes.erase(id);
     _EdgesFromNode.erase(id);
     _Neighbors.erase(id);
+    _NodeValueStorage.erase(id);
 }
 
 int Graph::CreateEdge(int from, int to, const EdgeType type)

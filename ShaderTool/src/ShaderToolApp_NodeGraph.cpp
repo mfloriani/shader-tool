@@ -1005,7 +1005,7 @@ void ShaderToolApp::HandleDeletedNodes()
 					if (_RootNodeId == node_id) _RootNodeId = INVALID_ID;
 
 					node->OnDelete();
-					_UINodeIdMap.erase(node->Id);
+					_UINodeIdMap.erase(node_id);
 					_UINodes.erase(it);
 					break;
 				}

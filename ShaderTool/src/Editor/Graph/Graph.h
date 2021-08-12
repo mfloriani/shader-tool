@@ -59,7 +59,8 @@ public:
     void SetCurrentId(int currentId) { _CurrentId = currentId; }
 
     void Reset();
-    
+
+    void DeleteNodeValue(int nodeId);
     void StoreNodeValue(int nodeId, std::shared_ptr<GraphNodeValue> value);
     std::shared_ptr<GraphNodeValue>& GetNodeValue(int nodeId);
 
@@ -128,9 +129,8 @@ private:
     IdMap<int>              _EdgesFromNode;
     IdMap<std::vector<int>> _Neighbors;    
     IdMap<Edge>             _Edges;        // This container maps to the edge id
-    
+
     std::unordered_map<int, std::shared_ptr<GraphNodeValue>> _NodeValueStorage;
-    //std::unique_ptr<GraphNodeValueStorage> _NodeValueStorage;
 };
 
 template<typename Visitor>
@@ -152,38 +152,3 @@ void dfs_traverse(const Graph& graph, const int start_node, Visitor visitor)
         }
     }
 }
-
-//template<class T>
-//class GraphNodeValues
-//{
-//public:
-//    static GraphNodeValues<T>& Get()
-//    {
-//        static GraphNodeValues<T> instance;
-//        return instance;
-//    }
-//    
-//    void StoreNodeValuePtr(int id, std::shared_ptr<NodeValue<T>> value)
-//    {
-//        _NodeValues[id] = value;
-//    }
-//
-//    std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(int id)
-//    {
-//        return _NodeValues[id];
-//    }
-//
-//    void Reset()
-//    {
-//        _NodeValues.clear();
-//    }
-//
-//private:
-//    GraphNodeValues() = default;
-//
-//private:
-//    std::unordered_map<NodeId, std::shared_ptr<NodeValue<T>>> _NodeValues;
-//};
-
-
-
