@@ -320,7 +320,7 @@ void DrawNode::OnShaderLinkCreated(int from, int to)
     
     auto nodevalue = ParentGraph->GetNodeValue(to);
     int shaderIndex = *(int*)nodevalue->GetValuePtr();
-    auto shader = ShaderManager::Get().GetShader((size_t)shaderIndex);
+    auto shader = ShaderManager::Get()->GetShader((size_t)shaderIndex);
     if (!shader)
     {
         LOG_ERROR("Failed to load shader binding vars! Invalid shader index {0}", shaderIndex);

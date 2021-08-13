@@ -46,7 +46,7 @@ bool ShaderToolApp::Init()
 
 void ShaderToolApp::InitNodeGraph()
 {
-	ShaderManager::Get().LoadShaderFromFile(DEFAULT_SHADER_FILE);
+	ShaderManager::Get()->LoadShaderFromFile(DEFAULT_SHADER_FILE);
 	CreateRenderTargetPSO(NOT_LINKED);
 }
 
@@ -121,7 +121,7 @@ void ShaderToolApp::BuildBackBufferPSO()
 	};
 
 	ComPtr<ID3DBlob> bytecode;
-	ShaderManager::Get().LoadBinaryShader(BACKBUFFER_VS, bytecode);
+	ShaderManager::Get()->LoadBinaryShader(BACKBUFFER_VS, bytecode);
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso;
 	ZeroMemory(&pso, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));

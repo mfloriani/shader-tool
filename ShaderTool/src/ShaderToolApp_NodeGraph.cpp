@@ -398,9 +398,9 @@ void DebugInfo(ShaderToolApp* app)
 
 	if(showShadersDebug)
 	{
-		auto& shaderMgr = ShaderManager::Get();
+		auto shaderMgr = ShaderManager::Get();
 		int i = 0;
-		for (auto& shader : shaderMgr.GetShaders())
+		for (auto& shader : shaderMgr->GetShaders())
 		{
 			ImGui::Begin("Shaders Debug", &showDfsDebug, overlay_window_flags);
 			ImGui::Text("Index: %i |", i); ImGui::SameLine();
@@ -602,7 +602,7 @@ void ShaderToolApp::EvaluateGraph()
 
 void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName)
 {
-	auto shader = ShaderManager::Get().GetShader(shaderName);
+	auto shader = ShaderManager::Get()->GetShader(shaderName);
 	auto& rootParameters = shader->GetRootParameters();
 	auto staticSamplers = D3DUtil::GetStaticSamplers();
 
@@ -648,7 +648,7 @@ void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 	};
 	D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
 
-	auto shaderName = shaderIndex == NOT_LINKED ? DEFAULT_SHADER : ShaderManager::Get().GetShaderName((size_t)shaderIndex);
+	auto shaderName = shaderIndex == NOT_LINKED ? DEFAULT_SHADER : ShaderManager::Get()->GetShaderName((size_t)shaderIndex);
 
 	BuildRenderTargetRootSignature(shaderName);
 
@@ -1072,15 +1072,17 @@ void ShaderToolApp::Save()
 {
 	// Save the internal imnodes state
 	ImNodes::SaveCurrentEditorStateToIniFile("node_graph.ini");
-
 	std::ofstream fout("node_graph.txt", std::ios_base::out | std::ios_base::trunc);
 
+	fout << "#shaders\n";
+	ShaderManager::Get()->Serialize(fout);
+	
 	fout << "#graph\n";
 	fout << _Graph;
+
 	fout << "#ui_nodes\n";
 	fout << _RootNodeId << "\n";
 	fout << _UINodes.size() << "\n";
-
 	for (auto& uin : _UINodes)
 		fout << *uin.get() << "\n";
 
@@ -1102,6 +1104,10 @@ void ShaderToolApp::Load()
 
 	Reset();
 
+	std::string label;
+	fin >> label;
+	ShaderManager::Get()->Deserialize(fin);
+
 	fin >> _Graph;
 
 	std::string comment;
@@ -1110,7 +1116,6 @@ void ShaderToolApp::Load()
 
 	std::string typeName;
 	int type;
-
 	for (int i = 0; i < numUiNodes; ++i)
 	{
 		fin >> typeName >> type;

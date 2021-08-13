@@ -116,6 +116,18 @@ public:
             //LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
         }
 
+        int numNodeValues;
+        in >> numNodeValues;
+
+        std::string nvLabel, nodeValueType, nodeValueType2;
+        int nodeId;
+
+        for (int i = 0; i < numNodeValues; ++i)
+        {
+            in >> eLabel >> nodeId >> nodeValueType >> nodeValueType2;
+            
+        }
+
         return in;
     }
     

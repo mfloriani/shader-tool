@@ -28,7 +28,7 @@ public:
     {
         _Path = "INTERNAL_SHADER_PATH";
         _ShaderName = DEFAULT_SHADER;
-        OutputNodeValue->Value = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
+        OutputNodeValue->Value = (int)ShaderManager::Get()->GetShaderIndex(_ShaderName);
 
         const Node idNode = Node(NodeType::Shader, NodeDirection::None);
         Id = ParentGraph->CreateNode(idNode);
@@ -42,10 +42,10 @@ public:
 
     virtual void OnLoad() override
     {
-        if (!ShaderManager::Get().HasShader(_ShaderName))
+        if (!ShaderManager::Get()->HasShader(_ShaderName))
         {
-            _ShaderName = ShaderManager::Get().LoadShaderFromFile(_Path);
-            if (!ShaderManager::Get().HasShader(_ShaderName))
+            _ShaderName = ShaderManager::Get()->LoadShaderFromFile(_Path);
+            if (!ShaderManager::Get()->HasShader(_ShaderName))
             {
                 LOG_ERROR("Failed to load shader {0}! The default shader was used instead.", _Path);
 
@@ -53,7 +53,7 @@ public:
                 _ShaderName = DEFAULT_SHADER;
             }
         }
-        OutputNodeValue->Value = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
+        OutputNodeValue->Value = (int)ShaderManager::Get()->GetShaderIndex(_ShaderName);
         ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
@@ -91,7 +91,7 @@ public:
             if (result == NFD_OKAY)
             {
                 _Path = std::string(outPath);
-                _ShaderName = ShaderManager::Get().LoadShaderFromFile(_Path);
+                _ShaderName = ShaderManager::Get()->LoadShaderFromFile(_Path);
                 OnLoad();
                 free(outPath);
             }

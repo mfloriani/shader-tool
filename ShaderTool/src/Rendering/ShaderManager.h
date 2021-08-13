@@ -16,27 +16,34 @@ enum class ShaderType
 class ShaderManager
 {
 public:
-	static ShaderManager& Get()
+	static ShaderManager* Get()
 	{
-		static ShaderManager instance;
-		return instance;
+		if (!_Instance)
+			_Instance = new ShaderManager();
+
+		return _Instance;
 	}
 
-	void LoadBinaryShader(const std::string& filename, Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
-	std::string LoadShaderFromFile(const std::string& filename);
+	void LoadBinaryShader(const std::string& path, Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
+	std::string LoadShaderFromFile(const std::string& path);
 
 	Shader* GetShader(size_t index);
 	Shader* GetShader(const std::string& name);
-	const std::vector<std::unique_ptr<Shader>>& GetShaders() const { return _Shaders; }
+	std::vector<std::unique_ptr<Shader>>& GetShaders() { return _Shaders; }
 	size_t GetShaderIndex(const std::string& name) { return _ShaderNameIndexMap[name]; }
 	const std::string& GetShaderName(size_t index) { return _ShaderIndexNameMap[index]; }
 	bool HasShader(const std::string& name) { return _ShaderNameIndexMap.find(name) != _ShaderNameIndexMap.end(); }
 
+	void Serialize(std::ostream& out);
+	void Deserialize(std::istream& in);
+
 private:
+	static ShaderManager* _Instance;
 	ShaderManager(){}
 
 private:
-	std::vector<std::unique_ptr<Shader>> _Shaders;
+	std::vector<std::unique_ptr<Shader>>    _Shaders;
 	std::unordered_map<std::string, size_t> _ShaderNameIndexMap;
 	std::unordered_map<size_t, std::string> _ShaderIndexNameMap;
+	std::unordered_map<size_t, std::string> _ShaderIndexPathMap;
 };
