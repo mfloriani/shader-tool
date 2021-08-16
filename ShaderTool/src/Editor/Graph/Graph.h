@@ -61,8 +61,8 @@ public:
     void Reset();
 
     void DeleteNodeValue(int nodeId);
-    void StoreNodeValue(int nodeId, std::shared_ptr<GraphNodeValue> value);
-    std::shared_ptr<GraphNodeValue>& GetNodeValue(int nodeId);
+    void StoreNodeValue(int nodeId, std::shared_ptr<NodeValue> value);
+    std::shared_ptr<NodeValue>& GetNodeValue(int nodeId);
 
     
     friend std::ostream& operator<<(std::ostream& out, const Graph& g)
@@ -119,13 +119,60 @@ public:
         int numNodeValues;
         in >> numNodeValues;
 
-        std::string nvLabel, nodeValueType, nodeValueType2;
-        int nodeId;
+        std::string nvLabel;
+        int nodeId, nodeType;
 
         for (int i = 0; i < numNodeValues; ++i)
         {
-            in >> eLabel >> nodeId >> nodeValueType >> nodeValueType2;
+            in >> eLabel >> nodeId >> nodeType;
             
+            switch ((NodeType)nodeType)
+            {
+            case NodeType::Int:
+            {
+                auto nodeValue = std::make_shared<NodeValueInt>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float2:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat2>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float3:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat3>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float4:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat4>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float4x4:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat4x4>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            default:
+                break;
+            }
         }
 
         return in;
@@ -142,7 +189,7 @@ private:
     IdMap<std::vector<int>> _Neighbors;    
     IdMap<Edge>             _Edges;        // This container maps to the edge id
 
-    std::unordered_map<int, std::shared_ptr<GraphNodeValue>> _NodeValueStorage;
+    std::unordered_map<int, std::shared_ptr<NodeValue>> _NodeValueStorage;
 };
 
 template<typename Visitor>

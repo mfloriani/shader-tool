@@ -9,17 +9,17 @@ private:
 public:
     NodeId LeftPin, RightPin, OutputPin;
 
-    std::shared_ptr<GraphNodeValueFloat> LeftNodeValue;
-    std::shared_ptr<GraphNodeValueFloat> RightNodeValue;
-    std::shared_ptr<GraphNodeValueFloat> OutputNodeValue;
+    std::shared_ptr<NodeValueFloat> LeftNodeValue;
+    std::shared_ptr<NodeValueFloat> RightNodeValue;
+    std::shared_ptr<NodeValueFloat> OutputNodeValue;
 
 public:
     explicit AddNode(Graph* graph)
         : UiNode(graph, UiNodeType::Add), LeftPin(INVALID_ID), RightPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        LeftNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        RightNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        OutputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        LeftNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        RightNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        OutputNodeValue = std::make_shared<NodeValueFloat>(0.f);
     }
     
     virtual void OnEvent(Event* e) override {}

@@ -14,7 +14,7 @@ void ShaderManager::LoadBinaryShader(const std::string& path, ComPtr<ID3DBlob>& 
 	ThrowIfFailed(D3DReadFileToBlob(AnsiToWString(path).c_str(), &bytecode));
 }
 
-void ShaderManager::Serialize(std::ostream& out)
+std::ostream& ShaderManager::Serialize(std::ostream& out)
 {
 	auto this_ = ShaderManager::Get();
 	auto& shaders = this_->GetShaders();
@@ -25,9 +25,10 @@ void ShaderManager::Serialize(std::ostream& out)
 		const std::string& path = this_->_ShaderIndexPathMap.find(i)->second;
 		out << i << " " << name << " " << path << "\n";
 	}
+	return out;
 }
 
-void ShaderManager::Deserialize(std::istream& in)
+std::istream& ShaderManager::Deserialize(std::istream& in)
 {
 	size_t numShaders;
 	in >> numShaders;
@@ -41,6 +42,7 @@ void ShaderManager::Deserialize(std::istream& in)
 		in >> index >> name >> path;
 		this_->LoadShaderFromFile(path);
 	}
+	return in;
 }
 
 std::string ShaderManager::LoadShaderFromFile(const std::string& path)

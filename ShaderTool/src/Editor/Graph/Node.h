@@ -1,13 +1,17 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include "Rendering/D3DUtil.h"
+
 #include <fstream>
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
 
+using NodeId = int;
+
 enum class NodeType
 {
+    None,
     Int,
     Float,
     Float2,
@@ -34,34 +38,6 @@ enum class NodeType
     Transform
 };
 
-//class NodeValueType
-//{
-//public:
-//    struct HlslType
-//    {
-//        int Id;
-//        std::string Name;
-//        int Num32BitValues;
-//    };
-//
-//public:
-//    NodeValueType()
-//    {
-//
-//    }
-//
-//    //Int,
-//    //Float,
-//    //Float2,
-//    //Float3,
-//    //Float4,
-//    //Float4x4,
-//
-//private:
-//    
-//    std::unordered_map<std::string, int> _NodeValueTypeMap;
-//};
-
 // None for uinode ids
 // In for nodes that receive data
 // Out for nodes that produce data
@@ -72,7 +48,57 @@ enum class NodeDirection
     Out
 };
 
-using NodeId = int;
+struct HlslType
+{
+    NodeType NodeType;
+    std::string TypeName;
+    UINT Num32BitValues;
+};
+
+class HlslNodeType
+{
+public:
+    static HlslNodeType* Get()
+    {
+        if (!_Instance)
+            _Instance = new HlslNodeType;
+        return _Instance;
+    }
+
+    HlslType GetHlslType(const std::string& typeName);
+    HlslType GetHlslType(NodeType nodeType);
+
+    UINT GetNum32BitValues(std::string typeName);
+    UINT GetNum32BitValues(NodeType nodeType);
+
+
+private:
+    static HlslNodeType* _Instance;
+    
+    std::vector<HlslType> _HlslTypes;
+    std::unordered_map<NodeType, size_t> _HlslTypeNodeMap;
+    std::unordered_map<std::string, size_t> _HlslTypeNameMap;
+
+    HlslNodeType() 
+    {
+        _HlslTypes = {
+            { NodeType::Int,      "int",       1 },
+            { NodeType::Float,    "float",     1 },
+            { NodeType::Float2,   "float2",    2 },
+            { NodeType::Float3,   "float3",    3 },
+            { NodeType::Float4,   "float4",    4 },
+            { NodeType::Float4x4, "float4x4", 16 }
+        };
+
+        // index map to search by NodeType
+        for (size_t i = 0ull; i < _HlslTypes.size(); ++i)
+            _HlslTypeNodeMap[ _HlslTypes[i].NodeType ] = i;
+
+        // index map to search by TypeName
+        for (size_t i = 0ull; i < _HlslTypes.size(); ++i)
+            _HlslTypeNameMap[ _HlslTypes[i].TypeName ] = i;
+    }
+};
 
 struct Node
 {
@@ -111,87 +137,45 @@ struct Node
     }
 };
 
-//template<class T>
-//struct NodeValue
-//{
-//    std::string TypeName{""};
-//    //UINT Num32BitValues{ 0 };
-//    T Data{};
-//};
-
-struct GraphNodeValue
+struct NodeValue
 {
-    GraphNodeValue(std::type_index t, const std::string& n)
-        : Type(t), TypeName(n)
-    {
-    }
+    NodeValue(NodeType t) : Type(t) {}
+
     virtual void SetValuePtr(void*) = 0;
     virtual void* GetValuePtr() = 0;
 
     virtual std::ostream& Serialize(std::ostream& out) const
     {
-        out << Type.name() << " " << TypeName;
+        out << (int)Type;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        // TODO: implement it using factory pattern
-        return in;
+        return in; // type is loaded before calling this method
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValue& n)
+    friend std::ostream& operator<<(std::ostream& out, const NodeValue& n)
     {
         return n.Serialize(out);
     }
 
-    friend std::istream& operator>>(std::istream& in, GraphNodeValue& n)
+    friend std::istream& operator>>(std::istream& in, NodeValue& n)
     {
         return n.Deserialize(in);
     }
 
 protected:
-    std::type_index Type;
-    std::string TypeName;
+    NodeType Type;
 };
 
-struct GraphNodeValueFloat : public GraphNodeValue
-{
-    float Value;
-
-public:
-    GraphNodeValueFloat(float initValue)
-        : GraphNodeValue(std::type_index(typeid(float)), "float"), Value(initValue)
-    {}
-
-    virtual void SetValuePtr(void* newValue) override { Value = *(float*)newValue; }
-    virtual void* GetValuePtr() override { return &Value; }
-
-    virtual std::ostream& Serialize(std::ostream& out) const override
-    {
-        GraphNodeValue::Serialize(out);
-        out << " " << Value;
-        return out;
-    }
-
-    virtual std::istream& Deserialize(std::istream& in) override
-    {
-        GraphNodeValue::Deserialize(in);
-        in >> Value;
-        return in;
-    }
-
-    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat& n) { return n.Serialize(out); }
-    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat& n) { return n.Deserialize(in); }
-};
-
-struct GraphNodeValueInt : public GraphNodeValue
+struct NodeValueInt : public NodeValue
 {
     int Value;
 
 public:
-    GraphNodeValueInt(int initValue)
-        : GraphNodeValue(std::type_index(typeid(int)), "int"), Value(initValue)
+    NodeValueInt(int initValue = 0)
+        : NodeValue(NodeType::Int), Value(initValue)
     {
     }
 
@@ -200,29 +184,59 @@ public:
 
     virtual std::ostream& Serialize(std::ostream& out) const override
     {
-        GraphNodeValue::Serialize(out);
+        NodeValue::Serialize(out);
         out << " " << Value;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        GraphNodeValue::Deserialize(in);
+        NodeValue::Deserialize(in);
         in >> Value;
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueInt& n) { return n.Serialize(out); }
-    friend std::istream& operator>>(std::istream& in, GraphNodeValueInt& n) { return n.Deserialize(in); }
+    friend std::ostream& operator<<(std::ostream& out, const NodeValueInt& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, NodeValueInt& n) { return n.Deserialize(in); }
 };
 
-struct GraphNodeValueFloat4x4 : public GraphNodeValue
+struct NodeValueFloat : public NodeValue
+{
+    float Value;
+
+public:
+    NodeValueFloat(float initValue = 0.f)
+        : NodeValue(NodeType::Float), Value(initValue)
+    {}
+
+    virtual void SetValuePtr(void* newValue) override { Value = *(float*)newValue; }
+    virtual void* GetValuePtr() override { return &Value; }
+
+    virtual std::ostream& Serialize(std::ostream& out) const override
+    {
+        NodeValue::Serialize(out);
+        out << " " << Value;
+        return out;
+    }
+
+    virtual std::istream& Deserialize(std::istream& in) override
+    {
+        NodeValue::Deserialize(in);
+        in >> Value;
+        return in;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const NodeValueFloat& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, NodeValueFloat& n) { return n.Deserialize(in); }
+};
+
+struct NodeValueFloat4x4 : public NodeValue
 {
     DirectX::XMFLOAT4X4 Value;
 
 public:
-    GraphNodeValueFloat4x4(DirectX::XMFLOAT4X4 initValue)
-        : GraphNodeValue(std::type_index(typeid(int)), "float4x4"), Value(initValue)
+    NodeValueFloat4x4(DirectX::XMFLOAT4X4 initValue = D3DUtil::Identity4x4())
+        : NodeValue(NodeType::Float4x4), Value(initValue)
     {
     }
 
@@ -231,31 +245,35 @@ public:
 
     virtual std::ostream& Serialize(std::ostream& out) const override
     {
-        GraphNodeValue::Serialize(out);
-        LOG_ERROR("GraphNodeValueFloat4x4::Serialize NOT IMPLEMENTED");
-        out << " " << "NOT IMPLEMENTED";
+        NodeValue::Serialize(out);
+        out << " " << Value._11 << " " << Value._12 << " " << Value._13 << " " << Value._14;
+        out << " " << Value._21 << " " << Value._22 << " " << Value._23 << " " << Value._24;
+        out << " " << Value._31 << " " << Value._32 << " " << Value._33 << " " << Value._34;
+        out << " " << Value._41 << " " << Value._42 << " " << Value._43 << " " << Value._44;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        GraphNodeValue::Deserialize(in);
-        LOG_ERROR("GraphNodeValueFloat4x4::Deserialize NOT IMPLEMENTED");
-        //in >> Value;
+        NodeValue::Deserialize(in);
+        in >> Value._11 >> Value._12 >> Value._13 >> Value._14;
+        in >> Value._21 >> Value._22 >> Value._23 >> Value._24;
+        in >> Value._31 >> Value._32 >> Value._33 >> Value._34;
+        in >> Value._41 >> Value._42 >> Value._43 >> Value._44;
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat4x4& n) { return n.Serialize(out); }
-    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat4x4& n) { return n.Deserialize(in); }
+    friend std::ostream& operator<<(std::ostream& out, const NodeValueFloat4x4& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, NodeValueFloat4x4& n) { return n.Deserialize(in); }
 };
 
-struct GraphNodeValueFloat4 : public GraphNodeValue
+struct NodeValueFloat4 : public NodeValue
 {
     DirectX::XMFLOAT4 Value;
 
 public:
-    GraphNodeValueFloat4(DirectX::XMFLOAT4 initValue)
-        : GraphNodeValue(std::type_index(typeid(int)), "float4"), Value(initValue)
+    NodeValueFloat4(DirectX::XMFLOAT4 initValue = DirectX::XMFLOAT4(0.f, 0.f, 0.f, 0.f))
+        : NodeValue(NodeType::Float4), Value(initValue)
     {
     }
 
@@ -264,31 +282,29 @@ public:
 
     virtual std::ostream& Serialize(std::ostream& out) const override
     {
-        GraphNodeValue::Serialize(out);
-        LOG_ERROR("GraphNodeValueFloat4::Serialize NOT IMPLEMENTED");
-        out << " " << "NOT IMPLEMENTED";
+        NodeValue::Serialize(out);
+        out << " " << Value.x << " " << Value.y << " " << Value.z << " " << Value.w;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        GraphNodeValue::Deserialize(in);
-        LOG_ERROR("GraphNodeValueFloat4::Deserialize NOT IMPLEMENTED");
-        //in >> Value;
+        NodeValue::Deserialize(in);
+        in >> Value.x >> Value.y >> Value.z >> Value.w;
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat4& n) { return n.Serialize(out); }
-    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat4& n) { return n.Deserialize(in); }
+    friend std::ostream& operator<<(std::ostream& out, const NodeValueFloat4& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, NodeValueFloat4& n) { return n.Deserialize(in); }
 };
 
-struct GraphNodeValueFloat3 : public GraphNodeValue
+struct NodeValueFloat3 : public NodeValue
 {
     DirectX::XMFLOAT3 Value;
 
 public:
-    GraphNodeValueFloat3(DirectX::XMFLOAT3 initValue)
-        : GraphNodeValue(std::type_index(typeid(int)), "float3"), Value(initValue)
+    NodeValueFloat3(DirectX::XMFLOAT3 initValue = DirectX::XMFLOAT3(0.f, 0.f, 0.f))
+        : NodeValue(NodeType::Float3), Value(initValue)
     {
     }
 
@@ -297,31 +313,29 @@ public:
 
     virtual std::ostream& Serialize(std::ostream& out) const override
     {
-        GraphNodeValue::Serialize(out);
-        LOG_ERROR("GraphNodeValueFloat3::Serialize NOT IMPLEMENTED");
-        out << " " << "NOT IMPLEMENTED";
+        NodeValue::Serialize(out);
+        out << " " << Value.x << " " << Value.y << " " << Value.z;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        GraphNodeValue::Deserialize(in);
-        LOG_ERROR("GraphNodeValueFloat3::Deserialize NOT IMPLEMENTED");
-        //in >> Value;
+        NodeValue::Deserialize(in);
+        in >> Value.x >> Value.y >> Value.z;
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat3& n) { return n.Serialize(out); }
-    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat3& n) { return n.Deserialize(in); }
+    friend std::ostream& operator<<(std::ostream& out, const NodeValueFloat3& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, NodeValueFloat3& n) { return n.Deserialize(in); }
 };
 
-struct GraphNodeValueFloat2 : public GraphNodeValue
+struct NodeValueFloat2 : public NodeValue
 {
     DirectX::XMFLOAT2 Value;
 
 public:
-    GraphNodeValueFloat2(DirectX::XMFLOAT2 initValue)
-        : GraphNodeValue(std::type_index(typeid(int)), "float2"), Value(initValue)
+    NodeValueFloat2(DirectX::XMFLOAT2 initValue = DirectX::XMFLOAT2(0.f, 0.f))
+        : NodeValue(NodeType::Float2), Value(initValue)
     {
     }
 
@@ -330,20 +344,18 @@ public:
 
     virtual std::ostream& Serialize(std::ostream& out) const override
     {
-        GraphNodeValue::Serialize(out);
-        LOG_ERROR("GraphNodeValueFloat2::Serialize NOT IMPLEMENTED");
-        out << " " << "NOT IMPLEMENTED";
+        NodeValue::Serialize(out);
+        out << " " << Value.x << " " << Value.y;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        GraphNodeValue::Deserialize(in);
-        LOG_ERROR("GraphNodeValueFloat2::Deserialize NOT IMPLEMENTED");
-        //in >> Value;
+        NodeValue::Deserialize(in);
+        in >> Value.x >> Value.y;
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, const GraphNodeValueFloat2& n) { return n.Serialize(out); }
-    friend std::istream& operator>>(std::istream& in, GraphNodeValueFloat2& n) { return n.Deserialize(in); }
+    friend std::ostream& operator<<(std::ostream& out, const NodeValueFloat2& n) { return n.Serialize(out); }
+    friend std::istream& operator>>(std::istream& in, NodeValueFloat2& n) { return n.Deserialize(in); }
 };

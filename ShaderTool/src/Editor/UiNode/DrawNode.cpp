@@ -12,9 +12,9 @@ DrawNode::DrawNode(Graph* graph)
 {
     EVENT_MANAGER.Attach(this);
     
-    ShaderNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
-    ModelNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
-    OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
+    ShaderNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
+    ModelNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
+    OutputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
 }
 
 DrawNode::~DrawNode()
@@ -216,11 +216,23 @@ void DrawNode::OnEval()
     OutputNodeValue->Value = INVALID_INDEX;
     if(isReadyToRender) 
         OutputNodeValue->Value = 1; // only set valid index when all pins are linked
-
 }
 
-void DrawNode::CreateShaderBindingPins(Shader* shader)
+void DrawNode::CreateShaderBindingPins(int shaderIndex)
 {
+    if (shaderIndex == INVALID_INDEX)
+    {
+        LOG_WARN("Invalid shader index{0}", shaderIndex);
+        return;
+    }
+
+    Shader* shader = ShaderManager::Get()->GetShader((size_t)shaderIndex);
+    if (!shader)
+    {
+        LOG_ERROR("Failed to load shader binding vars! Invalid shader index {0}", shaderIndex);
+        return;
+    }
+
     // get the constant buffer vars expected by the current shader
     for (auto& var : shader->GetBindingVars())
     {
@@ -234,7 +246,7 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
 
-            auto float4x4Value = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
+            auto float4x4Value = std::make_shared<NodeValueFloat4x4>(D3DUtil::Identity4x4());
             ParentGraph->StoreNodeValue(pinId, float4x4Value);
 
             bindPin.Data = &float4x4Value->Value;
@@ -246,7 +258,7 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
 
-            auto float4Value = std::make_shared<GraphNodeValueFloat4>(DirectX::XMFLOAT4());
+            auto float4Value = std::make_shared<NodeValueFloat4>(DirectX::XMFLOAT4());
             ParentGraph->StoreNodeValue(pinId, float4Value);
 
             bindPin.Data = &float4Value->Value;
@@ -258,7 +270,7 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
 
-            auto float3Value = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3());
+            auto float3Value = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3());
             ParentGraph->StoreNodeValue(pinId, float3Value);
                         
             bindPin.Data = &float3Value->Value;
@@ -270,7 +282,7 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
 
-            auto float2Value = std::make_shared<GraphNodeValueFloat2>(DirectX::XMFLOAT2());
+            auto float2Value = std::make_shared<NodeValueFloat2>(DirectX::XMFLOAT2());
             ParentGraph->StoreNodeValue(pinId, float2Value);
 
             bindPin.Data = &float2Value->Value;
@@ -282,7 +294,7 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
 
-            auto floatValue = std::make_shared<GraphNodeValueFloat>(0.f);
+            auto floatValue = std::make_shared<NodeValueFloat>(0.f);
             ParentGraph->StoreNodeValue(pinId, floatValue);
 
             bindPin.Data = &floatValue->Value;
@@ -294,7 +306,7 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
             pinId = ParentGraph->CreateNode(link);
             ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
 
-            auto intValue = std::make_shared<GraphNodeValueInt>(0);
+            auto intValue = std::make_shared<NodeValueInt>(0);
             ParentGraph->StoreNodeValue(pinId, intValue);
 
             bindPin.Data = &intValue->Value;
@@ -317,16 +329,9 @@ void DrawNode::CreateShaderBindingPins(Shader* shader)
 void DrawNode::OnShaderLinkCreated(int from, int to)
 {
     LOG_TRACE("ShaderPin link created");
-    
     auto nodevalue = ParentGraph->GetNodeValue(to);
     int shaderIndex = *(int*)nodevalue->GetValuePtr();
-    auto shader = ShaderManager::Get()->GetShader((size_t)shaderIndex);
-    if (!shader)
-    {
-        LOG_ERROR("Failed to load shader binding vars! Invalid shader index {0}", shaderIndex);
-        return;
-    }
-    CreateShaderBindingPins(shader);
+    CreateShaderBindingPins(shaderIndex);
 }
 
 void DrawNode::OnShaderLinkDeleted(int from, int to)

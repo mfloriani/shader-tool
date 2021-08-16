@@ -10,20 +10,20 @@ private:
 
 public:
     NodeId PositionPin, RotationPin, ScalePin, OutputPin;
-    std::shared_ptr<GraphNodeValueFloat3> PositionNodeValue;
-    std::shared_ptr<GraphNodeValueFloat3> RotationNodeValue;
-    std::shared_ptr<GraphNodeValueFloat3> ScaleNodeValue;
-    std::shared_ptr<GraphNodeValueFloat4x4> OutputNodeValue;
+    std::shared_ptr<NodeValueFloat3> PositionNodeValue;
+    std::shared_ptr<NodeValueFloat3> RotationNodeValue;
+    std::shared_ptr<NodeValueFloat3> ScaleNodeValue;
+    std::shared_ptr<NodeValueFloat4x4> OutputNodeValue;
 
 public:
     explicit TransformNode(Graph* graph)
         : UiNode(graph, UiNodeType::Transform), 
         PositionPin(INVALID_ID), RotationPin(INVALID_ID), ScalePin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        PositionNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
-        RotationNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
-        ScaleNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(1.f, 1.f, 1.f));
-        OutputNodeValue = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
+        PositionNodeValue = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
+        RotationNodeValue = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
+        ScaleNodeValue = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3(1.f, 1.f, 1.f));
+        OutputNodeValue = std::make_shared<NodeValueFloat4x4>(D3DUtil::Identity4x4());
     }
 
     virtual void OnEvent(Event* e) override {}

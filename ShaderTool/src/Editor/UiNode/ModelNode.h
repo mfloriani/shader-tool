@@ -11,13 +11,13 @@ private:
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<GraphNodeValueInt> OutputNodeValue;
+    std::shared_ptr<NodeValueInt> OutputNodeValue;
 
 public:
     explicit ModelNode(Graph* graph)
         : UiNode(graph, UiNodeType::Model), _Path(""), _ModelIndex(INVALID_INDEX)
     {
-        OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
+        OutputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
     }
 
     const std::string GetPath() const { return _Path; }

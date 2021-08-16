@@ -8,15 +8,15 @@ private:
 
 public:
     NodeId InputPin, OutputPin;
-    std::shared_ptr<GraphNodeValueFloat> InputNodeValue;
-    std::shared_ptr<GraphNodeValueFloat> OutputNodeValue;
+    std::shared_ptr<NodeValueFloat> InputNodeValue;
+    std::shared_ptr<NodeValueFloat> OutputNodeValue;
 
 public:
     explicit SineNode(Graph* graph)
         : UiNode(graph, UiNodeType::Sine), InputPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        InputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        OutputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
+        InputNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        OutputNodeValue = std::make_shared<NodeValueFloat>(0.f);
     }
 
     virtual void OnEvent(Event* e) override {}

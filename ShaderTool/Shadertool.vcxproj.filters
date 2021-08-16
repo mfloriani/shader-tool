@@ -278,6 +278,7 @@
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\Rendering\DDSTextureLoader.cpp" />
+    <ClCompile Include="src\Editor\Graph\Node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">

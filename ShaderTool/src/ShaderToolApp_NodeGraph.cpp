@@ -43,6 +43,7 @@ ImGuiWindowFlags overlay_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWin
 
 static bool showDfsDebug = false;
 static bool showShadersDebug = false;
+static bool showNodeValueDebug = false;
 std::stack<int> postOrderClone; // TODO: debug only
 
 void ShowHoverDebugInfo(std::function<void(void)> info)
@@ -363,16 +364,6 @@ void DebugInfo(ShaderToolApp* app)
 		}
 	}
 
-	//if (ImGui::IsKeyReleased(VK_RETURN))
-	//{
-	//	auto& shaderMgr = ShaderManager::Get();
-
-	//	for (auto& shader : shaderMgr.GetShaders())
-	//	{
-	//		shader->PrintDebugInfo();
-	//	}
-	//}
-
 	if (ImGui::IsKeyReleased(VK_F1))
 		showDfsDebug = !showDfsDebug;
 
@@ -386,7 +377,6 @@ void DebugInfo(ShaderToolApp* app)
 
 			ImGui::Begin("DFS Debug", &showDfsDebug, overlay_window_flags);
 			ImGui::Text("Id: %i |", id); ImGui::SameLine();
-			//ImGui::Text("Val: %.5f |", node.Value); ImGui::SameLine();
 			ImGui::Text("Type: %i |", node.Type); ImGui::SameLine();
 			ImGui::Text("TName: %s |", node.TypeName.c_str());
 			ImGui::End();
@@ -410,42 +400,55 @@ void DebugInfo(ShaderToolApp* app)
 		}
 	}
 
+	if (ImGui::IsKeyReleased(VK_F3))
+		showNodeValueDebug = !showNodeValueDebug;
 
-#if 0
-	if (ImGui::IsKeyReleased(VK_RETURN))
+	if (showNodeValueDebug)
 	{
-		LOG_TRACE("###########################");
-		auto& ids = _Graph.GetNodes();
-		LOG_TRACE("Node ids:");
-		for (auto id : ids)
-			LOG_TRACE("  {0}", id);
-
-		auto edges = _Graph.GetEdges();
-		LOG_TRACE("Edge ids:");
-		for (auto it = edges.begin(); it != edges.end(); ++it)
-			LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
-
+		auto& nodes = app->GetGraph().GetNodes();
+		for (auto n : nodes)
 		{
-			auto edgesFromNodeIds = _Graph.GetEdgesFromNodeIds();
-			auto edgesFromNode = _Graph.GetEdgesFromNode();
-			LOG_TRACE("EdgesFromNode:");
-			int i = 0;
-			for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
-				LOG_TRACE("  {0} {1}", edgesFromNodeIds[i], *it);
-		}
-
-		{
-			auto neighborIds = _Graph.GetAllNeighborIds();
-			auto neighbors = _Graph.GetAllNeighbors();
-			LOG_TRACE("Neighbors:");
-			int i = 0;
-			for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
-				for (auto neighborId : *it)
-					LOG_TRACE("  {0} {1}", neighborIds[i], neighborId);
+			ImGui::Begin("NodeValues Debug", &showDfsDebug, overlay_window_flags);
+			ImGui::Text("%i |", n); //ImGui::SameLine();
+			ImGui::End();
 		}
 
 	}
-#endif
+
+	//if (ImGui::IsKeyReleased(VK_RETURN))
+	//{
+	//	LOG_TRACE("###########################");
+	//	auto& ids = _Graph.GetNodes();
+	//	LOG_TRACE("Node ids:");
+	//	for (auto id : ids)
+	//		LOG_TRACE("  {0}", id);
+
+	//	auto edges = _Graph.GetEdges();
+	//	LOG_TRACE("Edge ids:");
+	//	for (auto it = edges.begin(); it != edges.end(); ++it)
+	//		LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
+
+	//	{
+	//		auto edgesFromNodeIds = _Graph.GetEdgesFromNodeIds();
+	//		auto edgesFromNode = _Graph.GetEdgesFromNode();
+	//		LOG_TRACE("EdgesFromNode:");
+	//		int i = 0;
+	//		for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
+	//			LOG_TRACE("  {0} {1}", edgesFromNodeIds[i], *it);
+	//	}
+
+	//	{
+	//		auto neighborIds = _Graph.GetAllNeighborIds();
+	//		auto neighbors = _Graph.GetAllNeighbors();
+	//		LOG_TRACE("Neighbors:");
+	//		int i = 0;
+	//		for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+	//			for (auto neighborId : *it)
+	//				LOG_TRACE("  {0} {1}", neighborIds[i], neighborId);
+	//	}
+
+	//}
+
 }
 
 void ShaderToolApp::EvaluateGraph()
@@ -773,19 +776,19 @@ void ShaderToolApp::HandleNewNodes()
 		{
 			const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
-			if (ImGui::MenuItem("Draw") && _RootNodeId == INVALID_ID)
+			if (ImGui::MenuItem("Render Target"))
 			{
-				auto node = std::make_unique<DrawNode>(&_Graph);
+				auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
 				node->OnCreate();
-				_RootNodeId = node->Id;
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-			else if (ImGui::MenuItem("Render Target"))
+			else if (ImGui::MenuItem("Draw") && _RootNodeId == INVALID_ID)
 			{
-				auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
+				auto node = std::make_unique<DrawNode>(&_Graph);
 				node->OnCreate();
+				_RootNodeId = node->Id;
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));

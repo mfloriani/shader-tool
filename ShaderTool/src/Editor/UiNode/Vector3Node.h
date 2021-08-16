@@ -9,20 +9,20 @@ private:
 public:
     NodeId XInputPin, YInputPin, ZInputPin, OutputPin;
 
-    std::shared_ptr<GraphNodeValueFloat> XInputNodeValue;
-    std::shared_ptr<GraphNodeValueFloat> YInputNodeValue;
-    std::shared_ptr<GraphNodeValueFloat> ZInputNodeValue;
-    std::shared_ptr<GraphNodeValueFloat3> OutputNodeValue;
+    std::shared_ptr<NodeValueFloat> XInputNodeValue;
+    std::shared_ptr<NodeValueFloat> YInputNodeValue;
+    std::shared_ptr<NodeValueFloat> ZInputNodeValue;
+    std::shared_ptr<NodeValueFloat3> OutputNodeValue;
 
 public:
     explicit Vector3Node(Graph* graph)
         : UiNode(graph, UiNodeType::Vector3),
         XInputPin(INVALID_ID), YInputPin(INVALID_ID), ZInputPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        XInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        YInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        ZInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        OutputNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
+        XInputNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        YInputNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        ZInputNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        OutputNodeValue = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
     }
 
     virtual void OnEvent(Event* e) override {}

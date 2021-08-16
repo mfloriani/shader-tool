@@ -9,15 +9,15 @@ private:
 
 public:
     NodeId InputPin, OutputPin;
-    std::shared_ptr<GraphNodeValueFloat4x4> InputNodeValue;
-    std::shared_ptr<GraphNodeValueFloat4x4> OutputNodeValue;
+    std::shared_ptr<NodeValueFloat4x4> InputNodeValue;
+    std::shared_ptr<NodeValueFloat4x4> OutputNodeValue;
 
 public:
     explicit Matrix4x4Node(Graph* graph)
         : UiNode(graph, UiNodeType::Matrix4x4), InputPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        InputNodeValue = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
-        OutputNodeValue = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
+        InputNodeValue = std::make_shared<NodeValueFloat4x4>(D3DUtil::Identity4x4());
+        OutputNodeValue = std::make_shared<NodeValueFloat4x4>(D3DUtil::Identity4x4());
     }
 
     virtual void OnEvent(Event* e) override {}

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Shader.h"
+#include "Editor/Graph/Node.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace D3DUtil;
@@ -70,14 +71,12 @@ void Shader::BuildRootParameters()
 			{
 				for (auto var : it->second)
 				{
-					auto it = D3DUtil::HlslTypeMap.find(var.Type.Name);
-					if (it == D3DUtil::HlslTypeMap.end())
+					UINT num32BitValues = HlslNodeType::Get()->GetNum32BitValues(var.Type.Name);
+					if (num32BitValues == 0)
 					{
 						LOG_CRITICAL("DirectXMath value for {0} is not mapped", var.Type.Name);
 						throw std::runtime_error("DirectXMath value for "+ var.Type.Name +" is not mapped");
 					}
-
-					UINT num32BitValues = it->second;
 					LOG_TRACE("  var {0} {1} {2}", var.Name, var.Type.Name, num32BitValues);
 
 					ShaderBind shaderBind;

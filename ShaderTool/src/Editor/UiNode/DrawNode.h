@@ -10,9 +10,9 @@ const static int DEFAULT_SHADER_INDEX = 0;
 
 struct ShaderBindingPin
 {
-    NodeId PinId;
+    NodeId PinId{ INVALID_INDEX };
     ShaderBind Bind;
-    void* Data;
+    void* Data{ nullptr };
 };
 
 struct DrawNode : UiNode
@@ -22,9 +22,9 @@ private:
 public:
     NodeId ModelPin, ShaderPin, OutputPin;
     
-    std::shared_ptr<GraphNodeValueInt> ShaderNodeValue;
-    std::shared_ptr<GraphNodeValueInt> ModelNodeValue;
-    std::shared_ptr<GraphNodeValueInt> OutputNodeValue;
+    std::shared_ptr<NodeValueInt> ShaderNodeValue;
+    std::shared_ptr<NodeValueInt> ModelNodeValue;
+    std::shared_ptr<NodeValueInt> OutputNodeValue;
 
     std::vector<ShaderBindingPin>           ShaderBindingPins;
     std::unordered_map<std::string, size_t> ShaderBindingPinNameMap;
@@ -42,19 +42,19 @@ public:
     virtual void OnUpdate() override;
     virtual void OnEval() override;
 
-    void CreateShaderBindingPins(Shader* shader);
+    void CreateShaderBindingPins(int shaderIndex);
     void OnShaderLinkCreated(int from, int to);
     void OnShaderLinkDeleted(int from, int to);
-        
+    
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << ModelPin << " " << ShaderPin << " " << OutputPin;
-        out << " " << ShaderBindingPins.size();
-        
+        out << " " << ModelPin << " " << ShaderPin << " " << OutputPin << " " << ShaderBindingPins.size();
         for (auto& bindPin : ShaderBindingPins)
-            out << " " << bindPin.PinId << " " << bindPin.Bind.VarName << " " << bindPin.Bind.VarTypeName;
-
+        {
+            out << "\n";
+            out << bindPin.PinId << " " << bindPin.Bind;
+        }
         return out;
     }
 
@@ -69,10 +69,11 @@ public:
             for (int i = 0; i < numShaderBindings; ++i)
             {
                 ShaderBindingPin pin;
-                in >> pin.PinId >> pin.Bind.VarName >> pin.Bind.VarTypeName;
+                in >> pin.PinId >> pin.Bind;
                 ShaderBindingPins.push_back(pin);
-                ShaderBindingPinNameMap[pin.Bind.VarName] = ShaderBindingPins.size() - 1;
-                ShaderBindingPinIdMap[pin.PinId] = ShaderBindingPins.size() - 1;
+                size_t index = ShaderBindingPins.size() - 1ull;
+                ShaderBindingPinNameMap[pin.Bind.VarName] = index;
+                ShaderBindingPinIdMap[pin.PinId] = index;
             }
         }
         OnLoad();

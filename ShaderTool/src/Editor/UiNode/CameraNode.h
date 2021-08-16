@@ -15,20 +15,20 @@ private:
 public:
     NodeId EyeInPin, EyeOutPin, ViewPin, ProjectionPin;
     
-    std::shared_ptr<GraphNodeValueFloat3>   EyeInNodeValue;
-    std::shared_ptr<GraphNodeValueFloat3>   EyeOutNodeValue;
-    std::shared_ptr<GraphNodeValueFloat4x4> ViewNodeValue;
-    std::shared_ptr<GraphNodeValueFloat4x4> ProjectionNodeValue;
+    std::shared_ptr<NodeValueFloat3>   EyeInNodeValue;
+    std::shared_ptr<NodeValueFloat3>   EyeOutNodeValue;
+    std::shared_ptr<NodeValueFloat4x4> ViewNodeValue;
+    std::shared_ptr<NodeValueFloat4x4> ProjectionNodeValue;
 
 public:
     explicit CameraNode(Graph* graph)
         : UiNode(graph, UiNodeType::Camera), 
         EyeInPin(INVALID_ID), EyeOutPin(INVALID_ID), ViewPin(INVALID_ID), ProjectionPin(INVALID_ID)
     {
-        EyeInNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
-        EyeOutNodeValue = std::make_shared<GraphNodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
-        ViewNodeValue = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
-        ProjectionNodeValue = std::make_shared<GraphNodeValueFloat4x4>(D3DUtil::Identity4x4());
+        EyeInNodeValue = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
+        EyeOutNodeValue = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
+        ViewNodeValue = std::make_shared<NodeValueFloat4x4>(D3DUtil::Identity4x4());
+        ProjectionNodeValue = std::make_shared<NodeValueFloat4x4>(D3DUtil::Identity4x4());
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -53,7 +53,6 @@ public:
         ParentGraph->CreateEdge(ViewPin, Id, EdgeType::Internal);
         ParentGraph->CreateEdge(ProjectionPin, Id, EdgeType::Internal);
 
-        
         ParentGraph->StoreNodeValue(EyeInPin, EyeInNodeValue);
         ParentGraph->StoreNodeValue(EyeOutPin, EyeOutNodeValue);
         ParentGraph->StoreNodeValue(ViewPin, ViewNodeValue);
@@ -95,6 +94,8 @@ public:
 
     virtual void OnDelete() override
     {
+        ParentGraph->EraseNode(EyeInPin);
+        ParentGraph->EraseNode(EyeOutPin);
         ParentGraph->EraseNode(ViewPin);
         ParentGraph->EraseNode(ProjectionPin);
     }
@@ -147,14 +148,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << ViewPin << " " << ProjectionPin;
+        out << " " << EyeInPin << " " << EyeOutPin << " " << ViewPin << " " << ProjectionPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Camera;
-        in >> Id >> ViewPin >> ProjectionPin;
+        in >> Id >> EyeInPin >> EyeOutPin >> ViewPin >> ProjectionPin;
         OnLoad();
         return in;
     }

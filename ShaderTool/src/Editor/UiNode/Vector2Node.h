@@ -9,18 +9,18 @@ private:
 public:
     NodeId XInputPin, YInputPin, OutputPin;
 
-    std::shared_ptr<GraphNodeValueFloat> XInputNodeValue;
-    std::shared_ptr<GraphNodeValueFloat> YInputNodeValue;
-    std::shared_ptr<GraphNodeValueFloat2> OutputNodeValue;
+    std::shared_ptr<NodeValueFloat> XInputNodeValue;
+    std::shared_ptr<NodeValueFloat> YInputNodeValue;
+    std::shared_ptr<NodeValueFloat2> OutputNodeValue;
 
 public:
     explicit Vector2Node(Graph* graph)
         : UiNode(graph, UiNodeType::Vector2),
         XInputPin(INVALID_ID), YInputPin(INVALID_ID), OutputPin(INVALID_ID)
     {
-        XInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        YInputNodeValue = std::make_shared<GraphNodeValueFloat>(0.f);
-        OutputNodeValue = std::make_shared<GraphNodeValueFloat2>(DirectX::XMFLOAT2(0.f, 0.f));
+        XInputNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        YInputNodeValue = std::make_shared<NodeValueFloat>(0.f);
+        OutputNodeValue = std::make_shared<NodeValueFloat2>(DirectX::XMFLOAT2(0.f, 0.f));
     }
 
     virtual void OnEvent(Event* e) override {}

@@ -10,14 +10,14 @@ private:
 
 public:
     NodeId InputPin;
-    std::shared_ptr<GraphNodeValueInt> InputNodeValue;
+    std::shared_ptr<NodeValueInt> InputNodeValue;
 
 public:
     explicit RenderTargetNode(Graph* graph, RenderTexture* renderTexture)
         : UiNode(graph, UiNodeType::RenderTarget), _RenderTex(renderTexture), InputPin(INVALID_ID), _IsLinkedToDrawNode(false)
     {
         EVENT_MANAGER.Attach(this);
-        InputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
+        InputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
     }
 
     virtual ~RenderTargetNode()
@@ -71,6 +71,8 @@ public:
     virtual void OnLoad() override
     {
         ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
+        if (ParentGraph->GetNumEdgesFromNode(InputPin) > 0ull)
+            _IsLinkedToDrawNode = true;
     }
 
     virtual void OnUpdate() override

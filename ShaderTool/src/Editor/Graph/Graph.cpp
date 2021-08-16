@@ -18,12 +18,12 @@ void Graph::DeleteNodeValue(int nodeId)
     _NodeValueStorage.erase(nodeId);
 }
 
-void Graph::StoreNodeValue(int nodeId, std::shared_ptr<GraphNodeValue> value)
+void Graph::StoreNodeValue(int nodeId, std::shared_ptr<NodeValue> value)
 {
     _NodeValueStorage[nodeId] = value;
 }
 
-std::shared_ptr<GraphNodeValue>& Graph::GetNodeValue(int nodeId)
+std::shared_ptr<NodeValue>& Graph::GetNodeValue(int nodeId)
 {
     return _NodeValueStorage[nodeId];
 }
@@ -65,6 +65,8 @@ inline Edge Graph::GetEdge(int id) const
 size_t Graph::GetNumEdgesFromNode(const int id) const
 {
     auto iter = _EdgesFromNode.find(id);
+    if (iter == _EdgesFromNode.end())
+        LOG_ERROR("Failed to find edges from the node {0}", id);
     assert(iter != _EdgesFromNode.end());
     return *iter;
 }

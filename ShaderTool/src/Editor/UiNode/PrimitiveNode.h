@@ -11,13 +11,13 @@ private:
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<GraphNodeValueInt> OutputNodeValue;
+    std::shared_ptr<NodeValueInt> OutputNodeValue;
 
 public:
     explicit PrimitiveNode(Graph* graph, std::vector<int>& primitives)
         : UiNode(graph, UiNodeType::Primitive), _SelectedModel(0), OutputPin(INVALID_ID)
     {
-        OutputNodeValue = std::make_shared<GraphNodeValueInt>(INVALID_INDEX);
+        OutputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
 
         for (int p : primitives)
         {

@@ -34,8 +34,8 @@ public:
 	const std::string& GetShaderName(size_t index) { return _ShaderIndexNameMap[index]; }
 	bool HasShader(const std::string& name) { return _ShaderNameIndexMap.find(name) != _ShaderNameIndexMap.end(); }
 
-	void Serialize(std::ostream& out);
-	void Deserialize(std::istream& in);
+	std::ostream& Serialize(std::ostream& out);
+	std::istream& Deserialize(std::istream& in);
 
 private:
 	static ShaderManager* _Instance;
