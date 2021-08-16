@@ -162,9 +162,7 @@ int AssetManager::AddModel(Model& model)
 		LOG_ERROR("Model has no name!");
 		return INVALID_INDEX;
 	}
-
 	_Models.push_back(model);
-
 	return (int) _Models.size()-1;
 }
 
@@ -180,7 +178,7 @@ int AssetManager::LoadTextureFromFile(const std::string& path)
 
 	auto tex = std::make_unique<Texture>();
 	tex->Name = name;
-	tex->Filename = AnsiToWString(path);
+	tex->Path = path;
 	tex->SrvCpuDescHandle = _TexSrvCpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
 	tex->SrvGpuDescHandle = _TexSrvGpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
 	
@@ -188,7 +186,7 @@ int AssetManager::LoadTextureFromFile(const std::string& path)
 		CreateDDSTextureFromFile12(
 			_Device,
 			_CommandList,
-			tex->Filename.c_str(),
+			AnsiToWString(path).c_str(),
 			tex->Resource,
 			tex->UploadHeap));
 	
@@ -202,16 +200,65 @@ int AssetManager::LoadTextureFromFile(const std::string& path)
 
 	_Device->CreateShaderResourceView(tex->Resource.Get(), &srvDesc, tex->SrvCpuDescHandle);
 
-	_Textures.push_back(std::move(tex));
-	size_t index = _Textures.size() - 1;
-	_TextureIndexMap[name] = index;
+	size_t index;
+	auto it = _TextureNameIndexMap.find(name);
+	if (it == _TextureNameIndexMap.end()) // add new texture
+	{
+		_Textures.push_back(std::move(tex));
+		index = _Textures.size() - 1;
+		_TextureNameIndexMap[name] = index;
+		_TextureIndexPathMap[index] = path;
+		//LOG_TRACE("Adding texture {0} | {1} | {2}", index, name, path);
+	}
+	else // update existing texture
+	{
+		index = it->second;
+		_Textures[index] = std::move(tex);
+		_TextureIndexPathMap[index] = path;
+		//LOG_TRACE("Updating texture {0} | {1} | {2}", index, name, path);
+	}
 
 	return (int)index;
+}
+
+Texture* AssetManager::LoadTextureFromIndex(int index)
+{
+	std::string path = GetTexture(index)->Path;
+	size_t texIndex = LoadTextureFromFile(path);
+	return _Textures[texIndex].get();
 }
 
 Texture* AssetManager::GetTexture(int index)
 {
 	assert(index != INVALID_INDEX && index < _Textures.size() && "Model index out of bounds");
-	return _Textures[index].get();
+	auto texture = _Textures[index].get();
+	//LOG_TRACE("GetTexture() {0} | {1} | {2}", index, texture->Name, texture->Path);
+	return texture;
 }
 
+std::ostream& AssetManager::Serialize(std::ostream& out)
+{
+	auto& textures = Get().GetTextures();
+	out << textures.size() << "\n";
+	
+	for (size_t i = 0; i < textures.size(); ++i)
+		out << "tex " << i << " " << textures[i]->Path << "\n";
+
+	return out;
+}
+
+std::istream& AssetManager::Deserialize(std::istream& in)
+{
+	size_t numTextures;
+	in >> numTextures;
+
+	size_t index;
+	std::string label, path;
+
+	for (size_t i = 0; i < numTextures; ++i)
+	{
+		in >> label >> index >> path;
+		//Get().LoadTextureFromFile(path);
+	}
+	return in;
+}

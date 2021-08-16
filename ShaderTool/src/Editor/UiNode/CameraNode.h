@@ -61,6 +61,8 @@ public:
 
     virtual void OnLoad() override
     {
+        EyeInNodeValue->Value = *(DirectX::XMFLOAT3*)ParentGraph->GetNodeValue(EyeInPin)->GetValuePtr();
+
         ParentGraph->StoreNodeValue(EyeInPin, EyeInNodeValue);
         ParentGraph->StoreNodeValue(EyeOutPin, EyeOutNodeValue);
         ParentGraph->StoreNodeValue(ViewPin, ViewNodeValue);

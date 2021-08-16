@@ -412,7 +412,6 @@ void DebugInfo(ShaderToolApp* app)
 			ImGui::Text("%i |", n);			
 			ImGui::End();
 		}
-
 	}
 
 	//if (ImGui::IsKeyReleased(VK_RETURN))
@@ -1080,6 +1079,9 @@ void ShaderToolApp::Save()
 	fout << "#shaders\n";
 	ShaderManager::Get()->Serialize(fout);
 	
+	fout << "#assets\n";
+	AssetManager::Get().Serialize(fout);
+
 	fout << "#graph\n";
 	fout << _Graph;
 
@@ -1110,6 +1112,9 @@ void ShaderToolApp::Load()
 	std::string label;
 	fin >> label;
 	ShaderManager::Get()->Deserialize(fin);
+
+	fin >> label;
+	AssetManager::Get().Deserialize(fin);
 
 	fin >> _Graph;
 

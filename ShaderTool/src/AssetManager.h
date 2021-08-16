@@ -26,7 +26,12 @@ public:
 	Model GetModel(int index);
 	
 	int LoadTextureFromFile(const std::string& path);
+	Texture* LoadTextureFromIndex(int index);
 	Texture* GetTexture(int index);
+	const std::vector<std::unique_ptr<Texture>>& GetTextures() const { return _Textures; }
+
+	std::ostream& Serialize(std::ostream& out);
+	std::istream& Deserialize(std::istream& in);
 
 private:
 	AssetManager() : _Device(nullptr), _CommandList(nullptr){}
@@ -37,10 +42,11 @@ private:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE _TexSrvCpuDescHandle;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE _TexSrvGpuDescHandle;
 
-	std::vector<std::shared_ptr<Mesh>> _Meshes;
 	std::vector<Model> _Models;
+	std::vector<std::shared_ptr<Mesh>> _Meshes;
 	std::vector<std::unique_ptr<Texture>> _Textures;
 	std::unordered_map<std::string, size_t> _MeshNameIndexMap;
 	std::unordered_map<std::string, size_t> _ModelNameIndexMap;
-	std::unordered_map<std::string, size_t> _TextureIndexMap;
+	std::unordered_map<std::string, size_t> _TextureNameIndexMap;
+	std::unordered_map<size_t, std::string> _TextureIndexPathMap;
 };
