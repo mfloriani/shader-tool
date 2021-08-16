@@ -54,6 +54,10 @@ public:
 
     virtual void OnLoad() override
     {
+        XInputNodeValue->Value = *(float*)ParentGraph->GetNodeValue(XInputPin)->GetValuePtr();
+        YInputNodeValue->Value = *(float*)ParentGraph->GetNodeValue(YInputPin)->GetValuePtr();
+        ZInputNodeValue->Value = *(float*)ParentGraph->GetNodeValue(ZInputPin)->GetValuePtr();
+
         ParentGraph->StoreNodeValue(XInputPin, XInputNodeValue);
         ParentGraph->StoreNodeValue(YInputPin, YInputNodeValue);
         ParentGraph->StoreNodeValue(ZInputPin, ZInputNodeValue);
@@ -147,10 +151,7 @@ public:
         out << " " << XInputPin
             << " " << YInputPin
             << " " << ZInputPin
-            << " " << OutputPin
-            << " " << XInputNodeValue->Value
-            << " " << YInputNodeValue->Value
-            << " " << ZInputNodeValue->Value;
+            << " " << OutputPin;
         return out;
     }
 
@@ -161,10 +162,7 @@ public:
             >> XInputPin
             >> YInputPin
             >> ZInputPin
-            >> OutputPin
-            >> XInputNodeValue->Value
-            >> YInputNodeValue->Value
-            >> ZInputNodeValue->Value;
+            >> OutputPin;
         OnLoad();
         return in;
     }

@@ -40,6 +40,8 @@ public:
 
     virtual void OnLoad() override
     {
+        InputNodeValue->Value = *(DirectX::XMFLOAT4X4*)ParentGraph->GetNodeValue(InputPin)->GetValuePtr();
+
         ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
         ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
@@ -97,50 +99,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << InputPin
-            << " " << OutputPin
-            << " " << InputNodeValue->Value._11
-            << " " << InputNodeValue->Value._12
-            << " " << InputNodeValue->Value._13
-            << " " << InputNodeValue->Value._14
-            << " " << InputNodeValue->Value._21
-            << " " << InputNodeValue->Value._22
-            << " " << InputNodeValue->Value._23
-            << " " << InputNodeValue->Value._24
-            << " " << InputNodeValue->Value._31
-            << " " << InputNodeValue->Value._32
-            << " " << InputNodeValue->Value._33
-            << " " << InputNodeValue->Value._34
-            << " " << InputNodeValue->Value._41
-            << " " << InputNodeValue->Value._42
-            << " " << InputNodeValue->Value._43
-            << " " << InputNodeValue->Value._44;
-
+        out << " " << InputPin << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Matrix4x4;
-        in >> Id
-            >> InputPin
-            >> OutputPin
-            >> InputNodeValue->Value._11
-            >> InputNodeValue->Value._12
-            >> InputNodeValue->Value._13
-            >> InputNodeValue->Value._14
-            >> InputNodeValue->Value._21
-            >> InputNodeValue->Value._22
-            >> InputNodeValue->Value._23
-            >> InputNodeValue->Value._24
-            >> InputNodeValue->Value._31
-            >> InputNodeValue->Value._32
-            >> InputNodeValue->Value._33
-            >> InputNodeValue->Value._34
-            >> InputNodeValue->Value._41
-            >> InputNodeValue->Value._42
-            >> InputNodeValue->Value._43
-            >> InputNodeValue->Value._44;
+        in >> Id >> InputPin >> OutputPin;
         OnLoad();
         return in;
     }

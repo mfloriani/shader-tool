@@ -34,17 +34,19 @@ public:
 
     virtual void OnLoad() override
     {
+        OutputNodeValue->Value = *(DirectX::XMFLOAT3*)ParentGraph->GetNodeValue(OutputPin)->GetValuePtr();
+        TempColor = ImVec4(OutputNodeValue->Value.x, OutputNodeValue->Value.y, OutputNodeValue->Value.z, 0.f);
         ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
     {
-
+        OutputNodeValue->Value = DirectX::XMFLOAT3(TempColor.x, TempColor.y, TempColor.z);
     }
 
     virtual void OnEval() override
     {
-        OutputNodeValue->Value = DirectX::XMFLOAT3(TempColor.x, TempColor.y, TempColor.z);
+        
     }
 
     virtual void OnDelete() override
@@ -86,14 +88,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << OutputNodeValue->Value.x << " " << OutputNodeValue->Value.y << " " << OutputNodeValue->Value.z;
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Color;
-        in >> Id >> OutputPin >> OutputNodeValue->Value.x >> OutputNodeValue->Value.y >> OutputNodeValue->Value.z;
+        in >> Id >> OutputPin;
         OnLoad();
         return in;
     }

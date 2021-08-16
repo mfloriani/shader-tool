@@ -47,6 +47,9 @@ public:
 
     virtual void OnLoad() override
     {
+        LeftNodeValue->Value = *(float*)ParentGraph->GetNodeValue(LeftPin)->GetValuePtr();
+        RightNodeValue->Value = *(float*)ParentGraph->GetNodeValue(RightPin)->GetValuePtr();
+
         ParentGraph->StoreNodeValue(LeftPin, LeftNodeValue);
         ParentGraph->StoreNodeValue(RightPin, RightNodeValue);
         ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);

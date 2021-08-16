@@ -32,6 +32,7 @@ public:
 
     virtual void OnLoad() override
     {
+        OutputNodeValue->Value = *(float*)ParentGraph->GetNodeValue(OutputPin)->GetValuePtr();
         ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
@@ -72,14 +73,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << OutputNodeValue->Value;
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Scalar;
-        in >> Id >> OutputPin >> OutputNodeValue->Value;
+        in >> Id >> OutputPin;
         OnLoad();
         return in;
     }

@@ -409,7 +409,7 @@ void DebugInfo(ShaderToolApp* app)
 		for (auto n : nodes)
 		{
 			ImGui::Begin("NodeValues Debug", &showDfsDebug, overlay_window_flags);
-			ImGui::Text("%i |", n); //ImGui::SameLine();
+			ImGui::Text("%i |", n);			
 			ImGui::End();
 		}
 

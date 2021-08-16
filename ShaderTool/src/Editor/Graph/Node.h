@@ -152,7 +152,7 @@ struct NodeValue
 
     virtual std::istream& Deserialize(std::istream& in)
     {
-        return in; // type is loaded before calling this method
+        return in; // DO NOT LOAD type here, it is loaded before calling this method
     }
 
     friend std::ostream& operator<<(std::ostream& out, const NodeValue& n)
@@ -191,7 +191,6 @@ public:
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        NodeValue::Deserialize(in);
         in >> Value;
         return in;
     }
@@ -221,7 +220,6 @@ public:
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        NodeValue::Deserialize(in);
         in >> Value;
         return in;
     }
@@ -255,7 +253,6 @@ public:
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        NodeValue::Deserialize(in);
         in >> Value._11 >> Value._12 >> Value._13 >> Value._14;
         in >> Value._21 >> Value._22 >> Value._23 >> Value._24;
         in >> Value._31 >> Value._32 >> Value._33 >> Value._34;
@@ -289,7 +286,6 @@ public:
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        NodeValue::Deserialize(in);
         in >> Value.x >> Value.y >> Value.z >> Value.w;
         return in;
     }
@@ -320,7 +316,6 @@ public:
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        NodeValue::Deserialize(in);
         in >> Value.x >> Value.y >> Value.z;
         return in;
     }
@@ -351,7 +346,6 @@ public:
 
     virtual std::istream& Deserialize(std::istream& in) override
     {
-        NodeValue::Deserialize(in);
         in >> Value.x >> Value.y;
         return in;
     }

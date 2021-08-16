@@ -54,6 +54,10 @@ public:
 
     virtual void OnLoad() override
     {
+        PositionNodeValue->Value = *(DirectX::XMFLOAT3*)ParentGraph->GetNodeValue(PositionPin)->GetValuePtr();
+        RotationNodeValue->Value = *(DirectX::XMFLOAT3*)ParentGraph->GetNodeValue(RotationPin)->GetValuePtr();
+        ScaleNodeValue->Value = *(DirectX::XMFLOAT3*)ParentGraph->GetNodeValue(ScalePin)->GetValuePtr();
+
         ParentGraph->StoreNodeValue(PositionPin, PositionNodeValue);
         ParentGraph->StoreNodeValue(RotationPin, RotationNodeValue);
         ParentGraph->StoreNodeValue(ScalePin, ScaleNodeValue);
@@ -137,14 +141,21 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << PositionPin << " " << RotationPin << " " << ScalePin << " " << OutputPin;
+        out << " " << PositionPin 
+            << " " << RotationPin 
+            << " " << ScalePin 
+            << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Transform;
-        in >> Id >> PositionPin >> RotationPin >> ScalePin >> OutputPin;
+        in >> Id
+            >> PositionPin
+            >> RotationPin
+            >> ScalePin
+            >> OutputPin;
         OnLoad();
         return in;
     }

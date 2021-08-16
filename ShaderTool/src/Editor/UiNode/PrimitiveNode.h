@@ -7,7 +7,6 @@ struct PrimitiveNode : UiNode
 private:
     std::vector<std::string> _PrimitiveNames;               // list of all primitives
     std::unordered_map<size_t, int> _PrimitiveNameIndexMap; // maps internal vector index with model index
-    int _SelectedModel;                                     // stores the internal index of primitives (do not return this)
 
 public:
     NodeId OutputPin;
@@ -15,9 +14,9 @@ public:
 
 public:
     explicit PrimitiveNode(Graph* graph, std::vector<int>& primitives)
-        : UiNode(graph, UiNodeType::Primitive), _SelectedModel(0), OutputPin(INVALID_ID)
+        : UiNode(graph, UiNodeType::Primitive), OutputPin(INVALID_ID)
     {
-        OutputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
+        OutputNodeValue = std::make_shared<NodeValueInt>(0);
 
         for (int p : primitives)
         {
@@ -43,6 +42,7 @@ public:
 
     virtual void OnLoad() override
     {
+        OutputNodeValue->Value = *(int*)ParentGraph->GetNodeValue(OutputPin)->GetValuePtr();
         ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
@@ -53,7 +53,7 @@ public:
     
     virtual void OnEval() override
     {
-        OutputNodeValue->Value = _PrimitiveNameIndexMap[_SelectedModel];
+        
     }
 
     virtual void OnDelete() override
@@ -74,7 +74,7 @@ public:
             items.push_back(_PrimitiveNames[i].c_str());
 
         ImGui::PushItemWidth(node_width);
-        ImGui::Combo("##hidelabel", &_SelectedModel, items.data(), (int)items.size());
+        ImGui::Combo("##hidelabel", &OutputNodeValue->Value, items.data(), (int)items.size());
         ImGui::PopItemWidth();
         
         ImNodes::BeginOutputAttribute(OutputPin);
@@ -89,14 +89,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << _SelectedModel;
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Primitive;
-        in >> Id >> OutputPin >> _SelectedModel;
+        in >> Id >> OutputPin;
         OnLoad();
         return in;
     }

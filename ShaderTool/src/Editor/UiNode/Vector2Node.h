@@ -48,6 +48,9 @@ public:
 
     virtual void OnLoad() override
     {
+        XInputNodeValue->Value = *(float*)ParentGraph->GetNodeValue(XInputPin)->GetValuePtr();
+        YInputNodeValue->Value = *(float*)ParentGraph->GetNodeValue(YInputPin)->GetValuePtr();
+
         ParentGraph->StoreNodeValue(XInputPin, XInputNodeValue);
         ParentGraph->StoreNodeValue(YInputPin, YInputNodeValue);
         ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
@@ -121,9 +124,7 @@ public:
         UiNode::Serialize(out);
         out << " " << XInputPin
             << " " << YInputPin
-            << " " << OutputPin
-            << " " << XInputNodeValue->Value
-            << " " << YInputNodeValue->Value;
+            << " " << OutputPin;
         return out;
     }
 
@@ -133,9 +134,7 @@ public:
         in >> Id
             >> XInputPin
             >> YInputPin
-            >> OutputPin
-            >> XInputNodeValue->Value
-            >> YInputNodeValue->Value;
+            >> OutputPin;
         OnLoad();
         return in;
     }
