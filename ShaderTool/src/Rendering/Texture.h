@@ -10,6 +10,7 @@ struct Texture
 		//LOG_TRACE("~Texture() {0} | {1}", Name, Path);
 	}
 
+	size_t Index;
 	std::string Name;
 	std::string Path;
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource{ nullptr };

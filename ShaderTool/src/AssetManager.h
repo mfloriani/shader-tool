@@ -25,10 +25,12 @@ public:
 	int AddModel(Model& model);
 	Model GetModel(int index);
 	
-	int LoadTextureFromFile(const std::string& path);
-	Texture* LoadTextureFromIndex(int index);
-	Texture* GetTexture(int index);
-	const std::vector<std::unique_ptr<Texture>>& GetTextures() const { return _Textures; }
+	std::shared_ptr<Texture> CreateTextureFromFile(const std::string& path);
+	std::shared_ptr<Texture> AssetManager::CreateTextureFromIndex(size_t index);
+	void CreateTextureSRV(std::shared_ptr<Texture> texture);
+	size_t StoreTexture(std::shared_ptr<Texture> texture);
+	std::shared_ptr<Texture> GetTexture(size_t index);
+	const std::vector<std::shared_ptr<Texture>>& GetTextures() const { return _Textures; }
 
 	std::ostream& Serialize(std::ostream& out);
 	std::istream& Deserialize(std::istream& in);
@@ -44,7 +46,7 @@ private:
 
 	std::vector<Model> _Models;
 	std::vector<std::shared_ptr<Mesh>> _Meshes;
-	std::vector<std::unique_ptr<Texture>> _Textures;
+	std::vector<std::shared_ptr<Texture>> _Textures;
 	std::unordered_map<std::string, size_t> _MeshNameIndexMap;
 	std::unordered_map<std::string, size_t> _ModelNameIndexMap;
 	std::unordered_map<std::string, size_t> _TextureNameIndexMap;

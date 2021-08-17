@@ -6,7 +6,7 @@
 struct TextureNode : UiNode
 {
 private:
-    Texture* _Texture;
+    std::shared_ptr<Texture> _Texture;
     std::string _Path;
 
 public:
@@ -57,9 +57,7 @@ public:
         OutputNodeValue->Value = *(int*)ParentGraph->GetNodeValue(OutputPin)->GetValuePtr();
         if (OutputNodeValue->Value != INVALID_INDEX)
         {
-            OutputNodeValue->Value = AssetManager::Get().LoadTextureFromFile(_Path);
-            _Texture = AssetManager::Get().GetTexture(OutputNodeValue->Value);
-            //_Texture = AssetManager::Get().LoadTextureFromIndex(OutputNodeValue->Value);
+            _Texture = AssetManager::Get().CreateTextureFromIndex(OutputNodeValue->Value);
             if (!_Texture || _Texture->Name.empty())
             {
                 LOG_ERROR("Failed to load texture from index {0}!", OutputNodeValue->Value);
@@ -103,8 +101,8 @@ public:
             if (result == NFD_OKAY)
             {
                 _Path = std::string(outPath);
-                OutputNodeValue->Value = AssetManager::Get().LoadTextureFromFile(_Path);
-                _Texture = AssetManager::Get().GetTexture(OutputNodeValue->Value);
+                _Texture = AssetManager::Get().CreateTextureFromFile(_Path);
+                OutputNodeValue->Value = (int)_Texture->Index;
                 ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
                 free(outPath);
             }
