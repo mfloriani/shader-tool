@@ -11,8 +11,8 @@
 //1280×720(720p HD)
 //1024×576.
 
-constexpr uint32_t INIT_CLIENT_WIDTH = 1366;
-constexpr uint32_t INIT_CLIENT_HEIGHT = 768;
+constexpr uint32_t INIT_CLIENT_WIDTH = 1920;
+constexpr uint32_t INIT_CLIENT_HEIGHT = 1080;
 
 constexpr uint32_t RENDER_TARGET_WIDTH = 1024;
 constexpr uint32_t RENDER_TARGET_HEIGHT = 1024;
