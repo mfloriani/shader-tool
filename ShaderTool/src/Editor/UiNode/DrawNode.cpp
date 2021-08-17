@@ -27,19 +27,28 @@ void DrawNode::OnEvent(Event* e)
     if (dynamic_cast<LinkCreatedEvent*>(e))
     {
         auto lce = dynamic_cast<LinkCreatedEvent*>(e);
-        LOG_TRACE("DrawNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
+        //LOG_TRACE("DrawNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
         
         if(ShaderPin == lce->from)
-            OnShaderLinkCreated(lce->from, lce->to);
+            OnShaderLinkCreate(lce->from, lce->to);
     }
     
     if (dynamic_cast<LinkDeletedEvent*>(e))
     {
         auto lde = dynamic_cast<LinkDeletedEvent*>(e);
-        LOG_TRACE("DrawNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
+        //LOG_TRACE("DrawNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
         
         if (ShaderPin == lde->from)
-            OnShaderLinkDeleted(lde->from, lde->to);
+            OnShaderLinkDelete(lde->from, lde->to);
+    }
+
+    if (dynamic_cast<ShaderUpdatedEvent*>(e))
+    {
+        auto sue = dynamic_cast<ShaderUpdatedEvent*>(e);
+        //LOG_TRACE("DrawNode::OnEvent -> ShaderUpdatedEvent");
+
+        if(ParentGraph->GetNumEdgesFromNode(ShaderPin) > 0ull)
+            OnLinkedShaderUpdate(sue->index);
     }
 }
 
@@ -78,8 +87,7 @@ void DrawNode::OnDelete()
     ParentGraph->EraseNode(ShaderPin);
     ParentGraph->EraseNode(OutputPin);
 
-    for (auto& bind : ShaderBindingPins)
-        ParentGraph->EraseNode(bind.PinId);
+    ClearShaderBindings();
 }
 
 void DrawNode::OnRender() 
@@ -324,27 +332,39 @@ void DrawNode::CreateShaderBindingPins(int shaderIndex)
     }
 }
 
-// `from` and `to` are backwards
-// `from` is the pin in this drawNode and `to` is the pin in the linked node
-void DrawNode::OnShaderLinkCreated(int from, int to)
+void DrawNode::ClearShaderBindings()
 {
-    LOG_TRACE("ShaderPin link created");
-    auto nodevalue = ParentGraph->GetNodeValue(to);
-    int shaderIndex = *(int*)nodevalue->GetValuePtr();
-    CreateShaderBindingPins(shaderIndex);
-}
-
-void DrawNode::OnShaderLinkDeleted(int from, int to)
-{
-    LOG_TRACE("ShaderPin link deleted");
-
     for (auto& bindPin : ShaderBindingPins)
     {
-        LOG_TRACE("Deleting shader pin nodes {0} {1} {2}", bindPin.PinId, bindPin.Bind.VarName, bindPin.Bind.VarTypeName);
+        //LOG_TRACE("Deleting shader pin nodes {0} {1} {2}", bindPin.PinId, bindPin.Bind.VarName, bindPin.Bind.VarTypeName);
         ParentGraph->EraseNode(bindPin.PinId);
     }
 
     ShaderBindingPins.clear();
     ShaderBindingPinNameMap.clear();
     ShaderBindingPinIdMap.clear();
+}
+
+// `from` and `to` are backwards
+// `from` is the pin in this drawNode and `to` is the pin in the linked node
+void DrawNode::OnShaderLinkCreate(int from, int to)
+{
+    //LOG_TRACE("ShaderPin link created");
+    auto nodevalue = ParentGraph->GetNodeValue(to);
+    int shaderIndex = *(int*)nodevalue->GetValuePtr();
+    CreateShaderBindingPins(shaderIndex);
+}
+
+void DrawNode::OnShaderLinkDelete(int from, int to)
+{
+    //LOG_TRACE("ShaderPin link deleted");
+    ClearShaderBindings();
+}
+
+void DrawNode::OnLinkedShaderUpdate(int newShaderIndex)
+{
+    //LOG_TRACE("Linked Shader Updated");
+    auto links = ParentGraph->GetLinksConnectedTo(ShaderPin);
+    for (int id : links)
+        ParentGraph->EraseEdge(id); // MUST delete the link between shader and draw node to avoid DX pipeline error 
 }

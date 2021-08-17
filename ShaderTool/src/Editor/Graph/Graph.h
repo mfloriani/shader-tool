@@ -43,6 +43,8 @@ public:
     int GetCurrentId() const { return _CurrentId; }
     size_t GetNodesCount() const { return _Nodes.size(); }
 
+    std::vector<int> GetLinksConnectedTo(int id);
+
     // Capacity
     
     size_t GetNumEdgesFromNode(int node_id) const;

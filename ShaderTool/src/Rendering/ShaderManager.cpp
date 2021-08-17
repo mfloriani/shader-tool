@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ShaderManager.h"
+#include "Defines.h"
 
 using namespace DirectX;
 using namespace D3DUtil;
@@ -45,7 +46,7 @@ std::istream& ShaderManager::Deserialize(std::istream& in)
 	return in;
 }
 
-std::string ShaderManager::LoadShaderFromFile(const std::string& path)
+int ShaderManager::LoadShaderFromFile(const std::string& path)
 {
 	std::string name = D3DUtil::ExtractFilename(path);
 	
@@ -69,26 +70,25 @@ std::string ShaderManager::LoadShaderFromFile(const std::string& path)
 			psOk = true;
 	}
 
+	int index = INVALID_INDEX;
 	if (vsOk && psOk)
 	{
 		if (!HasShader(name)) // new shader
 		{
 			_Shaders.push_back(std::make_unique<Shader>(name, vsBlob, psBlob));
-			size_t index = _Shaders.size() - 1u;
+			index = (int)_Shaders.size() - 1u;
 			_ShaderNameIndexMap.insert(std::make_pair(name, index));
 			_ShaderIndexNameMap.insert(std::make_pair(index, name));
 			_ShaderIndexPathMap.insert(std::make_pair(index, path));
 		}
 		else // overwrite the current shader
 		{
-			size_t index = GetShaderIndex(name);
+			index = (int)GetShaderIndex(name);
 			_Shaders[index] = std::make_unique<Shader>(name, vsBlob, psBlob);
 			_ShaderIndexPathMap.insert(std::make_pair(index, path));
 		}
-		return name;
 	}
-
-	return std::string();
+	return index;
 }
 
 Shader* ShaderManager::GetShader(size_t index)

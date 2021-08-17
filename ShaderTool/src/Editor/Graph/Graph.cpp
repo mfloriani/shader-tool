@@ -62,6 +62,18 @@ inline Edge Graph::GetEdge(int id) const
     return Edge();
 }
 
+std::vector<int> Graph::GetLinksConnectedTo(int id)
+{
+    std::vector<int> links;
+    auto edges = _Edges.elements();
+    for (auto it = edges.begin(); it != edges.end(); ++it)
+    {
+        if (it->to == id || it->from == id)
+            links.push_back(it->id);
+    }
+    return links;
+}
+
 size_t Graph::GetNumEdgesFromNode(const int id) const
 {
     auto iter = _EdgesFromNode.find(id);

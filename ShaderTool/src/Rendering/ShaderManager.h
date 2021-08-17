@@ -25,13 +25,14 @@ public:
 	}
 
 	void LoadBinaryShader(const std::string& path, Microsoft::WRL::ComPtr<ID3DBlob>& bytecode);
-	std::string LoadShaderFromFile(const std::string& path);
+	int LoadShaderFromFile(const std::string& path);
 
 	Shader* GetShader(size_t index);
 	Shader* GetShader(const std::string& name);
 	std::vector<std::unique_ptr<Shader>>& GetShaders() { return _Shaders; }
 	size_t GetShaderIndex(const std::string& name) { return _ShaderNameIndexMap[name]; }
 	const std::string& GetShaderName(size_t index) { return _ShaderIndexNameMap[index]; }
+	const std::string& GetShaderPath(size_t index) { return _ShaderIndexPathMap[index]; }
 	bool HasShader(const std::string& name) { return _ShaderNameIndexMap.find(name) != _ShaderNameIndexMap.end(); }
 
 	std::ostream& Serialize(std::ostream& out);

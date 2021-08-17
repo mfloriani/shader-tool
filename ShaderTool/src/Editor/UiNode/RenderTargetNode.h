@@ -30,7 +30,7 @@ public:
         if (dynamic_cast<LinkCreatedEvent*>(e))
         {
             auto lce = dynamic_cast<LinkCreatedEvent*>(e);
-            LOG_TRACE("RenderTargetNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
+            //LOG_TRACE("RenderTargetNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
 
             if (InputPin == lce->from)
                 OnDrawLinkCreated(lce->from, lce->to);
@@ -39,7 +39,7 @@ public:
         if (dynamic_cast<LinkDeletedEvent*>(e))
         {
             auto lde = dynamic_cast<LinkDeletedEvent*>(e);
-            LOG_TRACE("RenderTargetNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
+            //LOG_TRACE("RenderTargetNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
 
             if (InputPin == lde->from)
                 OnDrawLinkDeleted(lde->from, lde->to);

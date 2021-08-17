@@ -7,7 +7,6 @@ struct TextureNode : UiNode
 {
 private:
     std::shared_ptr<Texture> _Texture;
-    std::string _Path;
 
 public:
     NodeId OutputPin;
@@ -100,8 +99,7 @@ public:
 
             if (result == NFD_OKAY)
             {
-                _Path = std::string(outPath);
-                _Texture = AssetManager::Get().CreateTextureFromFile(_Path);
+                _Texture = AssetManager::Get().CreateTextureFromFile(std::string(outPath));
                 OutputNodeValue->Value = (int)_Texture->Index;
                 ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
                 free(outPath);
@@ -133,14 +131,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << _Path;
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Texture;
-        in >> Id >> OutputPin >> _Path;
+        in >> Id >> OutputPin;
         OnLoad();
         return in;
     }

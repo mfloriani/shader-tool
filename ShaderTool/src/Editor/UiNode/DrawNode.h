@@ -43,8 +43,10 @@ public:
     virtual void OnEval() override;
 
     void CreateShaderBindingPins(int shaderIndex);
-    void OnShaderLinkCreated(int from, int to);
-    void OnShaderLinkDeleted(int from, int to);
+    void ClearShaderBindings();
+    void OnShaderLinkCreate(int from, int to);
+    void OnShaderLinkDelete(int from, int to);
+    void OnLinkedShaderUpdate(int newShaderIndex);
     
     virtual std::ostream& Serialize(std::ostream& out) const
     {
