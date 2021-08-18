@@ -8,7 +8,7 @@ CameraNode::CameraNode(Graph* graph)
     : UiNode(graph, UiNodeType::Camera),
     EyeInPin(INVALID_ID), EyeOutPin(INVALID_ID), ViewPin(INVALID_ID), ProjectionPin(INVALID_ID)
 {
-    EyeInNodeValue = std::make_shared<NodeValueFloat3>(XMFLOAT3(0.f, 0.f, 0.f));
+    EyeInNodeValue = std::make_shared<NodeValueFloat3>(XMFLOAT3(0.f, 0.f, -3.f));
     EyeOutNodeValue = std::make_shared<NodeValueFloat3>(XMFLOAT3(0.f, 0.f, 0.f));
     TargetInNodeValue = std::make_shared<NodeValueFloat3>(XMFLOAT3(0.f, 0.f, 1.f));
     TargetOutNodeValue = std::make_shared<NodeValueFloat3>(XMFLOAT3(0.f, 0.f, 1.f));
