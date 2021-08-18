@@ -43,6 +43,7 @@ ImGuiWindowFlags overlay_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWin
 
 static bool showDfsDebug = false;
 static bool showShadersDebug = false;
+static bool showNodeValueDebug = false;
 std::stack<int> postOrderClone; // TODO: debug only
 
 void ShowHoverDebugInfo(std::function<void(void)> info)
@@ -92,9 +93,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("AddNode");
 						ImGui::Text("Id:      %i", addNode->Id);
-						ImGui::Text("Left:    %i %.3f", addNode->LeftPin, addNode->LeftNodeValue->Data);
-						ImGui::Text("Right:   %i %.3f", addNode->RightPin, addNode->RightNodeValue->Data);
-						ImGui::Text("Output:  %i %.3f", addNode->OutputPin, addNode->OutputNodeValue->Data);
+						ImGui::Text("Left:    %i %.3f", addNode->LeftPin, addNode->LeftNodeValue->Value);
+						ImGui::Text("Right:   %i %.3f", addNode->RightPin, addNode->RightNodeValue->Value);
+						ImGui::Text("Output:  %i %.3f", addNode->OutputPin, addNode->OutputNodeValue->Value);
 						});
 				}
 				break;
@@ -105,9 +106,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("MultiplyNode");
 						ImGui::Text("Id:      %i", multNode->Id);
-						ImGui::Text("Left:    %i %.3f", multNode->LeftPin, multNode->LeftNodeValue->Data);
-						ImGui::Text("Right:   %i %.3f", multNode->RightPin, multNode->RightNodeValue->Data);
-						ImGui::Text("Output:  %i %.3f", multNode->OutputPin, multNode->OutputNodeValue->Data);
+						ImGui::Text("Left:    %i %.3f", multNode->LeftPin, multNode->LeftNodeValue->Value);
+						ImGui::Text("Right:   %i %.3f", multNode->RightPin, multNode->RightNodeValue->Value);
+						ImGui::Text("Output:  %i %.3f", multNode->OutputPin, multNode->OutputNodeValue->Value);
 						});
 				}
 				break;
@@ -118,7 +119,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("TimeNode");
 						ImGui::Text("Id:      %i", timeNode->Id);
-						ImGui::Text("Output:  %i %.5f", timeNode->OutputPin, timeNode->OutputNodeValue->Data);
+						ImGui::Text("Output:  %i %.5f", timeNode->OutputPin, timeNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -129,8 +130,8 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("SineNode");
 						ImGui::Text("Id:      %i", sineNode->Id);
-						ImGui::Text("Input:   %i %.5f", sineNode->InputPin, sineNode->InputNodeValue->Data);
-						ImGui::Text("Output:  %i %.5f", sineNode->OutputPin, sineNode->OutputNodeValue->Data);
+						ImGui::Text("Input:   %i %.5f", sineNode->InputPin, sineNode->InputNodeValue->Value);
+						ImGui::Text("Output:  %i %.5f", sineNode->OutputPin, sineNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -143,8 +144,8 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("DrawNode");
 						ImGui::Text("Id:      %i", drawNode->Id);
-						ImGui::Text("Shader:  %i %i", drawNode->ShaderPin, drawNode->ShaderNodeValue->Data);
-						ImGui::Text("Model:   %i %i", drawNode->ModelPin, drawNode->ModelNodeValue->Data);
+						ImGui::Text("Shader:  %i %i", drawNode->ShaderPin, drawNode->ShaderNodeValue->Value);
+						ImGui::Text("Model:   %i %i", drawNode->ModelPin, drawNode->ModelNodeValue->Value);
 
 						for (auto& bindPin : drawNode->ShaderBindingPins)
 						{
@@ -152,29 +153,29 @@ void DebugInfo(ShaderToolApp* app)
 								ImGui::Text("%s:   %i", bindPin.Bind.VarName.c_str(), bindPin.PinId);
 							else if (bindPin.Bind.VarTypeName == "float4")
 							{
-								auto float4Data = drawNode->GetNodeValuePtr<XMFLOAT4>(bindPin.PinId)->Data;
+								auto float4Data = *(DirectX::XMFLOAT4*) drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr();
 								float x = float4Data.x, y = float4Data.y, z = float4Data.z, w = float4Data.w;
 								ImGui::Text("%s:   %i %.3f %.3f %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y, z, w);
 							}
 							else if (bindPin.Bind.VarTypeName == "float3")
 							{
-								auto float3Data = drawNode->GetNodeValuePtr<XMFLOAT3>(bindPin.PinId)->Data;
+								auto float3Data = *(DirectX::XMFLOAT3*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr();
 								float x = float3Data.x, y = float3Data.y, z = float3Data.z;
 								ImGui::Text("%s:   %i %.3f %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y, z);
 							}
 							else if (bindPin.Bind.VarTypeName == "float2")
 							{
-								auto float2Data = drawNode->GetNodeValuePtr<XMFLOAT2>(bindPin.PinId)->Data;
+								auto float2Data = *(DirectX::XMFLOAT2*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr();
 								float x = float2Data.x, y = float2Data.y;
 								ImGui::Text("%s:   %i %.3f %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, x, y);
 							}
 							else if (bindPin.Bind.VarTypeName == "float")
-								ImGui::Text("%s:   %i %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, drawNode->GetNodeValuePtr<float>(bindPin.PinId)->Data);
+								ImGui::Text("%s:   %i %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, *(float*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr());
 							else if (bindPin.Bind.VarTypeName == "int")
-								ImGui::Text("%s:   %i %i", bindPin.Bind.VarName.c_str(), bindPin.PinId, drawNode->GetNodeValuePtr<int>(bindPin.PinId)->Data);
+								ImGui::Text("%s:   %i %i", bindPin.Bind.VarName.c_str(), bindPin.PinId, *(int*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr());
 						}
 
-						ImGui::Text("Output:  %i %i", drawNode->OutputPin, drawNode->OutputNodeValue->Data);
+						ImGui::Text("Output:  %i %i", drawNode->OutputPin, drawNode->OutputNodeValue->Value);
 
 						});
 				}
@@ -186,7 +187,7 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("PrimitiveNode");
 						ImGui::Text("Id:    %i", primNode->Id);
-						ImGui::Text("Model: %i %i", primNode->OutputPin, primNode->OutputNodeValue->Data);
+						ImGui::Text("Model: %i %i", primNode->OutputPin, primNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -199,7 +200,7 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:     %i", shaderNode->Id);
 						ImGui::Text("Name:   %s", shaderNode->GetName().c_str());
 						ImGui::Text("Path:   %s", shaderNode->GetPath().c_str());
-						ImGui::Text("Output: %i %i", shaderNode->OutputPin, shaderNode->OutputNodeValue->Data);
+						ImGui::Text("Output: %i %i", shaderNode->OutputPin, shaderNode->OutputNodeValue->Value);
 					});
 				}
 				break;
@@ -212,7 +213,7 @@ void DebugInfo(ShaderToolApp* app)
 						ImGui::Text("Id:     %i", modelNode->Id);
 						ImGui::Text("Name:   %s", modelNode->GetName().c_str());
 						ImGui::Text("Path:   %s", modelNode->GetPath().c_str());
-						ImGui::Text("Output: %i %i", modelNode->OutputPin, modelNode->OutputNodeValue->Data);
+						ImGui::Text("Output: %i %i", modelNode->OutputPin, modelNode->OutputNodeValue->Value);
 						});
 				}
 				break;
@@ -220,7 +221,7 @@ void DebugInfo(ShaderToolApp* app)
 				case UiNodeType::Color:
 				{
 					auto colorNode = static_cast<ColorNode*>(node);
-					auto float3Value = colorNode->GetNodeValuePtr<XMFLOAT3>(colorNode->OutputPin)->Data;
+					auto float3Value = colorNode->OutputNodeValue->Value;
 					float x = float3Value.x, y = float3Value.y, z = float3Value.z;
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("ColorNode");
@@ -326,9 +327,9 @@ void DebugInfo(ShaderToolApp* app)
 					ShowHoverDebugInfo([&]() {
 						ImGui::Text("Vector2Node");
 						ImGui::Text("Id:         %i", uinode->Id);
-						ImGui::Text("Position:   %i %.3f %.3f %.3f", uinode->PositionPin, uinode->PositionNodeValue->Data.x, uinode->PositionNodeValue->Data.y, uinode->PositionNodeValue->Data.z);
-						ImGui::Text("Rotation:   %i %.3f %.3f %.3f", uinode->RotationPin, uinode->RotationNodeValue->Data.x, uinode->RotationNodeValue->Data.y, uinode->RotationNodeValue->Data.z);
-						ImGui::Text("Scale:      %i %.3f %.3f %.3f", uinode->ScalePin, uinode->ScaleNodeValue->Data.x, uinode->ScaleNodeValue->Data.y, uinode->ScaleNodeValue->Data.z);
+						ImGui::Text("Position:   %i %.3f %.3f %.3f", uinode->PositionPin, uinode->PositionNodeValue->Value.x, uinode->PositionNodeValue->Value.y, uinode->PositionNodeValue->Value.z);
+						ImGui::Text("Rotation:   %i %.3f %.3f %.3f", uinode->RotationPin, uinode->RotationNodeValue->Value.x, uinode->RotationNodeValue->Value.y, uinode->RotationNodeValue->Value.z);
+						ImGui::Text("Scale:      %i %.3f %.3f %.3f", uinode->ScalePin, uinode->ScaleNodeValue->Value.x, uinode->ScaleNodeValue->Value.y, uinode->ScaleNodeValue->Value.z);
 						ImGui::Text("Output:     %i", uinode->OutputPin);
 						});
 				}
@@ -363,16 +364,6 @@ void DebugInfo(ShaderToolApp* app)
 		}
 	}
 
-	//if (ImGui::IsKeyReleased(VK_RETURN))
-	//{
-	//	auto& shaderMgr = ShaderManager::Get();
-
-	//	for (auto& shader : shaderMgr.GetShaders())
-	//	{
-	//		shader->PrintDebugInfo();
-	//	}
-	//}
-
 	if (ImGui::IsKeyReleased(VK_F1))
 		showDfsDebug = !showDfsDebug;
 
@@ -386,7 +377,6 @@ void DebugInfo(ShaderToolApp* app)
 
 			ImGui::Begin("DFS Debug", &showDfsDebug, overlay_window_flags);
 			ImGui::Text("Id: %i |", id); ImGui::SameLine();
-			//ImGui::Text("Val: %.5f |", node.Value); ImGui::SameLine();
 			ImGui::Text("Type: %i |", node.Type); ImGui::SameLine();
 			ImGui::Text("TName: %s |", node.TypeName.c_str());
 			ImGui::End();
@@ -398,9 +388,9 @@ void DebugInfo(ShaderToolApp* app)
 
 	if(showShadersDebug)
 	{
-		auto& shaderMgr = ShaderManager::Get();
+		auto shaderMgr = ShaderManager::Get();
 		int i = 0;
-		for (auto& shader : shaderMgr.GetShaders())
+		for (auto& shader : shaderMgr->GetShaders())
 		{
 			ImGui::Begin("Shaders Debug", &showDfsDebug, overlay_window_flags);
 			ImGui::Text("Index: %i |", i); ImGui::SameLine();
@@ -410,42 +400,54 @@ void DebugInfo(ShaderToolApp* app)
 		}
 	}
 
+	if (ImGui::IsKeyReleased(VK_F3))
+		showNodeValueDebug = !showNodeValueDebug;
 
-#if 0
-	if (ImGui::IsKeyReleased(VK_RETURN))
+	if (showNodeValueDebug)
 	{
-		LOG_TRACE("###########################");
-		auto& ids = _Graph.GetNodes();
-		LOG_TRACE("Node ids:");
-		for (auto id : ids)
-			LOG_TRACE("  {0}", id);
-
-		auto edges = _Graph.GetEdges();
-		LOG_TRACE("Edge ids:");
-		for (auto it = edges.begin(); it != edges.end(); ++it)
-			LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
-
+		auto& nodes = app->GetGraph().GetNodes();
+		for (auto n : nodes)
 		{
-			auto edgesFromNodeIds = _Graph.GetEdgesFromNodeIds();
-			auto edgesFromNode = _Graph.GetEdgesFromNode();
-			LOG_TRACE("EdgesFromNode:");
-			int i = 0;
-			for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
-				LOG_TRACE("  {0} {1}", edgesFromNodeIds[i], *it);
+			ImGui::Begin("NodeValues Debug", &showDfsDebug, overlay_window_flags);
+			ImGui::Text("%i |", n);			
+			ImGui::End();
 		}
-
-		{
-			auto neighborIds = _Graph.GetAllNeighborIds();
-			auto neighbors = _Graph.GetAllNeighbors();
-			LOG_TRACE("Neighbors:");
-			int i = 0;
-			for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
-				for (auto neighborId : *it)
-					LOG_TRACE("  {0} {1}", neighborIds[i], neighborId);
-		}
-
 	}
-#endif
+
+	//if (ImGui::IsKeyReleased(VK_RETURN))
+	//{
+	//	LOG_TRACE("###########################");
+	//	auto& ids = _Graph.GetNodes();
+	//	LOG_TRACE("Node ids:");
+	//	for (auto id : ids)
+	//		LOG_TRACE("  {0}", id);
+
+	//	auto edges = _Graph.GetEdges();
+	//	LOG_TRACE("Edge ids:");
+	//	for (auto it = edges.begin(); it != edges.end(); ++it)
+	//		LOG_TRACE("  {0}, {1}, {2}", it->id, it->from, it->to);
+
+	//	{
+	//		auto edgesFromNodeIds = _Graph.GetEdgesFromNodeIds();
+	//		auto edgesFromNode = _Graph.GetEdgesFromNode();
+	//		LOG_TRACE("EdgesFromNode:");
+	//		int i = 0;
+	//		for (auto it = edgesFromNode.begin(); it != edgesFromNode.end(); ++it, ++i)
+	//			LOG_TRACE("  {0} {1}", edgesFromNodeIds[i], *it);
+	//	}
+
+	//	{
+	//		auto neighborIds = _Graph.GetAllNeighborIds();
+	//		auto neighbors = _Graph.GetAllNeighbors();
+	//		LOG_TRACE("Neighbors:");
+	//		int i = 0;
+	//		for (auto it = neighbors.begin(); it != neighbors.end(); ++it, ++i)
+	//			for (auto neighborId : *it)
+	//				LOG_TRACE("  {0} {1}", neighborIds[i], neighborId);
+	//	}
+
+	//}
+
 }
 
 void ShaderToolApp::EvaluateGraph()
@@ -602,7 +604,7 @@ void ShaderToolApp::EvaluateGraph()
 
 void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName)
 {
-	auto shader = ShaderManager::Get().GetShader(shaderName);	
+	auto shader = ShaderManager::Get()->GetShader(shaderName);
 	auto& rootParameters = shader->GetRootParameters();
 	auto staticSamplers = D3DUtil::GetStaticSamplers();
 
@@ -648,7 +650,7 @@ void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 	};
 	D3D12_INPUT_LAYOUT_DESC inputLayout = { _InputLayout.data(), (UINT)_InputLayout.size() };
 
-	auto shaderName = shaderIndex == NOT_LINKED ? DEFAULT_SHADER : ShaderManager::Get().GetShaderName((size_t)shaderIndex);
+	auto shaderName = shaderIndex == NOT_LINKED ? DEFAULT_SHADER : ShaderManager::Get()->GetShaderName((size_t)shaderIndex);
 
 	BuildRenderTargetRootSignature(shaderName);
 
@@ -668,12 +670,12 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 {
 	ClearRenderTexture();
 
-	if (drawNode->OutputNodeValue->Data == INVALID_INDEX) return; // NOT READY
+	if (drawNode->OutputNodeValue->Value == INVALID_INDEX) return; // NOT READY
 
-	int currentModel = drawNode->ModelNodeValue->Data;
+	int currentModel = drawNode->ModelNodeValue->Value;
 	if (currentModel == INVALID_INDEX) return; // no model linked
 
-	int currentShaderIndex = drawNode->ShaderNodeValue->Data;
+	int currentShaderIndex = drawNode->ShaderNodeValue->Value;
 	if (currentShaderIndex == INVALID_INDEX) return; // no shader linked
 
 	// recreate PSO when shader has changed
@@ -773,19 +775,19 @@ void ShaderToolApp::HandleNewNodes()
 		{
 			const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
-			if (ImGui::MenuItem("Draw") && _RootNodeId == INVALID_ID)
+			if (ImGui::MenuItem("Render Target"))
 			{
-				auto node = std::make_unique<DrawNode>(&_Graph);
+				auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
 				node->OnCreate();
-				_RootNodeId = node->Id;
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
 			}
-			else if (ImGui::MenuItem("Render Target"))
+			else if (ImGui::MenuItem("Draw") && _RootNodeId == INVALID_ID)
 			{
-				auto node = std::make_unique<RenderTargetNode>(&_Graph, _RenderTarget.get());
+				auto node = std::make_unique<DrawNode>(&_Graph);
 				node->OnCreate();
+				_RootNodeId = node->Id;
 				ImNodes::SetNodeScreenSpacePos(node->Id, click_pos);
 				_UINodeIdMap[node->Id] = node.get();
 				_UINodes.push_back(std::move(node));
@@ -1005,7 +1007,7 @@ void ShaderToolApp::HandleDeletedNodes()
 					if (_RootNodeId == node_id) _RootNodeId = INVALID_ID;
 
 					node->OnDelete();
-					_UINodeIdMap.erase(node->Id);
+					_UINodeIdMap.erase(node_id);
 					_UINodes.erase(it);
 					break;
 				}
@@ -1072,15 +1074,20 @@ void ShaderToolApp::Save()
 {
 	// Save the internal imnodes state
 	ImNodes::SaveCurrentEditorStateToIniFile("node_graph.ini");
-
 	std::ofstream fout("node_graph.txt", std::ios_base::out | std::ios_base::trunc);
+
+	fout << "#shaders\n";
+	ShaderManager::Get()->Serialize(fout);
+	
+	fout << "#assets\n";
+	AssetManager::Get().Serialize(fout);
 
 	fout << "#graph\n";
 	fout << _Graph;
+
 	fout << "#ui_nodes\n";
 	fout << _RootNodeId << "\n";
 	fout << _UINodes.size() << "\n";
-
 	for (auto& uin : _UINodes)
 		fout << *uin.get() << "\n";
 
@@ -1102,6 +1109,13 @@ void ShaderToolApp::Load()
 
 	Reset();
 
+	std::string label;
+	fin >> label;
+	ShaderManager::Get()->Deserialize(fin);
+
+	fin >> label;
+	AssetManager::Get().Deserialize(fin);
+
 	fin >> _Graph;
 
 	std::string comment;
@@ -1110,7 +1124,6 @@ void ShaderToolApp::Load()
 
 	std::string typeName;
 	int type;
-
 	for (int i = 0; i < numUiNodes; ++i)
 	{
 		fin >> typeName >> type;

@@ -5,8 +5,14 @@
 
 struct Texture
 {
+	~Texture() 
+	{
+		//LOG_TRACE("~Texture() {0} | {1}", Name, Path);
+	}
+
+	size_t Index;
 	std::string Name;
-	std::wstring Filename;
+	std::string Path;
 	Microsoft::WRL::ComPtr<ID3D12Resource> Resource{ nullptr };
 	Microsoft::WRL::ComPtr<ID3D12Resource> UploadHeap{ nullptr };
 	CD3DX12_CPU_DESCRIPTOR_HANDLE SrvCpuDescHandle;

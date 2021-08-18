@@ -10,16 +10,23 @@ void Graph::Reset()
     _EdgesFromNode.clear();
     _Neighbors.clear();
     _Edges.clear();
-    
-    // TODO: figure out how to handle this in a proper way
-    GraphNodeValues<int>::Get().Reset();
-    GraphNodeValues<float>::Get().Reset();
-    GraphNodeValues<XMFLOAT2>::Get().Reset();
-    GraphNodeValues<XMFLOAT3>::Get().Reset();
-    GraphNodeValues<XMFLOAT4>::Get().Reset();
-    GraphNodeValues<XMFLOAT4X4>::Get().Reset();
+    _NodeValueStorage.clear();
 }
 
+void Graph::DeleteNodeValue(int nodeId)
+{
+    _NodeValueStorage.erase(nodeId);
+}
+
+void Graph::StoreNodeValue(int nodeId, std::shared_ptr<NodeValue> value)
+{
+    _NodeValueStorage[nodeId] = value;
+}
+
+std::shared_ptr<NodeValue>& Graph::GetNodeValue(int nodeId)
+{
+    return _NodeValueStorage[nodeId];
+}
 
 Node& Graph::GetNode(const int id)
 {
@@ -55,9 +62,23 @@ inline Edge Graph::GetEdge(int id) const
     return Edge();
 }
 
+std::vector<int> Graph::GetLinksConnectedTo(int id)
+{
+    std::vector<int> links;
+    auto edges = _Edges.elements();
+    for (auto it = edges.begin(); it != edges.end(); ++it)
+    {
+        if (it->to == id || it->from == id)
+            links.push_back(it->id);
+    }
+    return links;
+}
+
 size_t Graph::GetNumEdgesFromNode(const int id) const
 {
     auto iter = _EdgesFromNode.find(id);
+    if (iter == _EdgesFromNode.end())
+        LOG_ERROR("Failed to find edges from the node {0}", id);
     assert(iter != _EdgesFromNode.end());
     return *iter;
 }
@@ -102,6 +123,7 @@ void Graph::EraseNode(const int id)
     _Nodes.erase(id);
     _EdgesFromNode.erase(id);
     _Neighbors.erase(id);
+    _NodeValueStorage.erase(id);
 }
 
 int Graph::CreateEdge(int from, int to, const EdgeType type)

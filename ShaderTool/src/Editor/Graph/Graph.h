@@ -10,6 +10,7 @@
 #include <iostream>
 #include <unordered_map>
 
+
 #include "Node.h"
 #include "Edge.h"
 #include "IdMap.h"
@@ -20,7 +21,9 @@
 class Graph
 {
 public:
-    Graph() : _CurrentId(0) {}
+    Graph() : _CurrentId(0) 
+    {
+    }
 
     // Element access
 
@@ -40,6 +43,8 @@ public:
     int GetCurrentId() const { return _CurrentId; }
     size_t GetNodesCount() const { return _Nodes.size(); }
 
+    std::vector<int> GetLinksConnectedTo(int id);
+
     // Capacity
     
     size_t GetNumEdgesFromNode(int node_id) const;
@@ -56,8 +61,10 @@ public:
     void SetCurrentId(int currentId) { _CurrentId = currentId; }
 
     void Reset();
-    
-    
+
+    void DeleteNodeValue(int nodeId);
+    void StoreNodeValue(int nodeId, std::shared_ptr<NodeValue> value);
+    std::shared_ptr<NodeValue>& GetNodeValue(int nodeId);
 
     
     friend std::ostream& operator<<(std::ostream& out, const Graph& g)
@@ -75,6 +82,10 @@ public:
         for (auto it = edges.begin(); it != edges.end(); ++it)
             out << "e " << *it << "\n";
         
+        out << g._NodeValueStorage.size() << "\n";
+        for (auto& [nodeId, nodeValue] : g._NodeValueStorage)
+            out << "nv " << nodeId << " " << *nodeValue.get() << "\n";
+
         return out;
     }
 
@@ -107,6 +118,65 @@ public:
             //LOG_TRACE("{0} {1} {2} {3}", eLabel, eId, eFrom, eTo);
         }
 
+        int numNodeValues;
+        in >> numNodeValues;
+
+        std::string nvLabel;
+        int nodeId, nodeType;
+
+        for (int i = 0; i < numNodeValues; ++i)
+        {
+            in >> eLabel >> nodeId >> nodeType;
+            
+            switch ((NodeType)nodeType)
+            {
+            case NodeType::Int:
+            {
+                auto nodeValue = std::make_shared<NodeValueInt>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float2:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat2>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float3:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat3>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float4:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat4>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            case NodeType::Float4x4:
+            {
+                auto nodeValue = std::make_shared<NodeValueFloat4x4>();
+                in >> *nodeValue.get();
+                g.StoreNodeValue(nodeId, nodeValue);
+            }
+            break;
+            default:
+                break;
+            }
+        }
+
         return in;
     }
     
@@ -115,12 +185,13 @@ private:
     int  InsertEdge(const int id, int from, int to, const EdgeType type);
 
 private:
-    int _CurrentId;
-    
+    int                     _CurrentId;    
     IdMap<Node>             _Nodes;         // These contains map to the node id
     IdMap<int>              _EdgesFromNode;
     IdMap<std::vector<int>> _Neighbors;    
     IdMap<Edge>             _Edges;        // This container maps to the edge id
+
+    std::unordered_map<int, std::shared_ptr<NodeValue>> _NodeValueStorage;
 };
 
 template<typename Visitor>
@@ -142,36 +213,3 @@ void dfs_traverse(const Graph& graph, const int start_node, Visitor visitor)
         }
     }
 }
-
-template<class T>
-class GraphNodeValues
-{
-public:
-    static GraphNodeValues<T>& Get()
-    {
-        static GraphNodeValues<T> instance;
-        return instance;
-    }
-    
-    void StoreNodeValuePtr(int id, std::shared_ptr<NodeValue<T>> value)
-    {
-        _NodeValues[id] = value;
-    }
-
-    std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(int id)
-    {
-        return _NodeValues[id];
-    }
-
-    void Reset()
-    {
-        _NodeValues.clear();
-    }
-
-private:
-    GraphNodeValues() = default;
-
-private:
-    std::unordered_map<NodeId, std::shared_ptr<NodeValue<T>>> _NodeValues;
-};
-

@@ -6,32 +6,40 @@
 struct TextureNode : UiNode
 {
 private:
-    std::string _Path;
-    int _TextureIndex;
-    Texture* _Texture;
+    std::shared_ptr<Texture> _Texture;
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+    std::shared_ptr<NodeValueInt> OutputNodeValue;
 
 public:
     explicit TextureNode(Graph* graph)
-        : UiNode(graph, UiNodeType::Texture), _Path(""), _TextureIndex(INVALID_INDEX), _Texture(nullptr)
+        : UiNode(graph, UiNodeType::Texture), _Texture(nullptr)
     {
-        OutputNodeValue = std::make_shared<NodeValue<int>>();
-        OutputNodeValue->TypeName = "int";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = INVALID_INDEX;
+        OutputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
     }
 
-    const std::string GetPath() const { return _Path; }
-    const std::string GetName() const { return _TextureIndex == INVALID_INDEX ? "" : AssetManager::Get().GetTexture(_TextureIndex)->Name; }
+    const std::string GetPath() const 
+    { 
+        if (OutputNodeValue->Value != INVALID_INDEX)
+            return AssetManager::Get().GetTexture(OutputNodeValue->Value)->Path;
+
+        return "";
+    }
+
+    const std::string GetName() const 
+    { 
+        if (OutputNodeValue->Value != INVALID_INDEX)
+            return AssetManager::Get().GetTexture(OutputNodeValue->Value)->Name;
+
+        return "";
+    }
 
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
-        OutputNodeValue->Data = INVALID_INDEX;
+        OutputNodeValue->Value = INVALID_INDEX;
 
         const Node idNode = Node(NodeType::Texture, NodeDirection::None);
         Id = ParentGraph->CreateNode(idNode);
@@ -40,31 +48,23 @@ public:
         OutputPin = ParentGraph->CreateNode(indexNodeOut);
 
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        _Texture = AssetManager::Get().GetTexture(_TextureIndex);
-        if (_Texture->Name.empty())
+        OutputNodeValue->Value = *(int*)ParentGraph->GetNodeValue(OutputPin)->GetValuePtr();
+        if (OutputNodeValue->Value != INVALID_INDEX)
         {
-            _TextureIndex = AssetManager::Get().LoadTextureFromFile(_Path);
-            if (_TextureIndex == INVALID_INDEX)
+            _Texture = AssetManager::Get().CreateTextureFromIndex(OutputNodeValue->Value);
+            if (!_Texture || _Texture->Name.empty())
             {
-                LOG_ERROR("Failed to load texture {0}!", _Path);
-                _Path = "";
+                LOG_ERROR("Failed to load texture from index {0}!", OutputNodeValue->Value);
+                OutputNodeValue->Value = INVALID_INDEX;
                 _Texture = nullptr;
-                OutputNodeValue->Data = INVALID_INDEX;
-                StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
-                return;
             }
         }
-        else
-        {
-            OutputNodeValue->Data = _TextureIndex;
-            StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
-        }
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
@@ -99,9 +99,9 @@ public:
 
             if (result == NFD_OKAY)
             {
-                _Path = std::string(outPath);
-                _TextureIndex = AssetManager::Get().LoadTextureFromFile(_Path);
-                OnLoad();
+                _Texture = AssetManager::Get().CreateTextureFromFile(std::string(outPath));
+                OutputNodeValue->Value = (int)_Texture->Index;
+                ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
                 free(outPath);
             }
             else if (result == NFD_CANCEL)
@@ -114,15 +114,15 @@ public:
             }
         }
         
-        ImNodes::BeginOutputAttribute(OutputPin);
         // TODO: temp dimensions
         static int w = 256;
         static int h = 256;
+        ImNodes::BeginOutputAttribute(OutputPin);
         if(_Texture) 
             ImGui::Image((ImTextureID)_Texture->SrvGpuDescHandle.ptr, ImVec2((float)w, (float)h));
         ImNodes::EndOutputAttribute();
 
-        if (_TextureIndex != INVALID_INDEX)
+        if (OutputNodeValue->Value != INVALID_INDEX)
             ImGui::Text(GetName().c_str());
 
         ImNodes::EndNode();
@@ -131,14 +131,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << _TextureIndex << " " << _Path;
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Texture;
-        in >> Id >> OutputPin >> _TextureIndex >> _Path;
+        in >> Id >> OutputPin;
         OnLoad();
         return in;
     }

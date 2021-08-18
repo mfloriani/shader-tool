@@ -9,16 +9,13 @@ private:
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<DirectX::XMFLOAT3>> OutputNodeValue;
+    std::shared_ptr<NodeValueFloat3> OutputNodeValue;
 
 public:
     explicit ColorNode(Graph* graph)
         : UiNode(graph, UiNodeType::Color)
     {
-        OutputNodeValue = std::make_shared<NodeValue<DirectX::XMFLOAT3>>();
-        OutputNodeValue->TypeName = "float3";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
+        OutputNodeValue = std::make_shared<NodeValueFloat3>(DirectX::XMFLOAT3(0.f, 0.f, 0.f));
     }
 
     virtual void OnEvent(Event* e) override {}
@@ -32,23 +29,24 @@ public:
         OutputPin = ParentGraph->CreateNode(colorNodeOut);
 
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<DirectX::XMFLOAT3>(OutputPin, OutputNodeValue);
+        OutputNodeValue->Value = *(DirectX::XMFLOAT3*)ParentGraph->GetNodeValue(OutputPin)->GetValuePtr();
+        TempColor = ImVec4(OutputNodeValue->Value.x, OutputNodeValue->Value.y, OutputNodeValue->Value.z, 0.f);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
     {
-
+        OutputNodeValue->Value = DirectX::XMFLOAT3(TempColor.x, TempColor.y, TempColor.z);
     }
 
     virtual void OnEval() override
     {
-        OutputNodeValue->Data = DirectX::XMFLOAT3(TempColor.x, TempColor.y, TempColor.z);
+        
     }
 
     virtual void OnDelete() override
@@ -90,14 +88,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << OutputNodeValue->Data.x << " " << OutputNodeValue->Data.y << " " << OutputNodeValue->Data.z;
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Color;
-        in >> Id >> OutputPin >> OutputNodeValue->Data.x >> OutputNodeValue->Data.y >> OutputNodeValue->Data.z;
+        in >> Id >> OutputPin;
         OnLoad();
         return in;
     }

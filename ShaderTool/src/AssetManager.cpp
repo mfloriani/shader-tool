@@ -162,9 +162,7 @@ int AssetManager::AddModel(Model& model)
 		LOG_ERROR("Model has no name!");
 		return INVALID_INDEX;
 	}
-
 	_Models.push_back(model);
-
 	return (int) _Models.size()-1;
 }
 
@@ -174,24 +172,37 @@ Model AssetManager::GetModel(int index)
 	return _Models[index];
 }
 
-int AssetManager::LoadTextureFromFile(const std::string& path)
+std::shared_ptr<Texture> AssetManager::CreateTextureFromFile(const std::string& path)
 {
-	std::string name = ExtractFilename(path);
-
-	auto tex = std::make_unique<Texture>();
-	tex->Name = name;
-	tex->Filename = AnsiToWString(path);
+	auto tex = std::make_shared<Texture>();
+	tex->Name = ExtractFilename(path);
+	tex->Path = path;
 	tex->SrvCpuDescHandle = _TexSrvCpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
 	tex->SrvGpuDescHandle = _TexSrvGpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
 	
+	CreateTextureSRV(tex);
+
+	tex->Index = StoreTexture(tex);
+	return tex;
+}
+
+std::shared_ptr<Texture> AssetManager::CreateTextureFromIndex(size_t index)
+{
+	auto tex = GetTexture(index);
+	CreateTextureSRV(tex);
+	return tex;
+}
+
+void AssetManager::CreateTextureSRV(std::shared_ptr<Texture> tex)
+{
 	ThrowIfFailed(
 		CreateDDSTextureFromFile12(
 			_Device,
 			_CommandList,
-			tex->Filename.c_str(),
+			AnsiToWString(tex->Path).c_str(),
 			tex->Resource,
 			tex->UploadHeap));
-	
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = tex->Resource->GetDesc().Format;
@@ -201,17 +212,70 @@ int AssetManager::LoadTextureFromFile(const std::string& path)
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 	_Device->CreateShaderResourceView(tex->Resource.Get(), &srvDesc, tex->SrvCpuDescHandle);
-
-	_Textures.push_back(std::move(tex));
-	size_t index = _Textures.size() - 1;
-	_TextureIndexMap[name] = index;
-
-	return (int)index;
 }
 
-Texture* AssetManager::GetTexture(int index)
+size_t AssetManager::StoreTexture(std::shared_ptr<Texture> tex)
 {
-	assert(index != INVALID_INDEX && index < _Textures.size() && "Model index out of bounds");
-	return _Textures[index].get();
+	size_t index;
+	auto it = _TextureNameIndexMap.find(tex->Name);
+	if (it == _TextureNameIndexMap.end()) // new texture
+	{
+		_Textures.push_back(tex);
+		index = _Textures.size() - 1;
+		_TextureNameIndexMap[tex->Name] = index;
+		_TextureIndexPathMap[index] = tex->Path;
+		//LOG_TRACE("Adding texture {0} | {1} | {2}", index, name, path);
+	}
+	else // existing texture
+	{
+		index = it->second;
+		_Textures[index] = tex;
+		_TextureIndexPathMap[index] = tex->Path;
+		//LOG_TRACE("Updating texture {0} | {1} | {2}", index, name, path);
+	}
+	return index;
 }
 
+std::shared_ptr<Texture> AssetManager::GetTexture(size_t index)
+{
+	assert(index < _Textures.size() && "Texture index out of bounds");
+	auto texture = _Textures[index];
+	//LOG_TRACE("GetTexture() {0} | {1} | {2}", index, texture->Name, texture->Path);
+	return texture;
+}
+
+std::ostream& AssetManager::Serialize(std::ostream& out)
+{
+	auto& textures = Get().GetTextures();
+	out << textures.size() << "\n";
+	
+	for (size_t i = 0; i < textures.size(); ++i)
+		out << "tex " << i << " " << textures[i]->Path << "\n";
+
+	return out;
+}
+
+std::istream& AssetManager::Deserialize(std::istream& in)
+{
+	size_t numTextures;
+	in >> numTextures;
+
+	size_t index;
+	std::string label, path;
+
+	for (size_t i = 0; i < numTextures; ++i)
+	{
+		in >> label >> index >> path;
+
+		std::string name = ExtractFilename(path);
+
+		auto tex = std::make_shared<Texture>();
+		tex->Name = name;
+		tex->Path = path;
+		tex->SrvCpuDescHandle = _TexSrvCpuDescHandle; 
+		tex->SrvGpuDescHandle = _TexSrvGpuDescHandle; 
+
+		StoreTexture(tex);
+	}
+	return in;
+}

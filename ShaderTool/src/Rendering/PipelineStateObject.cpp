@@ -43,7 +43,7 @@ void PipelineStateObject::Create(
 	pso.SampleDesc.Quality = _4xMsaaState ? (_4xMsaaQuality - 1) : 0;
 	//if(setDepthStencil) pso.DSVFormat = _DepthStencilFormat; // TODO: at the moment no format is used for render target
 	
-	auto shaderObj = ShaderManager::Get().GetShader(shader);
+	auto shaderObj = ShaderManager::Get()->GetShader(shader);
 
 	pso.VS = shaderObj->GetVsByteCode();
 	pso.PS = shaderObj->GetPsByteCode();

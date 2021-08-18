@@ -5,33 +5,33 @@
 struct ShaderNode : UiNode
 {
 private:
-    std::string _Path;
-    std::string _ShaderName;
 
 public:
     NodeId OutputPin;
-    std::shared_ptr<NodeValue<int>> OutputNodeValue;
+    std::shared_ptr<NodeValueInt> OutputNodeValue;
 
 public:
-    explicit ShaderNode(Graph* graph)
-        : UiNode(graph, UiNodeType::Shader)
+    explicit ShaderNode(Graph* graph) 
+        : UiNode(graph, UiNodeType::Shader), OutputPin(INVALID_ID)
     {
-        OutputNodeValue = std::make_shared<NodeValue<int>>();
-        OutputNodeValue->TypeName = "int";
-        OutputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[OutputNodeValue->TypeName];
-        OutputNodeValue->Data = INVALID_INDEX;
+        OutputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
     }
 
-    const std::string GetPath() const { return _Path; }
-    const std::string GetName() const { return _ShaderName; }
+    const std::string GetPath() const 
+    {
+        return ShaderManager::Get()->GetShaderPath(OutputNodeValue->Value);
+    }
+    
+    const std::string GetName() const 
+    {
+        return ShaderManager::Get()->GetShaderName(OutputNodeValue->Value);
+    }
 
     virtual void OnEvent(Event* e) override {}
 
     virtual void OnCreate() override
     {
-        _Path = "INTERNAL_SHADER_PATH";
-        _ShaderName = DEFAULT_SHADER;
-        OutputNodeValue->Data = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
+        OutputNodeValue->Value = (int)ShaderManager::Get()->GetShaderIndex(DEFAULT_SHADER);
 
         const Node idNode = Node(NodeType::Shader, NodeDirection::None);
         Id = ParentGraph->CreateNode(idNode);
@@ -40,25 +40,13 @@ public:
         OutputPin = ParentGraph->CreateNode(shaderIndexNodeOut);
 
         ParentGraph->CreateEdge(OutputPin, Id, EdgeType::Internal);
-        
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        if (!ShaderManager::Get().HasShader(_ShaderName))
-        {
-            _ShaderName = ShaderManager::Get().LoadShaderFromFile(_Path);
-            if (!ShaderManager::Get().HasShader(_ShaderName))
-            {
-                LOG_ERROR("Failed to load shader {0}! The default shader was used instead.", _Path);
-
-                _Path = "INTERNAL_SHADER_PATH";
-                _ShaderName = DEFAULT_SHADER;
-            }
-        }
-        OutputNodeValue->Data = (int)ShaderManager::Get().GetShaderIndex(_ShaderName);
-        StoreNodeValuePtr<int>(OutputPin, OutputNodeValue);
+        OutputNodeValue->Value = *(int*)ParentGraph->GetNodeValue(OutputPin)->GetValuePtr();
+        ParentGraph->StoreNodeValue(OutputPin, OutputNodeValue);
     }
 
     virtual void OnUpdate() override
@@ -94,9 +82,8 @@ public:
 
             if (result == NFD_OKAY)
             {
-                _Path = std::string(outPath);
-                _ShaderName = ShaderManager::Get().LoadShaderFromFile(_Path);
-                OnLoad();
+                OutputNodeValue->Value = ShaderManager::Get()->LoadShaderFromFile(std::string(outPath));
+                EVENT_MANAGER.Enqueue(std::make_shared<ShaderUpdatedEvent>(OutputNodeValue->Value));
                 free(outPath);
             }
             else if (result == NFD_CANCEL)
@@ -119,7 +106,7 @@ public:
 
         //}
 
-        ImGui::Text(_ShaderName.c_str());
+        ImGui::Text(GetName().c_str());
 
         ImNodes::BeginOutputAttribute(OutputPin);
         const float label_width = ImGui::CalcTextSize("output").x;
@@ -133,14 +120,14 @@ public:
     virtual std::ostream& Serialize(std::ostream& out) const
     {
         UiNode::Serialize(out);
-        out << " " << OutputPin << " " << _ShaderName << " " << _Path;
+        out << " " << OutputPin;
         return out;
     }
 
     virtual std::istream& Deserialize(std::istream& in)
     {
         Type = UiNodeType::Shader;
-        in >> Id >> OutputPin >> _ShaderName >> _Path;
+        in >> Id >> OutputPin;
         
         OnLoad();
                 

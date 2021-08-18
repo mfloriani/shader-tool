@@ -16,6 +16,36 @@ struct ShaderBind
 	std::string VarTypeName;
 	UINT VarNum32BitValues;
 	UINT VarNum32BitValuesOffset;
+
+	friend std::ostream& operator<<(std::ostream& out, const ShaderBind& rhs)
+	{
+		out << rhs.RootParameterIndex
+			<< " " << rhs.BindPoint
+			<< " " << rhs.BindType
+			<< " " << rhs.BindTypeName
+			<< " " << rhs.BindName
+			<< " " << rhs.VarName
+			<< " " << rhs.VarTypeName
+			<< " " << rhs.VarNum32BitValues
+			<< " " << rhs.VarNum32BitValuesOffset;
+		return out;
+	}
+
+	friend std::istream& operator>>(std::istream& in, ShaderBind& rhs)
+	{
+		int bindType;
+		in >> rhs.RootParameterIndex
+			>> rhs.BindPoint
+			>> bindType
+			>> rhs.BindTypeName
+			>> rhs.BindName
+			>> rhs.VarName
+			>> rhs.VarTypeName
+			>> rhs.VarNum32BitValues
+			>> rhs.VarNum32BitValuesOffset;
+		rhs.BindType = (D3D_SHADER_INPUT_TYPE)bindType;
+		return in;
+	}
 };
 
 class Shader

@@ -388,10 +388,10 @@ bool D3DApp::Init()
     if (!InitDirect3D())
         return false;
 
-    ::ShowWindow(_Window->GetHandler(), SW_SHOW);
+    ::ShowWindow(_Window->GetHandler(), SW_SHOW | SW_SHOWMAXIMIZED);
     ::UpdateWindow(_Window->GetHandler());
 
-    //_Window->SetFullscreen(true);
+    _Window->SetFullscreen(false);
 
 	return true;
 }

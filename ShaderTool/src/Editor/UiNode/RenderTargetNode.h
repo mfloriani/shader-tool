@@ -10,17 +10,14 @@ private:
 
 public:
     NodeId InputPin;
-    std::shared_ptr<NodeValue<int>> InputNodeValue;
+    std::shared_ptr<NodeValueInt> InputNodeValue;
 
 public:
     explicit RenderTargetNode(Graph* graph, RenderTexture* renderTexture)
         : UiNode(graph, UiNodeType::RenderTarget), _RenderTex(renderTexture), InputPin(INVALID_ID), _IsLinkedToDrawNode(false)
     {
         EVENT_MANAGER.Attach(this);
-        InputNodeValue = std::make_shared<NodeValue<int>>();
-        InputNodeValue->TypeName = "int";
-        InputNodeValue->Num32BitValues = D3DUtil::HlslTypeMap[InputNodeValue->TypeName];
-        InputNodeValue->Data = INVALID_INDEX;
+        InputNodeValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
     }
 
     virtual ~RenderTargetNode()
@@ -33,7 +30,7 @@ public:
         if (dynamic_cast<LinkCreatedEvent*>(e))
         {
             auto lce = dynamic_cast<LinkCreatedEvent*>(e);
-            LOG_TRACE("RenderTargetNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
+            //LOG_TRACE("RenderTargetNode::OnEvent -> LinkCreatedEvent {0} {1}", lce->from, lce->to);
 
             if (InputPin == lce->from)
                 OnDrawLinkCreated(lce->from, lce->to);
@@ -42,7 +39,7 @@ public:
         if (dynamic_cast<LinkDeletedEvent*>(e))
         {
             auto lde = dynamic_cast<LinkDeletedEvent*>(e);
-            LOG_TRACE("RenderTargetNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
+            //LOG_TRACE("RenderTargetNode::OnEvent -> LinkDeletedEvent {0} {1}", lde->from, lde->to);
 
             if (InputPin == lde->from)
                 OnDrawLinkDeleted(lde->from, lde->to);
@@ -68,13 +65,14 @@ public:
         InputPin = ParentGraph->CreateNode(inputNode);
 
         ParentGraph->CreateEdge(Id, InputPin, EdgeType::Internal);
-
-        StoreNodeValuePtr<int>(InputPin, InputNodeValue);
+        ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
     }
 
     virtual void OnLoad() override
     {
-        StoreNodeValuePtr<int>(InputPin, InputNodeValue);
+        ParentGraph->StoreNodeValue(InputPin, InputNodeValue);
+        if (ParentGraph->GetNumEdgesFromNode(InputPin) > 0ull)
+            _IsLinkedToDrawNode = true;
     }
 
     virtual void OnUpdate() override

@@ -47,7 +47,6 @@ public:
         LOG_TRACE("~UiNode()");
         if(ParentGraph) ParentGraph->EraseNode(Id);
     }
-
     
     UiNodeType Type;
     NodeId Id;
@@ -60,35 +59,23 @@ public:
     virtual void OnRender() = 0;
     virtual void OnEval() = 0;
     
-    template <typename T>
-    void StoreNodeValuePtr(NodeId id, std::shared_ptr<NodeValue<T>> value)
-    {
-        GraphNodeValues<T>::Get().StoreNodeValuePtr(id, value);
-    }
+    Graph* GetGraph() const { return ParentGraph; }
 
-    template <typename T>
-    std::shared_ptr<NodeValue<T>>& GetNodeValuePtr(NodeId id)
-    {
-        return GraphNodeValues<T>::Get().GetNodeValuePtr(id);
-    }
-
-    template <typename T>
-    bool CopyFromLinkedSourceNodeValue(NodeId id, T defaultValue)
+    bool CopyValueFromLinkedSource(NodeId id, void* defaultValue)
     {
         size_t numNeighbors = ParentGraph->GetNumEdgesFromNode(id);
         if (numNeighbors == 1ull) // there is one link
         {
             NodeId neighborId = *ParentGraph->GetNeighbors(id).begin();
-            GetNodeValuePtr<T>(id)->Data = GetNodeValuePtr<T>(neighborId)->Data;
+            auto neighborValue = ParentGraph->GetNodeValue(neighborId)->GetValuePtr();
+            ParentGraph->GetNodeValue(id)->SetValuePtr( neighborValue );
             return true;
         }
         
-        // no link or more than one
-
         if (numNeighbors > 1ull)
             LOG_ERROR("Multiple links [{0}] at node {1}", numNeighbors, id);
 
-        GetNodeValuePtr<T>(id)->Data = defaultValue;
+        ParentGraph->GetNodeValue(id)->SetValuePtr(defaultValue);
 
         return false;
     }

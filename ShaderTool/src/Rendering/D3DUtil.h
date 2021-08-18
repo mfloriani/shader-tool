@@ -13,16 +13,6 @@
 
 namespace D3DUtil
 {
-	static std::unordered_map<std::string, UINT> HlslTypeMap = {
-		{"float4x4", 16},
-		{"float4", 4},
-		{"float3", 3},
-		{"float2", 2},
-		{"float", 1},
-		{"int", 1},
-	};
-
-
 	bool CompileShader(
 		const std::string& filename, 
 		const std::string& entryPoint, 
