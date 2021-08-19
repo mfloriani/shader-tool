@@ -608,10 +608,55 @@ void ShaderToolApp::BuildRenderTargetRootSignature(const std::string& shaderName
 	auto& rootParameters = shader->GetRootParameters();
 	auto staticSamplers = D3DUtil::GetStaticSamplers();
 
+	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter(rootParameters.size());
+
+	for (auto& rp : rootParameters)
+	{
+		switch (rp->Type)
+		{
+		case D3D_SIT_CBUFFER:
+		{
+			RootParameterConstants* rootParConstants = (RootParameterConstants*)rp.get();
+			if (rootParConstants)
+			{
+				slotRootParameter[rp->Index].InitAsConstants(rootParConstants->Num32BitValues, rootParConstants->BindPoint);
+			}
+			else
+			{
+				LOG_ERROR("ShaderToolApp::BuildRenderTargetRootSignature() -> Failed to convert RootParameter to RootParameterConstants");
+			}
+		}
+		break;
+		
+		case D3D_SIT_TEXTURE:
+		{
+			RootParameterDescriptorTable* rootParDescTable = (RootParameterDescriptorTable*)rp.get();
+			if (rootParDescTable)
+			{
+				CD3DX12_DESCRIPTOR_RANGE texTable(
+					rootParDescTable->DescRangeType, 
+					rootParDescTable->NumDescriptors, 
+					rootParDescTable->BindPoint);
+
+				slotRootParameter[rp->Index].InitAsDescriptorTable(1, &texTable, rootParDescTable->ShaderVisibility);
+			}
+			else
+			{
+				LOG_ERROR("ShaderToolApp::BuildRenderTargetRootSignature() -> Failed to convert RootParameter to RootParameterDescriptorTable");
+			}
+		}
+		break;
+
+		default:
+			LOG_WARN("Root Parameter type [{0} - {1}] not handled", rp->Type, magic_enum::enum_name(rp->Type));
+			break;
+		}
+	}
+
 	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
-		(UINT)rootParameters.size(),
-		rootParameters.data(),
+		(UINT)slotRootParameter.size(),
+		slotRootParameter.data(),
 		(UINT)staticSamplers.size(),
 		staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -701,11 +746,29 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 
 	for (auto& var : drawNode->ShaderBindingPins)
 	{
-		_CommandList->SetGraphicsRoot32BitConstants(
-			var.Bind.RootParameterIndex, 
-			var.Bind.VarNum32BitValues, 
-			var.Data, 
-			var.Bind.VarNum32BitValuesOffset);
+		if (var.Bind.BindType == D3D_SIT_CBUFFER)
+		{
+			_CommandList->SetGraphicsRoot32BitConstants(
+				var.Bind.RootParameterIndex, 
+				var.Bind.VarNum32BitValues, 
+				var.Data, 
+				var.Bind.VarNum32BitValuesOffset);
+		}
+		else if(var.Bind.BindType == D3D_SIT_TEXTURE)
+		{
+			//CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+			//tex.Offset(var.Bind.OffsetInDescriptors, _CbvSrvUavDescriptorSize);
+			
+			// TODO: TESTING
+			CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_TextureSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+			tex.Offset(0, _CbvSrvUavDescriptorSize);
+			
+
+			ID3D12DescriptorHeap* descriptorHeaps[] = { _TextureSrvDescriptorHeap.Get() };
+			_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps),	descriptorHeaps);
+
+			_CommandList->SetGraphicsRootDescriptorTable(var.Bind.RootParameterIndex, tex);
+		}
 	}
 
 	{

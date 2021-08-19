@@ -66,6 +66,9 @@ private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
 	std::shared_ptr<PipelineStateObject> _RenderTargetPSO;
 	
+
+	size_t TEMP_TESTING_INDEX{ 0 };
+
 private: // Node Graph	
 	Graph _Graph;
 	int _RootNodeId;

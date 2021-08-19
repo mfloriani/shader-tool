@@ -48,12 +48,27 @@ UINT Shader::GetNumTextures()
 	return count;
 }
 
+UINT Shader::GetNumSamplers()
+{
+	UINT count = 0;
+	for (auto& bind : _Reflection->GetInputBinds())
+		if (bind.Type == D3D_SIT_SAMPLER)
+			++count;
+	return count;
+}
+
 void Shader::BuildRootParameters()
 {
 	auto& cbufferVars = _Reflection->GetCBufferVars();
 	auto& bindings = _Reflection->GetInputBinds();
 	
-	_RootParameters.resize(bindings.size());
+	UINT numBindings = (UINT)bindings.size();
+	UINT numSamplers = GetNumSamplers();
+
+	numBindings -= numSamplers; // ignoring samplers for now
+
+	_RootParameters.clear();
+	//_RootParameters.resize(numBindings, nullptr);
 	UINT rootParameterIndex = 0;
 
 	for (auto& bind : bindings)
@@ -62,6 +77,12 @@ void Shader::BuildRootParameters()
 		UINT num32BitValuesOffset = 0;
 		UINT num32BitValuesTotal = 0;
 		
+		if (bind.Type == D3D_SIT_SAMPLER) // TODO: ignoring samplers for now
+		{
+			LOG_TRACE("Skipping D3D_SIT_SAMPLER...");
+			continue;
+		}
+
 		switch (bind.Type)
 		{
 		case D3D_SIT_CBUFFER:
@@ -103,15 +124,50 @@ void Shader::BuildRootParameters()
 			}
 
 			LOG_TRACE("RootParameters[{0}].InitAsConstants({1}, {2})", rootParameterIndex, num32BitValuesTotal, bind.BindPoint);
-			_RootParameters[rootParameterIndex].InitAsConstants(num32BitValuesTotal, bind.BindPoint);
+
+			_RootParameters.push_back(
+				std::make_unique<RootParameterConstants>(
+					rootParameterIndex, 
+					bind.Type,
+					num32BitValuesTotal, 
+					bind.BindPoint));
 		}
 		break;
 
 		case D3D_SIT_TEXTURE:
 		{
+			ShaderBind shaderBind{};
+			shaderBind.RootParameterIndex = rootParameterIndex;
+			shaderBind.BindPoint = bind.BindPoint;
+			shaderBind.BindType = bind.Type;
+			shaderBind.BindTypeName = magic_enum::enum_name(bind.Type);
+			shaderBind.BindName = bind.Name;
+			shaderBind.OffsetInDescriptors = 2; // TODO: should not be fixed 
+			
+			_BindingVarsMap.push_back(shaderBind);
 
+			LOG_TRACE("RootParameters[{0}].InitAsDescriptorTable {1}", rootParameterIndex, bind.BindPoint);
+			
+			auto rootPardescTable = std::make_unique<RootParameterDescriptorTable>(
+				rootParameterIndex, 
+				bind.Type,
+				D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 
+				1, 
+				bind.BindPoint, 
+				D3D12_SHADER_VISIBILITY_PIXEL);
+
+			_RootParameters.push_back( std::move(rootPardescTable) );
 		}
 		break;
+
+		//case D3D_SIT_SAMPLER:
+		//{
+		//	LOG_TRACE("Ignoring D3D_SIT_SAMPLER");
+		//	//CD3DX12_DESCRIPTOR_RANGE texTable;
+		//	//texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, bind.BindPoint);
+		//	//_RootParameters[rootParameterIndex].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+		//}
+		//break;
 
 		default:
 			break;

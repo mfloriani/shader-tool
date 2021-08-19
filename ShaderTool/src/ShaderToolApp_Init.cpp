@@ -2,6 +2,7 @@
 #include "ShaderToolApp.h"
 #include "GeometryGenerator.h"
 #include "AssetManager.h"
+#include "Rendering/DDSTextureLoader.h"
 
 using namespace DirectX;
 using namespace D3DUtil;
@@ -69,7 +70,7 @@ void ShaderToolApp::CreateDescriptorHeaps()
 	);
 
 	// TODO: handle the offsets properly 
-	// (one solution would be setting offsets as the base descHandle, like from offset 10 is used to textures)
+	// (one solution would be setting offsets as the start point descHandle, like from offset 10 is used to textures)
 	AssetManager::Get().SetTextureDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(
 			_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -80,6 +81,46 @@ void ShaderToolApp::CreateDescriptorHeaps()
 			2,
 			_CbvSrvUavDescriptorSize));
 
+	
+	// TESTING
+
+	auto texCpuDescHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
+		_TextureSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+		0,
+		_CbvSrvUavDescriptorSize);
+
+	auto texGpuDescHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+		_TextureSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+		0,
+		_CbvSrvUavDescriptorSize);
+
+	auto tex = std::make_shared<Texture>();
+	tex->Path = "C:/gdev/src/shader-tool/ShaderTool/assets/WoodCrate01.dds";
+	tex->Name = ExtractFilename(tex->Path);
+	tex->SrvCpuDescHandle = texCpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
+	tex->SrvGpuDescHandle = texGpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
+
+	ThrowIfFailed(
+		CreateDDSTextureFromFile12(
+			_Device.Get(),
+			_CommandList.Get(),
+			AnsiToWString(tex->Path).c_str(),
+			tex->Resource,
+			tex->UploadHeap));
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = tex->Resource->GetDesc().Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = tex->Resource->GetDesc().MipLevels;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	_Device->CreateShaderResourceView(tex->Resource.Get(), &srvDesc, tex->SrvCpuDescHandle);
+
+	TEMP_TESTING_INDEX = AssetManager::Get().StoreTexture(tex);
+
+	//
 }
 
 void ShaderToolApp::BuildBackBufferPSO()
