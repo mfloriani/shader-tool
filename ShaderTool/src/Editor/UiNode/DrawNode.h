@@ -47,6 +47,7 @@ public:
     void OnShaderLinkCreate(int from, int to);
     void OnShaderLinkDelete(int from, int to);
     void OnLinkedShaderUpdate(int newShaderIndex);
+    void OnLinkedTextureUpdate(int newTextureIndex);
     
     virtual std::ostream& Serialize(std::ostream& out) const
     {

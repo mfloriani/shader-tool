@@ -66,9 +66,6 @@ private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> _InputLayout;
 	std::shared_ptr<PipelineStateObject> _RenderTargetPSO;
 	
-
-	size_t TEMP_TESTING_INDEX{ 0 };
-
 private: // Node Graph	
 	Graph _Graph;
 	int _RootNodeId;
@@ -77,6 +74,8 @@ private: // Node Graph
 	std::unique_ptr<RenderTexture> _RenderTarget;  // TODO: at the moment only 1 render target supported
 	std::vector<std::unique_ptr<UiNode>> _UINodes;
 	std::unordered_map<NodeId, UiNode*> _UINodeIdMap;
+	
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _TextureSrvDescriptorHeap;
 
 	void InitNodeGraph();
 	void Reset();
@@ -91,7 +90,7 @@ private: // Node Graph
 	void HandleDeletedNodes();
 	void BuildRenderTargetRootSignature(const std::string& shaderName);
 	void CreateRenderTargetPSO(int shaderIndex);
-
+	void LoadSrvTexture(int textureIndex);
 
 
 };

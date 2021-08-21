@@ -142,8 +142,10 @@ void Shader::BuildRootParameters()
 			shaderBind.BindType = bind.Type;
 			shaderBind.BindTypeName = magic_enum::enum_name(bind.Type);
 			shaderBind.BindName = bind.Name;
-			shaderBind.OffsetInDescriptors = 2; // TODO: should not be fixed 
-			
+			shaderBind.OffsetInDescriptors = 0; // TODO: should not be fixed 
+			shaderBind.VarName = bind.Name;
+			shaderBind.VarTypeName = "texture";
+
 			_BindingVarsMap.push_back(shaderBind);
 
 			LOG_TRACE("RootParameters[{0}].InitAsDescriptorTable {1}", rootParameterIndex, bind.BindPoint);

@@ -30,6 +30,7 @@ public:
 	void CreateTextureSRV(std::shared_ptr<Texture> texture);
 	size_t StoreTexture(std::shared_ptr<Texture> texture);
 	std::shared_ptr<Texture> GetTexture(size_t index);
+	const std::string GetTexturePath(size_t index);
 	const std::vector<std::shared_ptr<Texture>>& GetTextures() const { return _Textures; }
 
 	std::ostream& Serialize(std::ostream& out);

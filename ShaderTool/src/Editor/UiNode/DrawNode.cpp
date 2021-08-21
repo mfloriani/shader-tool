@@ -219,6 +219,16 @@ void DrawNode::OnEval()
             CopyValueFromLinkedSource(bindPin.PinId, (void*)&defaultValue);
             bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
         }
+        else if (bindPin.Bind.VarTypeName == "texture")
+        {
+            int defaultValue = INVALID_INDEX;
+            CopyValueFromLinkedSource(bindPin.PinId, (void*)&defaultValue);
+            bindPin.Data = ParentGraph->GetNodeValue(bindPin.PinId)->GetValuePtr();
+        }
+        else
+        {
+            LOG_CRITICAL("Unknown shader binding type {0}", bindPin.Bind.VarTypeName);
+        }
     }
 
     OutputNodeValue->Value = INVALID_INDEX;
@@ -320,6 +330,18 @@ void DrawNode::CreateShaderBindingPins(int shaderIndex)
             bindPin.Data = &intValue->Value;
             bindPin.PinId = pinId;
         }
+        else if (var.VarTypeName == "texture") // texture is internaly an int that represents an index 
+        {
+            const Node link(NodeType::Int, NodeDirection::In);
+            pinId = ParentGraph->CreateNode(link);
+            ParentGraph->CreateEdge(Id, pinId, EdgeType::Internal);
+
+            auto intValue = std::make_shared<NodeValueInt>(INVALID_INDEX);
+            ParentGraph->StoreNodeValue(pinId, intValue);
+
+            bindPin.Data = &intValue->Value;
+            bindPin.PinId = pinId;
+        }
         else
         {
             LOG_CRITICAL("Unknown binding variable type {0}", var.VarTypeName);
@@ -367,4 +389,10 @@ void DrawNode::OnLinkedShaderUpdate(int newShaderIndex)
     auto links = ParentGraph->GetLinksConnectedTo(ShaderPin);
     for (int id : links)
         ParentGraph->EraseEdge(id); // MUST delete the link between shader and draw node to avoid DX pipeline error 
+}
+
+void DrawNode::OnLinkedTextureUpdate(int newTextureIndex)
+{
+    
+
 }

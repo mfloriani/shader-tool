@@ -21,6 +21,8 @@
 #include "Editor\UiNode\TextureNode.h"
 #include "Editor\UiNode\TransformNode.h"
 
+#include "Rendering/DDSTextureLoader.h"
+
 #include <iomanip>
 #include <algorithm>
 #include <cassert>
@@ -33,6 +35,7 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
+using namespace D3DUtil;
 
 void mini_map_node_hovering_callback(int nodeId, void* userData)
 {
@@ -172,6 +175,8 @@ void DebugInfo(ShaderToolApp* app)
 							else if (bindPin.Bind.VarTypeName == "float")
 								ImGui::Text("%s:   %i %.3f", bindPin.Bind.VarName.c_str(), bindPin.PinId, *(float*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr());
 							else if (bindPin.Bind.VarTypeName == "int")
+								ImGui::Text("%s:   %i %i", bindPin.Bind.VarName.c_str(), bindPin.PinId, *(int*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr());
+							else if (bindPin.Bind.VarTypeName == "texture")
 								ImGui::Text("%s:   %i %i", bindPin.Bind.VarName.c_str(), bindPin.PinId, *(int*)drawNode->GetGraph()->GetNodeValue(bindPin.PinId)->GetValuePtr());
 						}
 
@@ -711,6 +716,49 @@ void ShaderToolApp::CreateRenderTargetPSO(int shaderIndex)
 
 static int PreviousShaderIndexRT = INVALID_INDEX;
 
+
+void ShaderToolApp::LoadSrvTexture(int textureIndex)
+{
+	if (textureIndex == INVALID_INDEX)
+		return;
+
+	auto texCpuDescHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
+		_TextureSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+		0,
+		_CbvSrvUavDescriptorSize);
+
+	auto texGpuDescHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+		_TextureSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+		0,
+		_CbvSrvUavDescriptorSize);
+
+	auto& tex = _CurrFrameResource->RenderTargetSrvTexture;
+
+	//auto tex = std::make_shared<Texture>();
+	tex->Path = AssetManager::Get().GetTexturePath(textureIndex);
+	tex->Name = ExtractFilename(tex->Path);
+	tex->SrvCpuDescHandle = texCpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
+	tex->SrvGpuDescHandle = texGpuDescHandle; // TODO: the descHandle has to be handled properly, now it's fixed
+
+	ThrowIfFailed(
+		CreateDDSTextureFromFile12(
+			_Device.Get(),
+			_CommandList.Get(),
+			AnsiToWString(tex->Path).c_str(),
+			tex->Resource,
+			tex->UploadHeap));
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = tex->Resource->GetDesc().Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = tex->Resource->GetDesc().MipLevels;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	_Device->CreateShaderResourceView(tex->Resource.Get(), &srvDesc, tex->SrvCpuDescHandle);
+}
+
 void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 {
 	ClearRenderTexture();
@@ -759,9 +807,20 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 			//CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_ImGuiSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 			//tex.Offset(var.Bind.OffsetInDescriptors, _CbvSrvUavDescriptorSize);
 			
+			static int currentTextureIndex = INVALID_INDEX;
+
+			int textureIndex = *(int*)var.Data;
+			if (textureIndex != INVALID_INDEX && textureIndex != currentTextureIndex)
+			{
+				currentTextureIndex = textureIndex;
+				LoadSrvTexture(textureIndex);
+			}
+
+			//var.PinId
+
 			// TODO: TESTING
 			CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_TextureSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-			tex.Offset(0, _CbvSrvUavDescriptorSize);
+			tex.Offset(var.Bind.OffsetInDescriptors, _CbvSrvUavDescriptorSize);
 			
 
 			ID3D12DescriptorHeap* descriptorHeaps[] = { _TextureSrvDescriptorHeap.Get() };

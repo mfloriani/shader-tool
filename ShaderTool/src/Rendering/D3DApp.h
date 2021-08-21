@@ -72,7 +72,6 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>      _RtvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>      _DsvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	  _ImGuiSrvDescriptorHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	  _TextureSrvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12Resource>		      _BackBuffers[NUM_BACK_BUFFERS];
 	Microsoft::WRL::ComPtr<ID3D12Resource>			  _DepthStencilBuffer;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>        _CommandQueue;

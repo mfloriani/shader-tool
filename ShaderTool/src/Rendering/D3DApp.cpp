@@ -176,12 +176,7 @@ void D3DApp::CreateRTVAndDSVDescriptorHeaps()
     srvHeapDesc.NumDescriptors = 3; // TODO: fixed for now: 3 = imgui + render target + texture
     srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_ImGuiSrvDescriptorHeap)));
-
-    D3D12_DESCRIPTOR_HEAP_DESC texSrvHeapDesc = {};
-    texSrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    texSrvHeapDesc.NumDescriptors = 1;
-    texSrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    ThrowIfFailed(_Device->CreateDescriptorHeap(&texSrvHeapDesc, IID_PPV_ARGS(&_TextureSrvDescriptorHeap)));
+        
 }
 
 void D3DApp::CreateRenderTargetViews()

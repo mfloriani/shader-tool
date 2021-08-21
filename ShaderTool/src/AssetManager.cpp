@@ -244,6 +244,11 @@ std::shared_ptr<Texture> AssetManager::GetTexture(size_t index)
 	return texture;
 }
 
+const std::string AssetManager::GetTexturePath(size_t index)
+{
+	return GetTexture(index)->Path;
+}
+
 std::ostream& AssetManager::Serialize(std::ostream& out)
 {
 	auto& textures = Get().GetTextures();
