@@ -176,6 +176,7 @@ void D3DApp::CreateRTVAndDSVDescriptorHeaps()
     srvHeapDesc.NumDescriptors = 3; // TODO: fixed for now: 3 = imgui + render target + texture
     srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     ThrowIfFailed(_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&_ImGuiSrvDescriptorHeap)));
+        
 }
 
 void D3DApp::CreateRenderTargetViews()

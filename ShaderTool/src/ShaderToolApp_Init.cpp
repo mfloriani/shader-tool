@@ -3,6 +3,7 @@
 #include "GeometryGenerator.h"
 #include "AssetManager.h"
 
+
 using namespace DirectX;
 using namespace D3DUtil;
 
@@ -69,7 +70,7 @@ void ShaderToolApp::CreateDescriptorHeaps()
 	);
 
 	// TODO: handle the offsets properly 
-	// (one solution would be setting offsets as the base descHandle, like from offset 10 is used to textures)
+	// (one solution would be setting offsets as the start point descHandle, like from offset 10 is used to textures)
 	AssetManager::Get().SetTextureDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(
 			_ImGuiSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -80,6 +81,12 @@ void ShaderToolApp::CreateDescriptorHeaps()
 			2,
 			_CbvSrvUavDescriptorSize));
 
+	// Textures used in shaders for texture mapping
+	D3D12_DESCRIPTOR_HEAP_DESC texSrvHeapDesc = {};
+	texSrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	texSrvHeapDesc.NumDescriptors = 1;
+	texSrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(_Device->CreateDescriptorHeap(&texSrvHeapDesc, IID_PPV_ARGS(&_TextureSrvDescriptorHeap)));
 }
 
 void ShaderToolApp::BuildBackBufferPSO()

@@ -11,6 +11,7 @@
 
 #include "UploadBuffer.h"
 #include "PipelineStateObject.h"
+#include "Texture.h"
 
 //struct ObjectConstants
 //{
@@ -56,6 +57,8 @@ struct FrameResource
     //std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
 
     std::shared_ptr<PipelineStateObject> RenderTargetPSO;
+
+    std::shared_ptr<Texture> RenderTargetSrvTexture;
 
     // Fence value to mark commands up to this fence point.  This lets us
     // check if these frame resources are still in use by the GPU.
