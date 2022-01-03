@@ -26,7 +26,7 @@ public:
 	Model GetModel(int index);
 	
 	std::shared_ptr<Texture> CreateTextureFromFile(const std::string& path);
-	std::shared_ptr<Texture> AssetManager::CreateTextureFromIndex(size_t index);
+	std::shared_ptr<Texture> CreateTextureFromIndex(size_t index);
 	void CreateTextureSRV(std::shared_ptr<Texture> texture);
 	size_t StoreTexture(std::shared_ptr<Texture> texture);
 	std::shared_ptr<Texture> GetTexture(size_t index);

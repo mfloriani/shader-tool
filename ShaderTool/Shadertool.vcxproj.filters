@@ -104,6 +104,9 @@
     <ClInclude Include="src\Editor\UiNode\Matrix4x4Node.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\ModelNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\UiNode\MultiplyNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
@@ -122,7 +125,13 @@
     <ClInclude Include="src\Editor\UiNode\SineNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\TextureNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
     <ClInclude Include="src\Editor\UiNode\TimeNode.h">
+      <Filter>Editor\UiNode</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Editor\UiNode\TransformNode.h">
       <Filter>Editor\UiNode</Filter>
     </ClInclude>
     <ClInclude Include="src\Editor\UiNode\UiNode.h">
@@ -147,7 +156,6 @@
     <ClInclude Include="src\GeometryGenerator.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\MagicEnum.h" />
-    <ClInclude Include="src\Rendering\Model.h" />
     <ClInclude Include="src\Patterns\IObserver.h">
       <Filter>Patterns</Filter>
     </ClInclude>
@@ -160,10 +168,16 @@
     <ClInclude Include="src\Rendering\D3DUtil.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Rendering\DDSTextureLoader.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rendering\FrameResource.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\Mesh.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rendering\Model.h">
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Rendering\PipelineStateObject.h">
@@ -181,6 +195,9 @@
     <ClInclude Include="src\Rendering\ShaderReflection.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Rendering\Texture.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Rendering\UploadBuffer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -195,15 +212,13 @@
     </ClInclude>
     <ClInclude Include="src\ShaderToolApp.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\Editor\UiNode\ModelNode.h" />
-    <ClInclude Include="src\Editor\UiNode\TextureNode.h" />
-    <ClInclude Include="src\Rendering\DDSTextureLoader.h" />
-    <ClInclude Include="src\Rendering\Texture.h" />
-    <ClInclude Include="src\Editor\UiNode\TransformNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetManager.cpp" />
     <ClCompile Include="src\Editor\Graph\Graph.cpp">
+      <Filter>Editor\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Editor\Graph\Node.cpp">
       <Filter>Editor\Graph</Filter>
     </ClCompile>
     <ClCompile Include="src\Editor\ImGui\imgui.cpp">
@@ -236,6 +251,9 @@
     <ClCompile Include="src\Editor\NFD\nfd_win.cpp">
       <Filter>Editor\NFD</Filter>
     </ClCompile>
+    <ClCompile Include="src\Editor\UiNode\CameraNode.cpp">
+      <Filter>Editor\UiNode</Filter>
+    </ClCompile>
     <ClCompile Include="src\Editor\UiNode\DrawNode.cpp">
       <Filter>Editor\UiNode</Filter>
     </ClCompile>
@@ -250,6 +268,9 @@
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\D3DUtil.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rendering\DDSTextureLoader.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Rendering\FrameResource.cpp">
@@ -277,9 +298,6 @@
     <ClCompile Include="src\ShaderToolApp_Main.cpp" />
     <ClCompile Include="src\ShaderToolApp_NodeGraph.cpp" />
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\Rendering\DDSTextureLoader.cpp" />
-    <ClCompile Include="src\Editor\Graph\Node.cpp" />
-    <ClCompile Include="src\Editor\UiNode\CameraNode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\backbuffer_vs.hlsl">
@@ -287,13 +305,28 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="src\Shaders\basic_color.fx">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
     <CustomBuild Include="src\Shaders\custom_red.fx">
       <Filter>Shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="src\Shaders\default.fx">
       <Filter>Shaders</Filter>
     </CustomBuild>
+    <CustomBuild Include="src\Shaders\performance_test.fx">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
     <CustomBuild Include="src\Shaders\quad.fx">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\Shaders\raymarching.fx">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\Shaders\raytracing.fx">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\Shaders\texturing.fx">
       <Filter>Shaders</Filter>
     </CustomBuild>
   </ItemGroup>

@@ -71,7 +71,7 @@ public:
         ImNodes::BeginNode(Id);
 
         ImNodes::BeginNodeTitleBar();
-        ImGui::TextUnformatted("VERTEX SHADER [?]");
+        ImGui::TextUnformatted("SHADER [?]");
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Expected function names:\nVS, HS, DS, GS and PS");
         ImNodes::EndNodeTitleBar();
         

@@ -75,9 +75,14 @@ void DebugInfo(ShaderToolApp* app)
 	{
 		static bool open = true;
 		ImGui::Begin("Debug", &open, overlay_window_flags);
-		ImGui::Text("UiNodes: %i", app->GetUiNodes().size());
-		ImGui::Text("Nodes:   %i", app->GetGraph().GetNodesCount());
-		ImGui::Text("Edges:   %i", app->GetGraph().GetEdgesCount());
+		
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::Text("MS/Frame: %.3f", 1000.0f / io.Framerate);
+		ImGui::Text("FPS:      %.1f", io.Framerate);
+		ImGui::Separator();
+		ImGui::Text("UiNodes:  %i", app->GetUiNodes().size());
+		ImGui::Text("Nodes:    %i", app->GetGraph().GetNodesCount());
+		ImGui::Text("Edges:    %i", app->GetGraph().GetEdgesCount());
 		ImGui::End();
 	}
 
@@ -818,11 +823,9 @@ void ShaderToolApp::RenderToTexture(DrawNode* drawNode)
 
 			//var.PinId
 
-			// TODO: TESTING
 			CD3DX12_GPU_DESCRIPTOR_HANDLE tex(_TextureSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 			tex.Offset(var.Bind.OffsetInDescriptors, _CbvSrvUavDescriptorSize);
 			
-
 			ID3D12DescriptorHeap* descriptorHeaps[] = { _TextureSrvDescriptorHeap.Get() };
 			_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps),	descriptorHeaps);
 

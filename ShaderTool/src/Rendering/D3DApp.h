@@ -86,7 +86,7 @@ protected:
 	bool _4xMsaaState{ false };
 	UINT _4xMsaaQuality{ 0 };
 	bool _TearingSupport{ false };
-	bool _VSync{ true };
+	bool _VSync{ false };
 	uint16_t _CurrentBackBufferIndex{ 0 };
 	uint32_t _RtvDescriptorSize{ 0 };
 	uint32_t _DsvDescriptorSize{ 0 };
