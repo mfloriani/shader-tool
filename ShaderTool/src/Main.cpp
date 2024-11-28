@@ -21,6 +21,3 @@ int WINAPI WinMain(
 	app.Run();
 	return 0;
 }
-
-
-
