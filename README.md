@@ -1,6 +1,6 @@
 # Shader Tool
 
-![Demo](misc/ShaderToolDemo.gif)
+![Demo](ShaderTool/misc/ShaderToolDemo.gif)
 
 It is a rendering application developed as the final project for my MSc in Computer Science for Game Development.
 Through this application you can run simple HLSL shader code connecting nodes in a node graph.
